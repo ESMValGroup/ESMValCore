@@ -1,0 +1,2918 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 1.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "APday"
+  },
+  "variable_entry": {
+    "albisccp": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where cloud",
+      "comment": "ISCCP Mean Cloud Albedo. Time-means are weighted by the ISCCP Total Cloud Fraction {:cltisccp} - see  http://cfmip.metoffice.com/COSP.html",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "ISCCP Mean Cloud Albedo",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "albisccp",
+      "positive": "",
+      "standard_name": "cloud_albedo",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "aod550volso4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Aerosol optical depth at 550nm due to stratospheric volcanic aerosols",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "lambda550nm"
+      ],
+      "frequency": "day",
+      "long_name": "Aerosol Optical Depth at 550nm Due to Stratospheric Volcanic Aerosols",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "aod550volso4",
+      "positive": "",
+      "standard_name": "stratosphere_optical_thickness_due_to_volcanic_ambient_aerosol_particles",
+      "type": "real",
+      "units": "1e-09",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ccb": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Where convective cloud is present in the grid cell, the instantaneous cloud base altitude should be that of the bottom of the lowest level containing convective cloud. Missing data should be reported in the absence of convective cloud. The time mean should be calculated from these quantities averaging over occasions when convective cloud is present only, and should contain missing data for occasions when no convective cloud is present during the meaning period.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Air Pressure at Convective Cloud Base",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ccb",
+      "positive": "",
+      "standard_name": "air_pressure_at_convective_cloud_base",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ccldncl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Droplets are liquid only.  Report concentration 'as seen from space' over convective liquid cloudy portion of grid cell.  This is the value from uppermost model layer with liquid cloud or, if available, it is better to sum over all liquid cloud tops, no matter where they occur, as long as they are seen from the top of the atmosphere. Weight by total liquid cloud top fraction of  (as seen from TOA) each time sample when computing monthly mean.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Cloud Droplet Number Concentration of Convective Cloud Tops",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ccldncl",
+      "positive": "",
+      "standard_name": "number_concentration_of_convective_cloud_liquid_water_particles_at_convective_liquid_water_cloud_top",
+      "type": "real",
+      "units": "m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cct": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Where convective cloud is present in the grid cell, the instantaneous cloud top altitude should be that of the top of the highest level containing convective cloud. Missing data should be reported in the absence of convective cloud. The time mean should be calculated from these quantities averaging over occasions when convective cloud is present only, and should contain missing data for occasions when no convective cloud is present during the meaning period.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Air Pressure at Convective Cloud Top",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cct",
+      "positive": "",
+      "standard_name": "air_pressure_at_convective_cloud_top",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clcalipso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Percentage cloud cover in CALIPSO standard atmospheric layers.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alt40",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "CALIPSO Percentage Cloud Cover",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clcalipso",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cldnci": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Concentration 'as seen from space' over ice-cloud portion of grid cell.  This is the value from uppermost model layer with ice cloud or, if available, it is the sum over all ice cloud tops, no matter where they occur, as long as they are seen from the top of the atmosphere. Weight by total ice cloud top fraction (as seen from TOA) of each time sample when computing monthly mean.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Ice Crystal Number Concentration of Cloud Tops",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cldnci",
+      "positive": "",
+      "standard_name": "number_concentration_of_ice_crystals_in_air_at_ice_cloud_top",
+      "type": "real",
+      "units": "m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cldnvi": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Droplets are liquid only.  Values are weighted by liquid cloud fraction in each layer when vertically integrating, and for monthly means the samples are weighted by total liquid cloud fraction (as seen from TOA).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Column Integrated Cloud Droplet Number",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cldnvi",
+      "positive": "",
+      "standard_name": "atmosphere_number_content_of_cloud_droplets",
+      "type": "real",
+      "units": "m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clhcalipso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage cloud cover in layer centred on 220hPa",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p220"
+      ],
+      "frequency": "day",
+      "long_name": "CALIPSO High Level Cloud Area Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clhcalipso",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clisccp": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage cloud cover in optical depth categories.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev7c",
+        "tau",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "ISCCP Cloud Area Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clisccp",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clivi": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "mass of ice water in the column divided by the area of the column (not just the area of the cloudy portion of the column). Includes precipitating frozen hydrometeors ONLY if the precipitating hydrometeor affects the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Ice Water Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clivi",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_cloud_ice",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clivic": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "calculate mass of convective ice water in the column divided by the area of the column (not just the area of the cloudy portion of the column). This includes precipitating frozen hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Convective Ice Water Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clivic",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_convective_cloud_ice",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cllcalipso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage cloud cover in layer centred on 840hPa",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p840"
+      ],
+      "frequency": "day",
+      "long_name": "CALIPSO Low Level Cloud Cover Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cllcalipso",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clmcalipso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage cloud cover in layer centred on 560hPa",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p560"
+      ],
+      "frequency": "day",
+      "long_name": "CALIPSO Mid Level Cloud Cover Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clmcalipso",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Total cloud area fraction (reported as a percentage) for the whole atmospheric column, as seen from the surface or the top of the atmosphere. Includes both large-scale and convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Total Cloud Cover Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clt",
+      "positive": "",
+      "standard_name": "cloud_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cltcalipso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Total cloud area fraction (reported as a percentage) for the whole atmospheric column, as seen by the  Cloud-Aerosol Lidar and Infrared Pathfinder Satellite Observation (CALIPSO) instrument. Includes both large-scale and convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "CALIPSO Total Cloud Cover Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cltcalipso",
+      "positive": "",
+      "standard_name": "cloud_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cltisccp": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Total cloud area fraction (reported as a percentage) for the whole atmospheric column, as seen by the International Satellite Cloud Climatology Project (ISCCP) analysis. Includes both large-scale and convective cloud.  (MODIS). Includes both large-scale and convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "ISCCP Total Cloud Cover Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cltisccp",
+      "positive": "",
+      "standard_name": "cloud_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clwvi": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass of condensed (liquid + ice) water in the column divided by the area of the column (not just the area of the cloudy portion of the column). Includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Condensed Water Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clwvi",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_cloud_condensed_water",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clwvic": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "calculate mass of convective condensed (liquid + ice) water in the column divided by the area of the column (not just the area of the cloudy portion of the column). This includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Convective Condensed Water Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clwvic",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_convective_cloud_condensed_water",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfdsl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'Downward' indicates a vector component which is positive when directed downward (negative upward). The vertical heat flux in air is the sum of all heat fluxes i.e. radiative, latent and sensible. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Downward Heat Flux at Land Surface",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfdsl",
+      "positive": "down",
+      "standard_name": "surface_downward_heat_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfdsnb": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Heat flux from snow into the ice or land under the snow.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Downward Heat Flux at Snow Base",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfdsnb",
+      "positive": "down",
+      "standard_name": "downward_heat_flux_at_ground_level_in_snow",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfls": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'Upward' indicates a vector component which is positive when directed upward (negative downward). The surface latent heat flux is the exchange of heat between the surface and the air on account of evaporation (including sublimation). In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Upward Latent Heat Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfls",
+      "positive": "up",
+      "standard_name": "surface_upward_latent_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfmlt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Energy consumed or released during liquid/solid phase changes.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Energy of Fusion",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfmlt",
+      "positive": "",
+      "standard_name": "surface_snow_and_ice_melt_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfrs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Heat transferred to a snow cover by rain..",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Heat Transferred to Snowpack by Rainfall",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfrs",
+      "positive": "down",
+      "standard_name": "tendency_of_thermal_energy_content_of_surface_snow_due_to_rainfall_temperature_excess_above_freezing",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfsbl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Energy consumed or released during vapor/solid phase changes.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Energy of Sublimation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfsbl",
+      "positive": "",
+      "standard_name": "surface_upward_latent_heat_flux_due_to_sublimation",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface sensible heat flux, also called turbulent heat flux, is the exchange of heat between the surface and the air by motion of air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Upward Sensible Heat Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfss",
+      "positive": "up",
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hur": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Relative Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hur",
+      "positive": "",
+      "standard_name": "relative_humidity",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hurs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Near-Surface Relative Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hurs",
+      "positive": "",
+      "standard_name": "relative_humidity",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hursmax": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: maximum",
+      "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Maximum Near-Surface Relative Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hursmax",
+      "positive": "",
+      "standard_name": "relative_humidity",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hursmin": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: minimum",
+      "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Minimum Near-Surface Relative Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hursmin",
+      "positive": "",
+      "standard_name": "relative_humidity",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hursminCrop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where crops time: minimum",
+      "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Minimum Near-Surface Relative Humidity over Crop Tile",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hursminCrop",
+      "positive": "",
+      "standard_name": "relative_humidity",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hus19": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Specific humidity is the mass fraction of water vapor in (moist) air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hus19",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hus8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Specific humidity is the mass fraction of water vapor in (moist) air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hus8",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hus850": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Specific humidity is the mass fraction of water vapor in (moist) air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p850"
+      ],
+      "frequency": "day",
+      "long_name": "Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hus850",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "huss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Near-surface (usually, 2 meter) specific humidity.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Near-Surface Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "huss",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "jpdftaureicemodis": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Joint probability distribution function, giving probability of cloud as a function of optical thickness and particle size, as measured by MODIS. For cloud ice particles.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "effectRadIc",
+        "tau",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "MODIS Joint Distribution of Optical Thickness and Particle Size, Ice",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "jpdftaureicemodis",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "jpdftaureliqmodis": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Joint probability distribution function, giving probability of cloud as a function of optical thickness and particle size, as measured by MODIS. For liquid cloud particles.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "effectRadLi",
+        "tau",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "MODIS Optical Thickness-Particle Size Joint Distribution, Liquid",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "jpdftaureliqmodis",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadbc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of black carbon aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of Black Carbon Aerosol",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadbc",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_elemental_carbon_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loaddust": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of dust aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of Dust",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loaddust",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_dust_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadnh4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of ammonium aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of NH4",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadnh4",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_ammonium_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadno3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of nitrate aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of NO3",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadno3",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_nitrate_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadoa": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "atmosphere dry organic content: This is the vertically integrated sum of atmosphere_primary_organic_content and atmosphere_secondary_organic_content (see next two table entries).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of Dry Aerosol Organic Matter",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadoa",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_particulate_organic_matter_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadpoa": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of primary particulate organic aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of Dry Aerosol Primary Organic Matter",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadpoa",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadso4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of sulfate aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of SO4",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadso4",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_sulfate_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadsoa": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of secondary particulate organic aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of Dry Aerosol Secondary Organic Matter",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadsoa",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "loadss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The total dry mass of sea salt aerosol particles per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Load of Sea-Salt Aerosol",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "loadss",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_sea_salt_dry_aerosol_particles",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "parasolRefl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Simulated reflectance from PARASOL as seen at the top of the atmosphere for 5 solar zenith angles. Valid only over ocean and for one viewing direction (viewing zenith angle of 30 degrees and relative azimuth angle 320 degrees).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sza5",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "PARASOL Reflectance",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "parasolRefl",
+      "positive": "",
+      "standard_name": "toa_bidirectional_reflectance",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pctisccp": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where cloud",
+      "comment": "ISCCP Mean Cloud Top Pressure. Time-means are weighted by the ISCCP Total Cloud Fraction {:cltisccp} - see  http://cfmip.metoffice.com/COSP.html",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "ISCCP Mean Cloud Top Pressure",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pctisccp",
+      "positive": "",
+      "standard_name": "air_pressure_at_cloud_top",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pr": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "includes both liquid and solid phases",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Precipitation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pr",
+      "positive": "",
+      "standard_name": "precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prCrop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where crops (comment: mask=cropFrac)",
+      "comment": "includes both liquid and solid phases",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Precipitation over Crop Tile",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prCrop",
+      "positive": "",
+      "standard_name": "precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Convective precipitation at surface; includes both liquid and solid phases.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Convective Precipitation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prc",
+      "positive": "",
+      "standard_name": "convective_precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prhmax": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: mean within hours time: maximum over hours",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Maximum Hourly Precipitation Rate",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prhmax",
+      "positive": "",
+      "standard_name": "precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prra": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Rainfall Flux over Land",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prra",
+      "positive": "",
+      "standard_name": "rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prrc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Convective Rainfall Rate",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prrc",
+      "positive": "",
+      "standard_name": "convective_rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prrsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The fraction of the grid averaged rainfall which falls on the snow pack",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Fraction of Rainfall on Snow",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prrsn",
+      "positive": "",
+      "standard_name": "mass_fraction_of_rainfall_falling_onto_surface_snow",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "At surface; includes precipitation of all forms of water in the solid phase",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Snowfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsn",
+      "positive": "",
+      "standard_name": "snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsnc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "convective precipitation of all forms of water in the solid phase.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Convective Snowfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsnc",
+      "positive": "",
+      "standard_name": "convective_snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsnsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The fraction of the snowfall which falls on the snow pack",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Fraction of Snowfall (Including Hail and Graupel) on Snow",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsnsn",
+      "positive": "",
+      "standard_name": "mass_fraction_of_solid_precipitation_falling_onto_surface_snow",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "vertically integrated through the atmospheric column",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Water Vapor Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prw",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ps": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "surface pressure (not mean sea-level pressure), 2-D field to calculate the 3-D pressure field from hybrid coordinates",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Air Pressure",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ps",
+      "positive": "",
+      "standard_name": "surface_air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "psl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Sea Level Pressure",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Sea Level Pressure",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "psl",
+      "positive": "",
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffcclwtop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Droplets are liquid only.  This is the effective radius 'as seen from space' over convective liquid cloudy portion of grid cell.  This is the value from uppermost model layer with liquid cloud or, if available, or for some models it is the sum over all liquid cloud tops, no matter where they occur, as long as they are seen from the top of the atmosphere. Reported values are weighted by total liquid cloud top fraction of  (as seen from TOA) each time sample when computing monthly mean.daily data, separated to large-scale clouds, convective clouds. If any of the cloud is from more than one process (i.e. shallow convection), please provide them separately.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Cloud-Top Effective Droplet Radius in Convective Cloud",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffcclwtop",
+      "positive": "",
+      "standard_name": "effective_radius_of_convective_cloud_liquid_water_particles_at_convective_liquid_water_cloud_top",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffsclwtop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Droplets are liquid only.  This is the effective radius 'as seen from space' over liquid stratiform cloudy portion of grid cell.  This is the value from uppermost model layer with liquid cloud or, if available, or for some models it is the sum over all liquid cloud tops, no matter where they occur, as long as they are seen from the top of the atmosphere. Reported values are weighted by total liquid cloud top fraction of  (as seen from TOA) each time sample when computing monthly mean.daily data, separated to large-scale clouds, convective clouds. If any of the cloud is from more than one process (i.e. shallow convection), please provide them separately.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Cloud-Top Effective Droplet Radius in Stratiform Cloud",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffsclwtop",
+      "positive": "",
+      "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particles_at_stratiform_liquid_water_cloud_top",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlds": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'longwave' means longwave radiation. Downwelling radiation is radiation from above. It does not mean 'net downward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Downwelling Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlds",
+      "positive": "down",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rldscs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface downwelling clear-sky longwave radiation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Downwelling Clear-Sky Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rldscs",
+      "positive": "down",
+      "standard_name": "surface_downwelling_longwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rls": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Net longwave surface radiation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Net Longwave Surface Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rls",
+      "positive": "down",
+      "standard_name": "surface_net_downward_longwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'longwave' means longwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Upwelling Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlus",
+      "positive": "up",
+      "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "at the top of the atmosphere (to be compared with satellite measurements)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "TOA Outgoing Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlut",
+      "positive": "up",
+      "standard_name": "toa_outgoing_longwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlutcs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Upwelling clear-sky longwave radiation at top of atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "TOA Outgoing Clear-Sky Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlutcs",
+      "positive": "up",
+      "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsds": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface solar irradiance for UV calculations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Downwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsds",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdscs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface solar irradiance clear sky for UV calculations",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Downwelling Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdscs",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdscsdiff": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface downwelling solar irradiance from diffuse radiation for UV calculations in clear sky conditions",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Diffuse Downwelling Clear Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdscsdiff",
+      "positive": "down",
+      "standard_name": "surface_diffuse_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdsdiff": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface downwelling solar irradiance from diffuse radiation for UV calculations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Diffuse Downwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdsdiff",
+      "positive": "down",
+      "standard_name": "surface_diffuse_downwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Shortwave radiation incident at the top of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "TOA Incident Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdt",
+      "positive": "down",
+      "standard_name": "toa_incoming_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Net downward shortwave radiation at the surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Net Shortwave Surface Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rss",
+      "positive": "down",
+      "standard_name": "surface_net_downward_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'shortwave' means shortwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Upwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsus",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsuscs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface Upwelling Clear-sky Shortwave Radiation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Upwelling Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsuscs",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "at the top of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "TOA Outgoing Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsut",
+      "positive": "up",
+      "standard_name": "toa_outgoing_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsutcs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Calculated in the absence of clouds.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "TOA Outgoing Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsutcs",
+      "positive": "up",
+      "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sblnosn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Rate of sublimation of ice into the atmosphere from areas with no snow.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Sublimation of the Snow Free Area",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sblnosn",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_ice",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "scldncl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Droplets are liquid only.  Report concentration 'as seen from space' over stratiform liquid cloudy portion of grid cell.  This is the value from uppermost model layer with liquid cloud or, if available, it is better to sum over all liquid cloud tops, no matter where they occur, as long as they are seen from the top of the atmosphere. Weight by total liquid cloud top fraction of  (as seen from TOA) each time sample when computing monthly mean.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Cloud Droplet Number Concentration of Stratiform Cloud Tops",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "scldncl",
+      "positive": "",
+      "standard_name": "number_concentration_of_stratiform_cloud_liquid_water_particles_at_stratiform_liquid_water_cloud_top",
+      "type": "real",
+      "units": "m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sfcWind": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "near-surface (usually, 10 meters) wind speed.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily-Mean Near-Surface Wind Speed",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sfcWind",
+      "positive": "",
+      "standard_name": "wind_speed",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sfcWindmax": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: maximum",
+      "comment": "Daily maximum near-surface (usually, 10 meters) wind speed.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Maximum Near-Surface Wind Speed",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sfcWindmax",
+      "positive": "",
+      "standard_name": "wind_speed",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snmsl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Mass flow rate of water draining out of the snow pack.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Water Flowing out of Snowpack",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snmsl",
+      "positive": "",
+      "standard_name": "liquid_water_mass_flux_into_soil_due_to_surface_snow_melt",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snrefr": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics. The surface called 'surface' means the lower boundary of the atmosphere. 'Surface snow and ice refreezing flux' means the mass flux of surface  meltwater which refreezes within the snow or firn.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Refreezing of Water in the Snow",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snrefr",
+      "positive": "",
+      "standard_name": "surface_snow_and_ice_refreezing_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snwc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Total water mass of the snowpack (liquid or frozen), averaged over a grid cell and intercepted by the canopy.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Snow Water Equivalent Intercepted by the Vegetation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snwc",
+      "positive": "",
+      "standard_name": "canopy_snow_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta19": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Air Temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta19",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta500": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Temperature on the 500 hPa surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p500"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta500",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta700": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air temperature at 700hPa",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p700"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta700",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Air Temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta8",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta850": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air temperature at 850hPa",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p850"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta850",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tas": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "near-surface (usually, 2 meter) air temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Near-Surface Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tas",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tasmax": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: maximum",
+      "comment": "maximum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: max')",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Maximum Near-Surface Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tasmax",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tasmaxCrop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where crops time: maximum",
+      "comment": "maximum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: max')",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Maximum Near-Surface Air Temperature over Crop Tile",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tasmaxCrop",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tasmin": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: minimum",
+      "comment": "minimum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: min')",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Minimum Near-Surface Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tasmin",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tasminCrop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where crops time: minimum",
+      "comment": "minimum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: min')",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height2m"
+      ],
+      "frequency": "day",
+      "long_name": "Daily Minimum Near-Surface Air Temperature over Crop Tile",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tasminCrop",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tau": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "module of the momentum lost by the atmosphere to the surface.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Momentum Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tau",
+      "positive": "",
+      "standard_name": "magnitude_of_surface_downward_stress",
+      "type": "real",
+      "units": "N m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tauu": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Downward eastward wind stress at the surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Downward Eastward Wind Stress",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tauu",
+      "positive": "down",
+      "standard_name": "surface_downward_eastward_stress",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tauupbl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The  downward eastward stress associated with the models parameterization of the planetary boundary layer. (This request is related to a WGNE effort to understand how models parameterize the surface stresses.)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Surface Stress from Planetary Boundary Layer Scheme",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tauupbl",
+      "positive": "",
+      "standard_name": "surface_downward_eastward_stress_due_to_boundary_layer_mixing",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tauv": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Downward northward wind stress at the surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Downward Northward Wind Stress",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tauv",
+      "positive": "down",
+      "standard_name": "surface_downward_northward_stress",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tauvpbl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The  downward northward stress associated with the models parameterization of the planetary boundary layer. (This request is related to a WGNE effort to understand how models parameterize the surface stresses.)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Surface Stress from Planetary Boundary Layer Scheme",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tauvpbl",
+      "positive": "",
+      "standard_name": "surface_downward_northward_stress_due_to_boundary_layer_mixing",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tdps": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Dew point temperature is the temperature at which a parcel of air reaches saturation upon being cooled at constant pressure and specific humidity.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "2m Dewpoint Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tdps",
+      "positive": "",
+      "standard_name": "dew_point_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tr": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Effective radiative surface temperature, averaged over the grid cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Radiative Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tr",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ts": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Temperature of the lower boundary of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ts",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tsland": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Temperature of the lower boundary of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Land Surface Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tsland",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tsns": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Temperature of the snow surface as it interacts with the atmosphere, averaged over a grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Snow Surface Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tsns",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ua19": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Zonal wind (positive in a eastward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ua19",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ua8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Zonal wind (positive in a eastward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ua8",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "uas": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Eastward component of the near-surface (usually, 10 meters)  wind",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Near-Surface Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "uas",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "va19": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Meridional wind (positive in a northward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "va19",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "va8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Meridional wind (positive in a northward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "va8",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vas": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Northward component of the near surface wind",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Near-Surface Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vas",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wap19": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Omega (vertical velocity in pressure coordinates, positive downwards)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Omega (=dp/dt)",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wap19",
+      "positive": "",
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "type": "real",
+      "units": "Pa s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wap500": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Omega (vertical velocity in pressure coordinates, positive downwards) at 500hPa level;",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p500"
+      ],
+      "frequency": "day",
+      "long_name": "Pressure Tendency",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wap500",
+      "positive": "",
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "type": "real",
+      "units": "Pa s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wap8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Omega (vertical velocity in pressure coordinates, positive downwards)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Omega (=dp/dt)",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wap8",
+      "positive": "",
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "type": "real",
+      "units": "Pa s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zg1000": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Geopotential height on the 1000 hPa surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "p1000"
+      ],
+      "frequency": "day",
+      "long_name": "Geopotential Height at 1000hPa",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zg1000",
+      "positive": "",
+      "standard_name": "geopotential_height",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zg19": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Geopotential is the sum of the specific gravitational potential energy relative to the geoid and the specific centripetal potential energy. Geopotential height is the geopotential divided by the standard acceleration due to gravity. It is numerically similar to the altitude (or geometric height) and not to the quantity with standard name height, which is relative to the surface.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Geopotential Height",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zg19",
+      "positive": "",
+      "standard_name": "geopotential_height",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zg8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: mean",
+      "comment": "Geopotential is the sum of the specific gravitational potential energy relative to the geoid and the specific centripetal potential energy. Geopotential height is the geopotential divided by the standard acceleration due to gravity. It is numerically similar to the altitude (or geometric height) and not to the quantity with standard name height, which is relative to the surface.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "plev8",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Geopotential Height",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zg8",
+      "positive": "",
+      "standard_name": "geopotential_height",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zmla": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The atmosphere boundary layer thickness is the 'depth' or 'height' of the (atmosphere) planetary boundary layer.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Height of Boundary Layer",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zmla",
+      "positive": "",
+      "standard_name": "atmosphere_boundary_layer_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

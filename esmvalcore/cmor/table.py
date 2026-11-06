@@ -13,7 +13,7 @@ import json
 import logging
 import os
 from collections import Counter
-from functools import lru_cache, total_ordering
+from functools import total_ordering
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
@@ -78,21 +78,27 @@ def _update_cmor_facets(facets: Facets) -> None:
     project: str = facets["project"]  # type: ignore[assignment]
     mip: str = facets["mip"]  # type: ignore[assignment]
     short_name: str = facets["short_name"]  # type: ignore[assignment]
+    branding_suffix: str | None = facets.get("branding_suffix")  # type: ignore[assignment]
     derive: bool = facets.get("derive", False)  # type: ignore[assignment]
     table = CMOR_TABLES.get(project)
     if table:
         table_entry = table.get_variable(
             mip,
             short_name,
-            branding_suffix=facets.get("branding_suffix"),  # type: ignore[arg-type]
+            branding_suffix=branding_suffix,
             derived=derive,
         )
     else:
         table_entry = None
     if table_entry is None:
         msg = (
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'"
+            f"Variable '{short_name}' "
+            + (
+                f"with branding suffix '{branding_suffix}' "
+                if branding_suffix
+                else ""
+            )
+            + f"not available in table '{mip}' of project '{project}'"
         )
         raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
@@ -198,121 +204,6 @@ def get_var_info(
     )
 
 
-def read_cmor_tables(cfg_developer: Path | None = None) -> None:
-    """Read cmor tables required in the configuration.
-
-    .. deprecated:: 2.14.0
-
-        The config-developer.yml file based configuration is deprecated and
-        will no longer be supported in ESMValCore v2.16.0. Please use
-        :func:`~esmvalcore.cmor.table.load_cmor_tables` instead of this function.
-
-    Parameters
-    ----------
-    cfg_developer:
-        Path to config-developer.yml file.
-
-    Raises
-    ------
-    TypeError
-        If `cfg_developer` is not a Path-like object
-    """
-    if cfg_developer is None:
-        cfg_developer = Path(__file__).parents[1] / "config-developer.yml"
-    elif not isinstance(cfg_developer, Path):
-        msg = "cfg_developer is not a Path-like object, got "
-        raise TypeError(msg, cfg_developer)
-    mtime = cfg_developer.stat().st_mtime
-    global CMOR_TABLES  # noqa: PLW0603
-    CMOR_TABLES = _read_cmor_tables(cfg_developer, mtime)
-
-
-@lru_cache
-def _read_cmor_tables(
-    cfg_file: Path,
-    mtime: float,  # noqa: ARG001
-) -> dict[str, InfoBase]:
-    """Read cmor tables required in the configuration.
-
-    Parameters
-    ----------
-    cfg_file: pathlib.Path
-        Path to config-developer.yml file.
-    mtime: float
-        Modification time of config-developer.yml file. Only used by the
-        `lru_cache` decorator to make sure the file is read again when it
-        is changed.
-    """
-    with cfg_file.open("r", encoding="utf-8") as file:
-        cfg_developer = yaml.safe_load(file)
-    cwd = os.path.dirname(os.path.realpath(__file__))
-    var_alt_names_file = os.path.join(cwd, "variable_alt_names.yml")
-    with open(var_alt_names_file, encoding="utf-8") as yfile:
-        alt_names = yaml.safe_load(yfile)
-
-    cmor_tables: dict[str, InfoBase] = {}
-
-    # Try to infer location for custom tables from config-developer.yml file,
-    # if not possible, use default location
-    custom_path = None
-    if "custom" in cfg_developer:
-        custom_path = cfg_developer["custom"].get("cmor_path")
-    if custom_path is not None:
-        custom_path = os.path.expandvars(os.path.expanduser(custom_path))
-    custom = CustomInfo(custom_path)
-    cmor_tables["custom"] = custom
-
-    install_dir = os.path.dirname(os.path.realpath(__file__))
-    for table in cfg_developer:
-        if table == "custom":
-            continue
-        cmor_tables[table] = _read_table(
-            cfg_developer,
-            table,
-            install_dir,
-            custom,
-            alt_names,
-        )
-    return cmor_tables
-
-
-def _read_table(cfg_developer, table, install_dir, custom, alt_names):
-    project = cfg_developer[table]
-    cmor_type = project.get("cmor_type", "CMIP5")
-    default_path = os.path.join(install_dir, "tables", cmor_type.lower())
-    table_path = project.get("cmor_path", default_path)
-    table_path = os.path.expandvars(os.path.expanduser(table_path))
-    cmor_strict = project.get("cmor_strict", True)
-    default_table_prefix = project.get("cmor_default_table_prefix", "")
-
-    if cmor_type == "CMIP3":
-        return CMIP3Info(
-            table_path,
-            default=custom,
-            strict=cmor_strict,
-            alt_names=alt_names,
-        )
-
-    if cmor_type == "CMIP5":
-        return CMIP5Info(
-            table_path,
-            default=custom,
-            strict=cmor_strict,
-            alt_names=alt_names,
-        )
-
-    if cmor_type == "CMIP6":
-        return CMIP6Info(
-            table_path,
-            default=custom,
-            strict=cmor_strict,
-            default_table_prefix=default_table_prefix,
-            alt_names=alt_names,
-        )
-    msg = f"Unsupported CMOR type {cmor_type}"
-    raise ValueError(msg)
-
-
 _TABLE_CACHE: dict[str, InfoBase] = {}
 """The CMOR tables are cached for faster access."""
 
@@ -404,14 +295,12 @@ class InfoBase:
 
     Parameters
     ----------
-    default:
-        Default table to look variables on if not found.
-
-        .. deprecated:: 2.14.0
-
-            The ``default`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
-            to aggregate multiple tables.
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
 
     alt_names:
         List of known alternative names for variables. If no value is provided,
@@ -423,21 +312,14 @@ class InfoBase:
         If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
         will look for a variable in other tables if it can not be found in the
         table specified by ``mip`` in the :ref:`recipe <recipe>` or :class:`~esmvalcore.dataset.Dataset`.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
     """
 
     def __init__(
         self,
-        default: CustomInfo | None = None,
+        *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
         # Configure the paths to the CMOR tables.
         builtin_tables_path = Path(__file__).parent / "tables"
@@ -463,15 +345,6 @@ class InfoBase:
         """List of known alternative names for variables."""
         self.coords: dict[str, CoordinateInfo] = {}
         """The coordinates defined in these tables."""
-        self.default = default
-        """
-        Default table to look variables on if not found.
-
-        .. deprecated:: 2.14.0
-
-            The ``default`` attribute is deprecated and will be removed in
-            ESMValCore v2.16.0.
-        """
         self.strict = strict
         """If False, will look for a variable in other tables if it can not be
         found in the requested one.
@@ -519,14 +392,14 @@ class InfoBase:
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
         derived:
             Variable is derived. Information retrieval for derived variables
-            always looks in the default tables (usually, the custom tables) if
-            variable is not found in the requested table.
+            always looks in all tables if variable is not found in the
+            requested table.
 
         Returns
         -------
@@ -569,15 +442,6 @@ class InfoBase:
             alt_names_list += self._get_alt_names_list(short_name)
         var_info = self._look_in_all_tables(derived, alt_names_list)
 
-        # If that didn't work either, look in default table if
-        # cmor_strict=False or derived=True
-        if not var_info and self.default is not None:
-            var_info = self._look_in_default(
-                derived,
-                alt_names_list,
-                table_name,
-            )
-
         # If necessary, adapt frequency of variable (set it to the one from the
         # requested MIP). E.g., if the user asked for table `Amon`, but the
         # variable has been found in `day`, use frequency `mon`.
@@ -585,17 +449,6 @@ class InfoBase:
             var_info = var_info.copy()
             var_info = self._update_frequency_from_mip(table_name, var_info)
 
-        return var_info
-
-    def _look_in_default(self, derived, alt_names_list, table_name):
-        """Look for variable in default table."""
-        # TODO: remove in v2.16.0
-        var_info = None
-        if not self.strict or derived:
-            for alt_names in alt_names_list:
-                var_info = self.default.get_variable(table_name, alt_names)
-                if var_info:
-                    break
         return var_info
 
     def _look_in_all_tables(self, derived, alt_names_list):
@@ -644,23 +497,14 @@ class CMIP6Info(InfoBase):
 
     Parameters
     ----------
-    cmor_tables_path:
-        The path to a directory with subdirectory "Tables" where the CMOR tables
-        are located.
-
-        .. deprecated:: 2.14.0
-
-            The ``cmor_tables_path`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead.
-
-    default:
-        Default table to look variables on if not found.
-
-        .. deprecated:: 2.14.0
-
-            The ``default`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
-            to aggregate multiple tables.
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory. Only files
+        with the extension ``.json`` in the specified paths will be read as a
+        CMOR tables, any other files will be ignored.
 
     alt_names:
         List of known alternative names for variables. If no value is provided,
@@ -673,55 +517,17 @@ class CMIP6Info(InfoBase):
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
 
-    default_table_prefix:
-        If the table_id contains a prefix, it can be specified here.
-
-        .. deprecated:: 2.14.0
-
-            The ``default_table_prefix`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory. Only files
-        with the extension ``.json`` in the specified paths will be read as a
-        CMOR tables, any other files will be ignored.
-
     """
 
     def __init__(
         self,
-        cmor_tables_path: str | None = None,
-        default: CustomInfo | None = None,
+        *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        default_table_prefix: str = "",
-        paths: Iterable[Path] = (),
     ) -> None:
-        if cmor_tables_path is not None:
-            # Support cmor_tables_path for backward compatibility.
-            # TODO: remove in v2.16.0
-            tables_path = Path(self._get_cmor_path(cmor_tables_path))
-            if (tables_path / "tables").exists():
-                # Support CMIP7 which uses a lowercase "tables" subdirectory.
-                cmor_folder = tables_path / "tables"
-            else:
-                cmor_folder = tables_path / "Tables"
-            paths = (*tuple(paths), cmor_folder)
-        super().__init__(default, alt_names, strict, paths=paths)
+        super().__init__(alt_names=alt_names, strict=strict, paths=paths)
 
-        self.default_table_prefix = default_table_prefix
-        """
-        If the table_id contains a prefix, it can be specified here.
-
-        .. deprecated:: 2.14.0
-
-            The ``default_table_prefix`` attribute is deprecated and will be
-            removed in ESMValCore v2.16.0.
-        """
         self.var_to_freq: dict[str, dict[str, str]] = {}
         self.activities: dict[str, list[str]] = {}
         """A mapping from ``exp`` to ``activity`` from the controlled vocabulary."""
@@ -748,17 +554,6 @@ class CMIP6Info(InfoBase):
                         print(msg)  # noqa: T201
                     raise
 
-    @staticmethod
-    def _get_cmor_path(cmor_tables_path: str) -> str:
-        if os.path.isdir(cmor_tables_path):
-            return cmor_tables_path
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, "tables", cmor_tables_path)
-        if os.path.isdir(cmor_tables_path):
-            return cmor_tables_path
-        msg = f"CMOR tables not found in {cmor_tables_path}"
-        raise ValueError(msg)
-
     def _load_table(self, json_file):
         with open(json_file, encoding="utf-8") as inf:
             raw_data = json.loads(inf.read())
@@ -772,7 +567,10 @@ class CMIP6Info(InfoBase):
                 self.tables[table_name] = table
             table = self.tables[table_name]
 
-            generic_levels = header["generic_levels"].split()
+            generic_levels = header.get("generic_levels", "")
+            if isinstance(generic_levels, str):
+                generic_levels = generic_levels.split()
+
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():
@@ -789,7 +587,11 @@ class CMIP6Info(InfoBase):
 
     def _assign_dimensions(self, var, generic_levels):
         for dimension in var.dimensions:
-            if dimension in generic_levels:
+            is_generic = dimension in generic_levels or any(
+                self.coords[name].generic_lev_name == dimension
+                for name in self.coords
+            )
+            if is_generic:
                 coord = CoordinateInfo(dimension)
                 coord.generic_level = True
                 for name in self.coords:
@@ -856,10 +658,7 @@ class CMIP6Info(InfoBase):
             Return the TableInfo object for the requested table if
             found, returns None if not
         """
-        try:
-            return self.tables[table]
-        except KeyError:
-            return self.tables.get(f"{self.default_table_prefix}{table}")
+        return self.tables.get(table)
 
     @staticmethod
     def _is_table(table_data):
@@ -873,6 +672,13 @@ class Obs4MIPsInfo(CMIP6Info):
 
     Parameters
     ----------
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -883,20 +689,14 @@ class Obs4MIPsInfo(CMIP6Info):
         will look for a variable in other tables if it can not be found in the
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
     """
 
     def __init__(
         self,
+        *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
         super().__init__(
             alt_names=alt_names,
@@ -909,6 +709,21 @@ class Obs4MIPsInfo(CMIP6Info):
             if name.startswith(table_id_prefix):
                 table = self.tables.pop(name)
                 self.tables[name[len(table_id_prefix) :]] = table
+
+    def _load_controlled_vocabulary(self, path: Path) -> None:
+        """Load controlled vocabulary."""
+        # Get institute
+        source_id_file = path.parent / "obs4MIPs_source_id.json"
+        if source_id_file.is_file():
+            with open(source_id_file, encoding="utf-8") as file:
+                table_data = json.loads(file.read())
+                try:
+                    sources = table_data["source_id"]
+                    for source_id in sources:
+                        institution = sources[source_id]["institution_id"]
+                        self.institutes[source_id] = institution
+                except (KeyError, AttributeError):
+                    pass
 
 
 @total_ordering
@@ -1000,7 +815,6 @@ class VariableInfo(JsonInfo):
     def __init__(
         self,
         table_type: str = "",
-        short_name: str = "",
     ) -> None:
         """Class to read and store variable information.
 
@@ -1013,19 +827,12 @@ class VariableInfo(JsonInfo):
 
                 The ``table_type`` parameter is deprecated and will be removed
                 in ESMValCore v2.16.0.
-        short_name:
-            Variable's short name.
-
-            .. deprecated:: 2.14.0
-
-                The ``short_name`` parameter is deprecated and will be removed
-                in ESMValCore v2.16.0.
         """
         super().__init__()
         self.table_type = table_type
         self.modeling_realm: list[str] = []
         """Modeling realm"""
-        self.short_name = short_name
+        self.short_name = ""
         """Short name"""
         self.standard_name = ""
         """Standard name"""
@@ -1088,9 +895,7 @@ class VariableInfo(JsonInfo):
         self.valid_min = self._read_json_variable("valid_min")
         self.valid_max = self._read_json_variable("valid_max")
         self.positive = self._read_json_variable("positive")
-        self.modeling_realm = self._read_json_variable(
-            "modeling_realm",
-        ).split()
+        self.modeling_realm = self._read_json_list_variable("modeling_realm")
         self.frequency = self._read_json_variable("frequency", default_freq)
 
         # "dimensions" is a list of str in CMIP7 and a space separated str in CMIP6 CMOR tables.
@@ -1211,23 +1016,13 @@ class CMIP5Info(InfoBase):
 
     Parameters
     ----------
-    cmor_tables_path:
-        The path to a directory with subdirectory "Tables" where the CMOR tables
-        are located.
-
-        .. deprecated:: 2.14.0
-
-            The ``cmor_tables_path`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead.
-
-    default:
-        Default table to look variables on if not found.
-
-        .. deprecated:: 2.14.0
-
-            The ``default`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
-            to aggregate multiple tables.
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory. Any file
+        in the specified paths will be read as a CMOR table.
 
     alt_names:
         List of known alternative names for variables. If no value is provided,
@@ -1240,39 +1035,16 @@ class CMIP5Info(InfoBase):
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
 
-    default_table_prefix:
-        If the table_id contains a prefix, it can be specified here.
-
-        .. deprecated:: 2.14.0
-
-            The ``default_table_prefix`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory. Any file
-        in the specified paths will be read as a CMOR table.
-
     """
 
     def __init__(
         self,
-        cmor_tables_path: str | None = None,
-        default: CustomInfo | None = None,
+        *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
-        if cmor_tables_path is not None:
-            # Support cmor_tables_path for backward compatibility.
-            # TODO: remove in v2.16.0
-            cmor_tables_path = self._get_cmor_path(cmor_tables_path)
-            cmor_folder = Path(cmor_tables_path) / "Tables"
-            paths = (*tuple(paths), cmor_folder)
-        super().__init__(default, alt_names, strict, paths=paths)
+        super().__init__(alt_names=alt_names, strict=strict, paths=paths)
 
         self._current_table: TextIOWrapper | None = None
         self._last_line_read = ("", "")
@@ -1296,13 +1068,6 @@ class CMIP5Info(InfoBase):
                     else:
                         print(msg)  # noqa: T201
                     raise
-
-    @staticmethod
-    def _get_cmor_path(cmor_tables_path):
-        if os.path.isdir(cmor_tables_path):
-            return cmor_tables_path
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        return os.path.join(cwd, "tables", cmor_tables_path)
 
     def _load_table(self, table_file: str) -> None:
         table = self._read_table_file(table_file)
@@ -1415,23 +1180,13 @@ class CMIP3Info(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path:
-        The path to a directory with subdirectory "Tables" where the CMOR tables
-        are located.
-
-        .. deprecated:: 2.14.0
-
-            The ``cmor_tables_path`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead.
-
-    default:
-        Default table to look variables on if not found.
-
-        .. deprecated:: 2.14.0
-
-            The ``default`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
-            to aggregate multiple tables.
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory. Any file
+        in the specified paths will be read as a CMOR table.
 
     alt_names:
         List of known alternative names for variables. If no value is provided,
@@ -1443,22 +1198,6 @@ class CMIP3Info(CMIP5Info):
         will look for a variable in other tables if it can not be found in the
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
-
-    default_table_prefix:
-        If the table_id contains a prefix, it can be specified here.
-
-        .. deprecated:: 2.14.0
-
-            The ``default_table_prefix`` parameter is deprecated and will be removed in
-            ESMValCore v2.16.0.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory. Any file
-        in the specified paths will be read as a CMOR table.
 
     """
 
@@ -1482,141 +1221,6 @@ class CMIP3Info(CMIP5Info):
         var.frequency = ""
         var.modeling_realm = []
         return var
-
-
-class CustomInfo(CMIP5Info):
-    """Class to read custom var info for ESMVal.
-
-    .. deprecated:: 2.14.0
-
-        This class is deprecated and will be removed in ESMValCore v2.16.0.
-        Please use :class:`~esmvalcore.cmor.tables.table.CMIP5Info` instead.
-
-    Parameters
-    ----------
-    cmor_tables_path:
-        Full path to the table or name for the table if it is present in
-        ESMValTool repository. If ``None``, use default tables from
-        `esmvalcore/cmor/tables/custom`.
-
-    """
-
-    def __init__(self, cmor_tables_path: str | Path | None = None) -> None:
-        """Initialize class member."""
-        self.coords = {}
-        self.tables = {}
-        self.var_to_freq: dict[str, dict[str, str]] = {}
-        table = TableInfo()
-        table.name = "custom"
-        self.tables[table.name] = table
-
-        # First, read default custom tables from repository
-        self.paths = (
-            Path(self._get_cmor_path("old-custom-coordinates")),
-            Path(self._get_cmor_path("cmip5-custom")),
-        )
-
-        # Second, if given, update default tables with user-defined custom
-        # tables
-        if cmor_tables_path is not None:
-            user_table_folder = Path(self._get_cmor_path(cmor_tables_path))
-            if not user_table_folder.is_dir():
-                msg = (
-                    f"Custom CMOR tables path {user_table_folder} is "
-                    f"not a directory"
-                )
-                raise ValueError(msg)
-            self.paths += (user_table_folder,)
-
-        for path in self.paths:
-            self._read_table_dir(str(path))
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(paths={list(self.paths)})"
-
-    def _read_table_dir(self, table_dir: str) -> None:
-        """Read CMOR tables from directory."""
-        # If present, read coordinates
-        coordinates_file = os.path.join(table_dir, "CMOR_coordinates.dat")
-        if os.path.isfile(coordinates_file):
-            self._read_table_file(coordinates_file)
-
-        # Read other variables
-        for dat_file in glob.glob(os.path.join(table_dir, "*.dat")):
-            if dat_file == coordinates_file:
-                continue
-            try:
-                self._load_table(dat_file)
-            except Exception:
-                msg = f"Exception raised when loading {dat_file}"
-                # Logger may not be ready at this stage
-                if logger.handlers:
-                    logger.error(msg)
-                else:
-                    print(msg)  # noqa: T201
-                raise
-
-    def get_variable(
-        self,
-        table_name: str,  # noqa: ARG002
-        short_name: str,
-        *,
-        branding_suffix: str | None = None,  # noqa: ARG002
-        derived: bool = False,  # noqa: ARG002
-    ) -> VariableInfo | None:
-        """Search and return the variable info.
-
-        Parameters
-        ----------
-        table_name:
-            Table name, i.e., the ``mip`` in the :ref:`recipe <recipe>` or
-            :class:`~esmvalcore.dataset.Dataset`, e.g. ``"Omon"`` for CMIP6 or
-            ``"ocean"`` for CMIP7.
-        short_name:
-            Variable's short name, e.g. ``"tos"`` for sea surface temperature.
-        branding_suffix:
-            A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
-            could be ``"tavg-u-hxy-sea"``, which defines the temporal average
-            at an undefined vertical level on a horizontal grid where non-sea
-            points are masked.
-        derived:
-            Variable is derived. Info retrieval for derived variables always
-            looks on the default tables if variable is not found in the
-            requested table. Ignored for custom tables.
-
-        Returns
-        -------
-        VariableInfo | None
-            `VariableInfo` object for the requested variable if found, returns
-            None if not.
-
-        """
-        return self.tables["custom"].get(short_name, None)
-
-    def _read_table_file(self, table_file: str) -> TableInfo:
-        """Read a single table file."""
-        table = TableInfo()
-        table.name = "custom"
-        with open(table_file, encoding="utf-8") as self._current_table:
-            self._read_line()
-            while True:
-                key, value = self._last_line_read
-                if key == "generic_levels":
-                    for dim in value.split(" "):
-                        coord = CoordinateInfo(dim)
-                        coord.generic_level = True
-                        coord.axis = "Z"
-                        self.coords[dim] = coord
-                elif key == "axis_entry":
-                    self.coords[value] = self._read_coordinate(value)
-                    continue
-                elif key == "variable_entry":
-                    table[value] = self._read_variable(value, "")
-                    continue
-                if not self._read_line():
-                    return table
 
 
 class NoInfo(InfoBase):
@@ -1649,14 +1253,14 @@ class NoInfo(InfoBase):
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
         derived:
             Variable is derived. Information retrieval for derived variables
-            always looks in the default tables (usually, the custom tables) if
-            variable is not found in the requested table.
+            always looks in all tables if variable is not found in the
+            requested table.
 
         Returns
         -------

@@ -17,6 +17,8 @@ from esmvalcore.config._diagnostics import TagsManager
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from esmvalcore.config import Session
+
 
 def test_write_ncl_settings(tmp_path):
     """Test minimally write_ncl_settings()."""
@@ -349,6 +351,7 @@ def test_collect_provenance_ancestor_hint(mocker, caplog, diagnostic_task):
 def test_run_fails_with_nonzero_returncode(
     mocker: MockerFixture,
     tmp_path: Path,
+    session: Session,
 ) -> None:
     """Test that DiagnosticError is raised when script fails."""
     mocker.patch.object(
@@ -395,4 +398,4 @@ def test_run_fails_with_nonzero_returncode(
 
     msg = r"Diagnostic script test.py failed with return code 1"
     with pytest.raises(DiagnosticError, match=re.escape(msg)):
-        task._run(input_files=[])
+        task._run(input_files=[], session=session)

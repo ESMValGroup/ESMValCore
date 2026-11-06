@@ -8,13 +8,13 @@ import dask.array as da
 import numpy as np
 from iris.cube import Cube
 
-FacetValue = str | Sequence[str] | int | float
+type FacetValue = str | Sequence[str] | int | float
 """Type describing a single facet."""
 
-Facets = dict[str, FacetValue]
+type Facets = dict[str, FacetValue]
 """Type describing a collection of facets."""
 
-NetCDFAttr = str | int | float | Iterable
+type NetCDFAttr = str | int | float | Iterable
 """Type describing netCDF attributes.
 
 `NetCDF attributes
@@ -22,5 +22,5 @@ NetCDFAttr = str | int | float | Iterable
 be strings, numbers or sequences.
 """
 
-DataType = np.ndarray | da.Array | Cube
+type DataType = np.ndarray | da.Array | Cube
 """Type describing data."""

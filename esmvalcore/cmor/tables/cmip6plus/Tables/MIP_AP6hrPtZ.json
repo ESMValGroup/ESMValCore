@@ -1,0 +1,65 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.25,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AP6hrPtZ"
+  },
+  "variable_entry": {
+    "zmlwaero": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: point",
+      "comment": "longwave heating rate due to volcanic aerosols to be diagnosed through double radiation call, zonal average values required",
+      "dimensions": [
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "6hrPt",
+      "long_name": "Zonal Mean Longwave Heating Rate Due to Volcanic Aerosols",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zmlwaero",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_longwave_heating_from_volcanic_ambient_aerosol_particles",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zmswaero": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: point",
+      "comment": "shortwave heating rate due to volcanic aerosols to be diagnosed through double radiation call, zonal average values required",
+      "dimensions": [
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "6hrPt",
+      "long_name": "Zonal Mean Shortwave Heating Rate Due to Volcanic Aerosols",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zmswaero",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_shortwave_heating_from_volcanic_ambient_aerosol_particles",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

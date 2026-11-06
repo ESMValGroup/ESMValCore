@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 class MockBaseTask(BaseTask):
-    def _run(self, input_files):
+    def _run(self, input_files, session):
         tmp_path = self._tmp_path
         output_file = tmp_path / self.name
 
@@ -77,7 +77,7 @@ def get_distributed_client_mock(client):
     """Mock `get_distributed_client` to avoid starting a Dask cluster."""
 
     @contextmanager
-    def get_distributed_client():
+    def get_distributed_client(session):
         yield client
 
     return get_distributed_client
@@ -93,7 +93,13 @@ def get_distributed_client_mock(client):
         ("spawn", 2),
     ],
 )
-def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
+def test_run_tasks(
+    monkeypatch,
+    session,
+    max_parallel_tasks,
+    example_tasks,
+    mpmethod,
+):
     """Check that tasks are run correctly."""
     monkeypatch.setattr(
         esmvalcore._task,
@@ -105,14 +111,20 @@ def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
         "Pool",
         multiprocessing.get_context(mpmethod).Pool,
     )
-    example_tasks.run(max_parallel_tasks=max_parallel_tasks)
+    session["max_parallel_tasks"] = max_parallel_tasks
+    example_tasks.run(session=session)
 
     for task in example_tasks:
         print(task.name, task.output_files)
         assert task.output_files
 
 
-def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
+def test_diag_task_updated_with_address(
+    monkeypatch,
+    mocker,
+    tmp_path,
+    session,
+):
     """Test that the scheduler address is passed to the diagnostic tasks."""
     # Set up mock Dask distributed client
     client = mocker.Mock()
@@ -134,7 +146,8 @@ def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
     mocker.patch.object(TaskSet, "_run_sequential")
     tasks = TaskSet()
     tasks.add(task)
-    tasks.run(max_parallel_tasks=1)
+    session["max_parallel_tasks"] = 1
+    tasks.run(session=session)
 
     # Check that the scheduler address was added to the
     # diagnostic task settings.
@@ -149,15 +162,15 @@ def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
         partial(
             TaskSet._run_parallel,
             scheduler_address=None,
-            max_parallel_tasks=1,
         ),
     ],
 )
-def test_runner_uses_priority(monkeypatch, runner, example_tasks):
+def test_runner_uses_priority(monkeypatch, session, runner, example_tasks):
     """Check that the runner tries to respect task priority."""
+    session["max_parallel_tasks"] = 1
     order = []
 
-    def _run(self, input_files):
+    def _run(self, input_files, session):
         print(f"running task {self.name} with priority {self.priority}")
         order.append(self.priority)
         return [f"{self.name}_test.nc"]
@@ -165,14 +178,14 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     monkeypatch.setattr(MockBaseTask, "_run", _run)
     monkeypatch.setattr(esmvalcore._task.multiprocessing, "Pool", ThreadPool)
 
-    runner(example_tasks)
+    runner(example_tasks, session=session)
     print(order)
     assert len(order) == 12
     assert order == sorted(order)
 
 
 @pytest.mark.parametrize("address", [None, "localhost:1234"])
-def test_run_task(mocker, address):
+def test_run_task(mocker, session, address):
     # Set up mock Dask distributed client
     mocker.patch.object(esmvalcore._task, "Client")
 
@@ -185,6 +198,7 @@ def test_run_task(mocker, address):
         task,
         scheduler_address=address,
         scheduler_lock=scheduler_lock,
+        session=session,
     )
     assert output_files == task.run.return_value
     assert products == task.products

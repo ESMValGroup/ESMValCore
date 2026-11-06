@@ -3,6 +3,7 @@
 from typing import Literal
 
 import iris
+import iris.coord_systems
 import iris.fileformats
 import numpy as np
 from iris.coords import AuxCoord, CellMethod, DimCoord
@@ -77,9 +78,9 @@ def _make_cube(  # noqa: PLR0915,C901
         cube.add_dim_coord(_make_vcoord(z, dtype=dtype), 0)
 
     if grid == "rotated":
-        # Create a synthetic test latitude coordinate.
+        # Create a synthetic test grid_latitude coordinate.
         data = np.arange(y, dtype=dtype) + 1
-        cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+        cs = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
         kwargs = {
             "standard_name": "grid_latitude",
             "long_name": "latitude in rotated pole grid",
@@ -93,7 +94,7 @@ def _make_cube(  # noqa: PLR0915,C901
             ycoord.guess_bounds()
         cube.add_dim_coord(ycoord, 1)
 
-        # Create a synthetic test longitude coordinate.
+        # Create a synthetic test grid_longitude coordinate.
         data = np.arange(x, dtype=dtype) + 1
         kwargs = {
             "standard_name": "grid_longitude",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import pickle
 import warnings
-from copy import deepcopy
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -17,6 +17,7 @@ from iris.coords import (
 )
 from iris.cube import Cube
 
+import esmvalcore.cmor.table
 from esmvalcore.config import CFG, Config
 
 if TYPE_CHECKING:
@@ -26,8 +27,8 @@ if TYPE_CHECKING:
 
 
 @lru_cache
-def _load_default_config():
-    """Create a configuration object with default values."""
+def _load_default_config() -> bytes:
+    """Create a pickled configuration object with default values."""
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
@@ -36,14 +37,15 @@ def _load_default_config():
         )
         cfg = Config()
     cfg.load_from_dirs([])
-    return cfg
+    return pickle.dumps(cfg)
 
 
 @pytest.fixture
 def cfg_default():
     """Create a configuration object with default values."""
-    cfg = _load_default_config()
-    return deepcopy(cfg)
+    # Unpickling is much faster than copy.deepcopy and the pickled data
+    # is created by this process, so it is safe to load.
+    return pickle.loads(_load_default_config())  # noqa: S301
 
 
 @pytest.fixture(autouse=True)
@@ -53,6 +55,17 @@ def ignore_existing_user_config(
 ) -> None:
     """Ignore user's configuration when running tests."""
     monkeypatch.setattr(CFG, "_mapping", cfg_default._mapping)
+    monkeypatch.setattr(
+        esmvalcore.cmor.table,
+        "CMOR_TABLES",
+        {
+            project: esmvalcore.cmor.table.get_tables(
+                session=cfg_default,
+                project=project,
+            )
+            for project in cfg_default["projects"]
+        },
+    )
 
 
 @pytest.fixture

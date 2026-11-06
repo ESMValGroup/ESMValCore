@@ -178,6 +178,20 @@ def test_get_iris_aggregator_no_weights_allowed():
         get_iris_aggregator(operator, **kwargs)
 
 
+def test_get_iris_aggregator_unhashable_kwarg() -> None:
+    """Test ``get_iris_aggregator`` with unhashable keyword arguments."""
+    kwargs = {"percent": np.array([10.0, 90.0])}
+    (agg, agg_kwargs) = get_iris_aggregator("percentile", **kwargs)
+    assert agg == iris.analysis.PERCENTILE
+    assert agg_kwargs == kwargs
+
+
+def test_get_iris_aggregator_unhashable_invalid_kwarg() -> None:
+    """Test ``get_iris_aggregator`` with unhashable invalid kwargs."""
+    with pytest.raises(ValueError, match="Invalid kwargs for operator"):
+        get_iris_aggregator("max", invalid_kwarg=np.array([1.0]))
+
+
 @pytest.mark.parametrize(
     ("aggregator", "result"),
     [
@@ -437,7 +451,7 @@ def test_try_adding_calculated_cell_area():
             da.ma.masked_array(np.arange(2), np.arange(2)),
         ),
         (
-            np.ma.masked_array(np.arange(2), mask=np.array([1, 0])),
+            np.ma.MaskedArray(np.arange(2), mask=np.array([1, 0])),
             da.arange(2),
             (0,),
             da.ma.masked_array(np.arange(2), np.ones(2)),
@@ -454,7 +468,7 @@ def test_try_adding_calculated_cell_area():
             np.arange(2),
             np.ones((3, 2)),
             (1,),
-            np.ma.masked_array(
+            np.ma.MaskedArray(
                 np.ones((3, 2)),
                 mask=np.array([[0, 1], [0, 1], [0, 1]]),
             ),

@@ -174,6 +174,7 @@ def test_load_zarr3_cmip6_metadata():
     assert cube.has_lazy_data()
 
 
+@pytest.mark.online
 @pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr_remote_not_zarr_file():
     """
@@ -195,6 +196,7 @@ def test_load_zarr_remote_not_zarr_file():
         load(zarr_path)
 
 
+@pytest.mark.online
 @pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr_remote_not_file():
     """

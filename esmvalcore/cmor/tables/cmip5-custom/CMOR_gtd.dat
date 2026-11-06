@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    gtd
+!============
+modeling_realm:    land
+frequency:         yr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             K
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Permafrost Ground Temperature
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude sdepth time
+out_name:          gtd
+type:              real
+!----------------------------------
+!

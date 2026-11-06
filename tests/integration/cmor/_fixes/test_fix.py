@@ -10,6 +10,9 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
+from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin53 import (
+    AllVars as Aladin53AllVars,
+)
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin63 import (
     Tas,
 )
@@ -53,7 +56,7 @@ def test_get_grid_fix_cordex():
         "tas",
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
-    assert fix == [AllVars(None), GenericFix(None)]
+    assert fix == [Aladin53AllVars(None), AllVars(None), GenericFix(None)]
 
 
 def test_get_fixes_with_replace():

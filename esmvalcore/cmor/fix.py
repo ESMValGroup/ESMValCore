@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def fix_file(  # noqa: PLR0913
+def fix_file(  # noqa: PLR0913, PLR0917
     file: Path,
     short_name: str,
     project: str,

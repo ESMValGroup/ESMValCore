@@ -1,0 +1,1153 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 1.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "LPday"
+  },
+  "variable_entry": {
+    "albc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Albedo of the vegetation: fraction of incoming solar radiation which is reflected before reaching the ground.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Canopy Albedo",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "albc",
+      "positive": "",
+      "standard_name": "canopy_albedo",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "albsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where snow (comment: mask=snc)",
+      "comment": "Albedo of the snow-covered surface, averaged over the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Snow Albedo",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "albsn",
+      "positive": "",
+      "standard_name": "surface_albedo",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ares": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The 'aerodynamic_resistance' is the resistance to mixing through the boundary layer toward the surface by means of the dominant process, turbulent transport. Reference: Wesely, M. L., 1989,  doi:10.1016/0004-6981(89)90153-4.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Aerodynamic Resistance",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ares",
+      "positive": "",
+      "standard_name": "aerodynamic_resistance",
+      "type": "real",
+      "units": "s m-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cnc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Percentage of area covered by vegetation.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Canopy Covered Area Percentage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cnc",
+      "positive": "",
+      "standard_name": "vegetation_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "'Amount' means mass per unit area. 'Water' means water in all phases, including frozen i.e. ice and snow. 'Canopy' means the plant or vegetation canopy. The canopy water is the water on the canopy.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Total Canopy Water Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cw",
+      "positive": "",
+      "standard_name": "canopy_water_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dcw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The phrase 'change_over_time_in_X' means change in a quantity X over a time-interval, which should be defined by the bounds of the time coordinate. 'Canopy' means the plant or vegetation canopy. Canopy water is the water on the canopy. 'Water' means water in all phases, including frozen, i.e. ice and snow. 'Amount' means mass per unit area.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Interception Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dcw",
+      "positive": "",
+      "standard_name": "change_over_time_in_canopy_water_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dgw": {
+      "cell_measures": "area: areacellr",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Groundwater is subsurface water below the depth of the water table.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Groundwater",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dgw",
+      "positive": "",
+      "standard_name": "change_over_time_in_groundwater_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dmlt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where unfrozen_soil",
+      "comment": "Depth from surface to the zero degree isotherm. Above this isotherm T > 0o, and below this line T < 0o. Missing if surface is frozen or if soil is unfrozen at all depths.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "stempzero"
+      ],
+      "frequency": "day",
+      "long_name": "Depth to Soil Thaw",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dmlt",
+      "positive": "",
+      "standard_name": "depth_at_shallowest_isotherm_defined_by_soil_temperature",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "drivw": {
+      "cell_measures": "area: areacellr",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Change over time of the mass of water per unit area in the fluvial system (stream and floodplain).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in River Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "drivw",
+      "positive": "",
+      "standard_name": "change_over_time_in_river_water_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dslw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The phrase 'change_over_time_in_X' means change in a quantity X over a time-interval, which should be defined by the bounds of the time coordinate. 'Content' indicates a quantity per unit area. The mass content of water in soil refers to the vertical integral from the surface down to the bottom of the soil model. For the content between specified levels in the soil, standard names including 'content_of_soil_layer' are used. 'Water' means water in all phases.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Soil Moisture",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dslw",
+      "positive": "",
+      "standard_name": "change_over_time_in_mass_content_of_water_in_soil",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Change in time of the mass per unit area of ice in glaciers, ice caps, ice sheets and shelves, river and lake ice, any other ice on a land surface, such as frozen flood water, and snow lying on such ice or on the land surface.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Snow Water Equivalent",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dsn",
+      "positive": "",
+      "standard_name": "change_over_time_in_amount_of_ice_and_snow_on_land",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dsw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The phrase 'land_water_amount', often known as 'Terrestrial Water Storage', includes: surface liquid water (water in rivers, wetlands, lakes, reservoirs, rainfall intercepted by the canopy); surface ice and snow (glaciers, ice caps, grounded ice sheets not displacing sea water, river and lake ice, other surface ice such as frozen flood water, snow lying on the surface and intercepted by the canopy); subsurface water (liquid and frozen soil water, groundwater).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Surface Water Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dsw",
+      "positive": "",
+      "standard_name": "change_over_time_in_land_water_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dtes": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Change in heat storage over the soil layer and the vegetation for which the energy balance is calculated, accumulated over the sampling time interval.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Surface Heat Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dtes",
+      "positive": "",
+      "standard_name": "change_over_time_in_thermal_energy_content_of_vegetation_and_litter_and_soil",
+      "type": "real",
+      "units": "J m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dtesn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Change in cold content over the snow layer for which the energy balance is calculated, accumulated over the sampling time interval. This should also include the energy contained in the liquid water in the snow pack.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Change in Snow and Ice Cold Content",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dtesn",
+      "positive": "",
+      "standard_name": "change_over_time_in_thermal_energy_content_of_ice_and_snow_on_land",
+      "type": "real",
+      "units": "J m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ec": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Evaporation flux from water in all phases on the vegetation canopy.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Interception Evaporation",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ec",
+      "positive": "",
+      "standard_name": "water_evaporation_flux_from_canopy",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "eow": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Evaporation (conversion of liquid or solid into vapor) from open water. ",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Open Water Evaporation",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "eow",
+      "positive": "",
+      "standard_name": "surface_water_evaporation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "es": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Water here means water in all phases. Evaporation is the conversion of liquid or solid into vapor. (The conversion of solid alone into vapor is called 'sublimation'.) In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Bare Soil Evaporation",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "es",
+      "positive": "",
+      "standard_name": "water_evaporation_flux_from_soil",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "esn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Water here means water in all phases. Evaporation is the conversion of liquid or solid into vapor. (The conversion of solid alone into vapor is called 'sublimation'.) In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics. Unless indicated in the cell_methods attribute, a quantity is assumed to apply to the whole area of each horizontal grid box. Previously, the qualifier where_type was used to specify that the quantity applies only to the part of the grid box of the named type.  Names containing the where_type qualifier are deprecated and newly created data should use the cell_methods attribute to indicate the horizontal area to which the quantity applies.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Snow Evaporation",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "esn",
+      "positive": "",
+      "standard_name": "water_evapotranspiration_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "evspsbl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion of both liquid and solid phases to vapor (from underlying surface and vegetation)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Evaporation Including Sublimation and Transpiration",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "evspsbl",
+      "positive": "",
+      "standard_name": "water_evapotranspiration_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "evspsblpot": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "at surface; potential flux of water into the atmosphere due to conversion of both liquid and solid phases to vapor (from underlying surface and vegetation)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Potential Evapotranspiration",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "evspsblpot",
+      "positive": "",
+      "standard_name": "water_potential_evaporation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "lai": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "A ratio obtained by dividing the total upper leaf surface area of vegetation by the (horizontal) surface area of the land on which it grows.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Leaf Area Index",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "lai",
+      "positive": "",
+      "standard_name": "leaf_area_index",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrfsofr": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Fraction of soil moisture mass in the solid phase in each user-defined soil layer (3D variable)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Average Layer Fraction of Frozen Moisture",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrfsofr",
+      "positive": "",
+      "standard_name": "mass_fraction_of_frozen_water_in_soil_moisture",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrlqso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Fraction of soil moisture mass in the liquid phase in each user-defined soil layer (3D variable)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Average Layer Fraction of Liquid Moisture",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrlqso",
+      "positive": "",
+      "standard_name": "mass_fraction_of_unfrozen_water_in_soil_moisture",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrro": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The total run-off (including drainage through the base of the soil model) per unit area leaving the land portion of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Total Runoff",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrro",
+      "positive": "",
+      "standard_name": "runoff_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrrob": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Runoff is the liquid water which drains from land. If not specified, 'runoff' refers to the sum of surface runoff and subsurface drainage. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Subsurface Runoff",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrrob",
+      "positive": "",
+      "standard_name": "subsurface_runoff_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrros": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The total surface run off leaving the land portion of the grid cell (excluding drainage through the base of the soil model).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Runoff",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrros",
+      "positive": "",
+      "standard_name": "surface_runoff_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrsfl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "in each soil layer, the mass of water in ice phase.  Reported as 'missing' for grid cells occupied entirely by 'sea'",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Frozen Water Content of Soil Layer",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrsfl",
+      "positive": "",
+      "standard_name": "frozen_water_content_of_soil_layer",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrsll": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "in each soil layer, the mass of water in liquid phase.  Reported as 'missing' for grid cells occupied entirely by 'sea'",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Liquid Water Content of Soil Layer",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrsll",
+      "positive": "",
+      "standard_name": "liquid_water_content_of_soil_layer",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrso": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "the mass per unit area  (summed over all soil layers) of water in all phases.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Total Soil Moisture Content",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrso",
+      "positive": "",
+      "standard_name": "mass_content_of_water_in_soil",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrsol": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "in each soil layer, the mass of water in all phases, including ice.  Reported as 'missing' for grid cells occupied entirely by 'sea'",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Total Water Content of Soil Layer",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrsol",
+      "positive": "",
+      "standard_name": "mass_content_of_water_in_soil_layer",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrsos": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The mass of water in all phases in the upper 10cm of the  soil layer.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "sdepth1"
+      ],
+      "frequency": "day",
+      "long_name": "Moisture in Upper Portion of Soil Column",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrsos",
+      "positive": "",
+      "standard_name": "mass_content_of_water_in_soil_layer",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrsow": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Vertically integrated soil moisture divided by maximum allowable soil moisture above wilting point.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Total Soil Wetness",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrsow",
+      "positive": "",
+      "standard_name": "volume_fraction_of_condensed_water_in_soil_at_field_capacity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrtws": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Mass of water in all phases and in all components including soil, canopy, vegetation, ice sheets, rivers and ground water.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Terrestrial Water Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrtws",
+      "positive": "",
+      "standard_name": "land_water_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "nudgincsm": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "A nudging increment refers to an amount added to parts of a model system. The phrase 'nudging_increment_in_X' refers to an increment in quantity X over a time period which should be defined in the bounds of the time coordinate. 'Content' indicates a quantity per unit area. 'Water' means water in all phases. The mass content of water in soil refers to the vertical integral from the surface down to the bottom of the soil model. The 'soil content' of a quantity refers to the vertical integral from the surface down to the bottom of the soil model. For the content between specified levels in the soil, standard names including 'content_of_soil_layer' are used.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Nudging Increment of Water in Soil Moisture",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "nudgincsm",
+      "positive": "",
+      "standard_name": "nudging_increment_in_mass_content_of_water_in_soil",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "nudgincswe": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "A nudging increment refers to an amount added to parts of a model system. The phrase 'nudging_increment_in_X' refers to an increment in quantity X over a time period which should be defined in the bounds of the time coordinate. The surface called 'surface' means the lower boundary of the atmosphere. 'Amount' means mass per unit area. 'Snow and ice on land' means ice in glaciers, ice caps, ice sheets & shelves, river and lake ice, any other ice on a land surface, such as frozen flood water, and snow lying on such ice or on the land surface.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Nudging Increment of Water in Snow",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "nudgincswe",
+      "positive": "",
+      "standard_name": "nudging_increment_in_snow_and_ice_amount_on_land",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prveg": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The precipitation flux that is intercepted by the vegetation canopy (if present in model) before reaching the ground.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Precipitation onto Canopy",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prveg",
+      "positive": "",
+      "standard_name": "precipitation_flux_onto_canopy",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "qgwr": {
+      "cell_measures": "area: areacellr",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Mass flux of water from the soil layer into ground water.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Groundwater Recharge from Soil Layer",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "qgwr",
+      "positive": "",
+      "standard_name": "downward_liquid_water_mass_flux_into_groundwater",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rivi": {
+      "cell_measures": "area: areacellr",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Inflow of River Water into Cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "River Inflow",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rivi",
+      "positive": "",
+      "standard_name": "incoming_water_volume_transport_along_river_channel",
+      "type": "real",
+      "units": "m3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rivo": {
+      "cell_measures": "area: areacellr",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Outflow of River Water from Cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "River Discharge",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rivo",
+      "positive": "",
+      "standard_name": "outgoing_water_volume_transport_along_river_channel",
+      "type": "real",
+      "units": "m3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rzwc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "'Content' indicates a quantity per unit area. The content of a soil layer is the vertical integral of the specified quantity within the layer. The quantity with standard name mass_content_of_water_in_soil_layer_defined_by_root_depth is the vertical integral between the surface and the depth to which plant roots penetrate. A coordinate variable or scalar coordinate variable with standard name root_depth can be used to specify the extent of the layer. 'Water' means water in all phases.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Root Zone Soil Moisture",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rzwc",
+      "positive": "",
+      "standard_name": "mass_content_of_water_in_soil_layer_defined_by_root_depth",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Total liquid water storage, other than soil, snow or interception storage (i.e. lakes, river channel or depression storage).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Water Storage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sw",
+      "positive": "",
+      "standard_name": "land_surface_liquid_water_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tcs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Vegetation temperature, averaged over all vegetation types",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Vegetation Canopy Temperature",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tcs",
+      "positive": "",
+      "standard_name": "canopy_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tgs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Surface bare soil temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Temperature of Bare Soil",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tgs",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tran": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Transpiration (may include dew formation as a negative flux).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Transpiration",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tran",
+      "positive": "up",
+      "standard_name": "transpiration_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tsl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Temperature of soil. Reported as missing for grid cells with no land.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Temperature of Soil",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tsl",
+      "positive": "",
+      "standard_name": "soil_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tslsi": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean (comment: over land and sea ice)",
+      "comment": "Surface temperature of all surfaces except open ocean.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Temperature Where Land or Sea Ice",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tslsi",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wtd": {
+      "cell_measures": "area: areacellr",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "Depth is the vertical distance below the surface. The water table is the surface below which the soil is saturated with water such that all pore spaces are filled.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Water Table Depth",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wtd",
+      "positive": "",
+      "standard_name": "water_table_depth",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

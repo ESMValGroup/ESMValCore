@@ -13,10 +13,9 @@ import numpy as np
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import (
+    add_scalar_areatype_coord,
     add_scalar_depth_coord,
     add_scalar_height_coord,
-    add_scalar_typeland_coord,
-    add_scalar_typesea_coord,
     fix_ocean_depth_coord,
 )
 from esmvalcore.iris_helpers import dataset_to_iris
@@ -269,7 +268,7 @@ class Sftlf(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_typeland_coord(cube)
+        add_scalar_areatype_coord(cube, long_name="Land area type")
         return cubes
 
 
@@ -290,7 +289,7 @@ class Sftof(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_typesea_coord(cube)
+        add_scalar_areatype_coord(cube, long_name="Ocean area type")
         return cubes
 
 

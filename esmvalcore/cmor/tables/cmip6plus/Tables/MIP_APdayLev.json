@@ -1,0 +1,345 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 1.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "alevel",
+      "alevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "APdayLev"
+  },
+  "variable_entry": {
+    "cl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage cloud cover, including both large-scale and convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Percentage Cloud Cover",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cl",
+      "positive": "",
+      "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cli": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Includes both large-scale and convective cloud. This is calculated as the mass of cloud ice in the grid cell divided by the mass of air (including the water in all phases) in the grid cell. It includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Mass Fraction of Cloud Ice",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cli",
+      "positive": "",
+      "standard_name": "mass_fraction_of_cloud_ice_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Includes both large-scale and convective cloud. Calculate as the mass of cloud liquid water in the grid cell divided by the mass of air (including the water in all phases) in the grid cells. Precipitating hydrometeors are included ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Mass Fraction of Cloud Liquid Water",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clw",
+      "positive": "",
+      "standard_name": "mass_fraction_of_cloud_liquid_water_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hur": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Relative Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hur",
+      "positive": "",
+      "standard_name": "relative_humidity",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Specific humidity is the mass fraction of water vapor in (moist) air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hus",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The net mass flux should represent the difference between the updraft and downdraft components.  The flux is computed as the mass divided by the area of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Convective Mass Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mc",
+      "positive": "up",
+      "standard_name": "atmosphere_net_upward_convective_mass_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pfull": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air pressure on model levels",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Pressure at Model Full-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pfull",
+      "positive": "",
+      "standard_name": "air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "phalf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air pressure on model half-levels",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Pressure on Model Half-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "phalf",
+      "positive": "",
+      "standard_name": "air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air Temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ua": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Zonal wind (positive in a eastward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ua",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "va": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Meridional wind (positive in a northward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "va",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wap": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Omega (vertical velocity in pressure coordinates, positive downwards)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Omega (=dp/dt)",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wap",
+      "positive": "",
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "type": "real",
+      "units": "Pa s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zg": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Geopotential is the sum of the specific gravitational potential energy relative to the geoid and the specific centripetal potential energy. Geopotential height is the geopotential divided by the standard acceleration due to gravity. It is numerically similar to the altitude (or geometric height) and not to the quantity with standard name height, which is relative to the surface.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Geopotential Height",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zg",
+      "positive": "",
+      "standard_name": "geopotential_height",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

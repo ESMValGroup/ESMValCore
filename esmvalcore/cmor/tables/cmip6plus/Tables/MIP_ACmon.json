@@ -1,0 +1,41 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "ACmon"
+  },
+  "variable_entry": {
+    "flashrate": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "proposed name: lightning_flash_rate (units to be interpreted as 'counts km-2 s-1)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Lightning Flash Rate",
+      "modeling_realm": [
+        "atmosChem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "flashrate",
+      "positive": "",
+      "standard_name": "frequency_of_lightning_flashes_per_unit_area",
+      "type": "real",
+      "units": "km-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

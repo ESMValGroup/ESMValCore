@@ -3,6 +3,7 @@
 Runs recipes using :meth:`esmvalcore.experimental.Recipe.run`.
 """
 
+import copy
 import logging
 import os
 from contextlib import contextmanager
@@ -10,6 +11,7 @@ from pathlib import Path
 
 import iris
 import pytest
+import yaml
 
 import esmvalcore._task
 from esmvalcore.config._diagnostics import TAGS
@@ -39,7 +41,7 @@ def get_mock_distributed_client(monkeypatch):
     """Mock `get_distributed_client` to avoid starting a Dask cluster."""
 
     @contextmanager
-    def get_distributed_client():
+    def get_distributed_client(session):
         yield None
 
     monkeypatch.setattr(
@@ -50,11 +52,18 @@ def get_mock_distributed_client(monkeypatch):
 
 
 @pytest.fixture
+def author_tags(mocker):
+    """Make :data:`AUTHOR_TAGS` the only available tags."""
+    mocker.patch.dict(TAGS, copy.deepcopy(AUTHOR_TAGS), clear=True)
+
+
+@pytest.fixture
 def recipe():
     return get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
 
 
 @pytest.mark.use_sample_data
+@pytest.mark.usefixtures("author_tags")
 @pytest.mark.parametrize("ssh", [True, False])
 @pytest.mark.parametrize("task", [None, "example/ta"])
 def test_run_recipe(
@@ -76,8 +85,6 @@ def test_run_recipe(
         monkeypatch.setitem(os.environ, "SSH_CONNECTION", "0.0 0 1.1 1")
     else:
         monkeypatch.delitem(os.environ, "SSH_CONNECTION", raising=False)
-
-    TAGS.set_tag_values(AUTHOR_TAGS)
 
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
@@ -124,13 +131,12 @@ def test_run_recipe(
 
 
 @pytest.mark.use_sample_data
+@pytest.mark.usefixtures("author_tags")
 def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
     """Test running a single diagnostic using sample data.
 
     Recipe contains no provenance and no diagnostics.
     """
-    TAGS.set_tag_values(AUTHOR_TAGS)
-
     monkeypatch.setitem(CFG, "output_dir", tmp_path)
 
     session = CFG.start_session(recipe.path.stem)
@@ -138,3 +144,19 @@ def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
     task = "example/non-existent"
     with pytest.raises(RecipeError):
         _ = recipe.run(task, session)
+
+
+def test_recipe_to_yaml(recipe: Recipe, tmp_path: Path) -> None:
+    """Test writing a recipe to YAML."""
+    recipe_file = tmp_path / "recipe.yml"
+    recipe_yaml = recipe.to_yaml(file=recipe_file)
+    print()
+    print(recipe_yaml)
+    assert isinstance(recipe_yaml, str)
+    assert recipe_file.exists()
+    recipe_dict = yaml.safe_load(recipe_yaml)
+    assert isinstance(recipe_dict, dict)
+    assert recipe_dict == recipe.data
+    assert (
+        yaml.safe_load(recipe_file.read_text(encoding="utf-8")) == recipe.data
+    )

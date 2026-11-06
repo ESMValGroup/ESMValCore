@@ -1,0 +1,740 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.125,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "AP3hr"
+  },
+  "variable_entry": {
+    "clivi": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "mass of ice water in the column divided by the area of the column (not just the area of the cloudy portion of the column). Includes precipitating frozen hydrometeors ONLY if the precipitating hydrometeor affects the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Ice Water Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clivi",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_cloud_ice",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Total cloud area fraction (reported as a percentage) for the whole atmospheric column, as seen from the surface or the top of the atmosphere. Includes both large-scale and convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Total Cloud Cover Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clt",
+      "positive": "",
+      "standard_name": "cloud_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clwvi": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass of condensed (liquid + ice) water in the column divided by the area of the column (not just the area of the cloudy portion of the column). Includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Condensed Water Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clwvi",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_cloud_condensed_water",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfls": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'Upward' indicates a vector component which is positive when directed upward (negative downward). The surface latent heat flux is the exchange of heat between the surface and the air on account of evaporation (including sublimation). In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Upward Latent Heat Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfls",
+      "positive": "up",
+      "standard_name": "surface_upward_latent_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface sensible heat flux, also called turbulent heat flux, is the exchange of heat between the surface and the air by motion of air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Upward Sensible Heat Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfss",
+      "positive": "up",
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pr": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "includes both liquid and solid phases",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Precipitation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pr",
+      "positive": "",
+      "standard_name": "precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Convective precipitation at surface; includes both liquid and solid phases.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Convective Precipitation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prc",
+      "positive": "",
+      "standard_name": "convective_precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prcsh": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Convection precipitation from shallow convection",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Precipitation Flux from Shallow Convection",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prcsh",
+      "positive": "",
+      "standard_name": "shallow_convective_precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prra": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Rainfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prra",
+      "positive": "",
+      "standard_name": "rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prrc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Convective Rainfall Rate",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prrc",
+      "positive": "",
+      "standard_name": "convective_rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "At surface; includes precipitation of all forms of water in the solid phase",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Snowfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsn",
+      "positive": "",
+      "standard_name": "snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsnc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "convective precipitation of all forms of water in the solid phase.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Convective Snowfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsnc",
+      "positive": "",
+      "standard_name": "convective_snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "vertically integrated through the atmospheric column",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Water Vapor Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prw",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "psl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Sea Level Pressure",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Sea Level Pressure",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "psl",
+      "positive": "",
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlds": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'longwave' means longwave radiation. Downwelling radiation is radiation from above. It does not mean 'net downward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Downwelling Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlds",
+      "positive": "down",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rldscs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface downwelling clear-sky longwave radiation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Downwelling Clear-Sky Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rldscs",
+      "positive": "down",
+      "standard_name": "surface_downwelling_longwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'longwave' means longwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Upwelling Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlus",
+      "positive": "up",
+      "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "at the top of the atmosphere (to be compared with satellite measurements)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "TOA Outgoing Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlut",
+      "positive": "up",
+      "standard_name": "toa_outgoing_longwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlutcs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Upwelling clear-sky longwave radiation at top of atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "TOA Outgoing Clear-Sky Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlutcs",
+      "positive": "up",
+      "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsds": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface solar irradiance for UV calculations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Downwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsds",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdscs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface solar irradiance clear sky for UV calculations",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Downwelling Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdscs",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdsdiff": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface downwelling solar irradiance from diffuse radiation for UV calculations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Diffuse Downwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdsdiff",
+      "positive": "down",
+      "standard_name": "surface_diffuse_downwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Shortwave radiation incident at the top of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "TOA Incident Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdt",
+      "positive": "down",
+      "standard_name": "toa_incoming_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'shortwave' means shortwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Upwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsus",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsuscs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Surface Upwelling Clear-sky Shortwave Radiation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "Surface Upwelling Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsuscs",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "at the top of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "TOA Outgoing Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsut",
+      "positive": "up",
+      "standard_name": "toa_outgoing_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsutcs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Calculated in the absence of clouds.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "3hr",
+      "long_name": "TOA Outgoing Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsutcs",
+      "positive": "up",
+      "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sfcWind": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "near-surface (usually, 10 meters) wind speed.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "3hr",
+      "long_name": "Near-Surface Wind Speed",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sfcWind",
+      "positive": "",
+      "standard_name": "wind_speed",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "uas": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Eastward component of the near-surface (usually, 10 meters)  wind",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "3hr",
+      "long_name": "Eastward Near-Surface Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "uas",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vas": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Northward component of the near surface wind",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "height10m"
+      ],
+      "frequency": "3hr",
+      "long_name": "Northward Near-Surface Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vas",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

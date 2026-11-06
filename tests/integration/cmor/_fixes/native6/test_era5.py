@@ -1,6 +1,6 @@
 """Tests for the fixes of ERA5."""
 
-import datetime
+import datetime as dt
 
 import dask.array as da
 import numpy as np
@@ -24,7 +24,7 @@ from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = (
     "Contains modified Copernicus Climate Change Service Information "
-    f"{datetime.datetime.now().year}"
+    f"{dt.datetime.now().year}"
 )
 
 CMOR_TABLES = {
@@ -408,6 +408,8 @@ def evspsbl_era5_hourly():
             (_era5_longitude(), 2),
         ],
     )
+    # Test time units of newly downloaded ERA5 data (2026-05-20)
+    cube.coord("time").convert_units("seconds since 1970-01-01")
     return CubeList([cube])
 
 
@@ -1623,3 +1625,69 @@ def test_latitude_w_direction(cube_latitude_w_direction):
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     assert fixed_cube.coord("latitude") == _cmor_latitude()
+
+
+def test_remove_expver():
+    """Test removal of the scalar string coordinate ``expver``.
+
+    The new CDS GRIB to netCDF converter adds a scalar string coordinate
+    ``expver`` to the data, which needs to be removed.
+    """
+    dataset = Dataset(
+        short_name="tas",
+        mip="Amon",
+        project="native6",
+        dataset="ERA5",
+    )
+    dataset.augment_facets()
+    era5_cubes = tas_era5_monthly()
+    era5_cubes[0].add_aux_coord(AuxCoord("0001", var_name="expver"))
+    assert era5_cubes[0].coords("expver")
+
+    fixed_cubes = fix_metadata(era5_cubes, **dataset.facets)
+
+    fixed_cube = fixed_cubes[0]
+    assert not fixed_cube.coords("expver")
+
+    cmor_check_metadata(
+        fixed_cube,
+        cmor_table="native6",
+        mip="Amon",
+        short_name="tas",
+        frequency=dataset["frequency"],
+    )
+    cmor_cube = tas_cmor_amon()[0]
+    assert fixed_cube == cmor_cube
+
+
+def test_remove_realization():
+    """Test removal of the scalar string coordinate ``realization``.
+
+    The new CDS GRIB to netCDF converter adds a scalar string coordinate
+    ``realization`` to the data, which needs to be removed.
+    """
+    dataset = Dataset(
+        short_name="tas",
+        mip="Amon",
+        project="native6",
+        dataset="ERA5",
+    )
+    dataset.augment_facets()
+    era5_cubes = tas_era5_monthly()
+    era5_cubes[0].add_aux_coord(AuxCoord("0001", var_name="realization"))
+    assert era5_cubes[0].coords("realization")
+
+    fixed_cubes = fix_metadata(era5_cubes, **dataset.facets)
+
+    fixed_cube = fixed_cubes[0]
+    assert not fixed_cube.coords("realization")
+
+    cmor_check_metadata(
+        fixed_cube,
+        cmor_table="native6",
+        mip="Amon",
+        short_name="tas",
+        frequency=dataset["frequency"],
+    )
+    cmor_cube = tas_cmor_amon()[0]
+    assert fixed_cube == cmor_cube

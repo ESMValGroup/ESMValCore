@@ -1,0 +1,377 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 1.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "APdayZ"
+  },
+  "variable_entry": {
+    "epfy": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Transformed Eulerian Mean Diagnostics Meridional component Fy of Eliassen-Palm (EP) flux (Fy, Fz) derived from 6hr or higher frequency fields (use daily fields or 12 hr fields if the 6 hr are not available). Please use the definitions given by equation 3.5.3a of Andrews, Holton and Leovy text book, but scaled by density to have units m3 s-2.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Component of the Eliassen-Palm Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "epfy",
+      "positive": "",
+      "standard_name": "northward_eliassen_palm_flux_in_air",
+      "type": "real",
+      "units": "m3 s-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "epfz": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Transformed Eulerian Mean Diagnostics Meridional component Fz of the Eliassen-Palm (EP) flux (Fy, Fz) derived from 6hr or higher frequency fields (use daily fields or 12 hr fields if the 6 hr are not available). Please use the definitions given by equation 3.5.3b of Andrews, Holton and Leovy text book, but scaled by density to have units m3 s-2.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Upward Component of the Eliassen-Palm Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "epfz",
+      "positive": "up",
+      "standard_name": "upward_eliassen_palm_flux_in_air",
+      "type": "real",
+      "units": "m3 s-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hus": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Specific humidity is the mass fraction of water vapor in (moist) air.",
+      "dimensions": [
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hus",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "psitem": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Residual mass streamfunction, computed from vstar and integrated from the top of the atmosphere (on the native model grid). Reference: Andrews et al (1987): Middle Atmospheric Dynamics. Academic Press.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Transformed Eulerian Mean Mass Streamfunction",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "psitem",
+      "positive": "",
+      "standard_name": "atmosphere_transformed_eulerian_mean_meridional_overturning_mass_streamfunction",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Air Temperature",
+      "dimensions": [
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ua": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Zonal wind (positive in a eastward direction).",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ua",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "utendepfd": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of the zonal mean zonal wind due to the divergence of the Eliassen-Palm flux.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Tendency of Eastward Wind Due to Eliassen-Palm Flux Divergence",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "utendepfd",
+      "positive": "",
+      "standard_name": "tendency_of_eastward_wind_due_to_eliassen_palm_flux_divergence",
+      "type": "real",
+      "units": "m s-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "utendnogw": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of the eastward wind by parameterized nonorographic gravity waves.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Acceleration Due to Non-Orographic Gravity Wave Drag",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "utendnogw",
+      "positive": "",
+      "standard_name": "tendency_of_eastward_wind_due_to_nonorographic_gravity_wave_drag",
+      "type": "real",
+      "units": "m s-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "utendogw": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of the eastward wind by parameterized orographic gravity waves.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Eastward Acceleration Due to Orographic Gravity Wave Drag",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "utendogw",
+      "positive": "",
+      "standard_name": "tendency_of_eastward_wind_due_to_orographic_gravity_wave_drag",
+      "type": "real",
+      "units": "m s-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "utendvtem": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of zonally averaged eastward wind, by the residual northward wind advection (on the native model grid). Reference: Andrews et al (1987): Middle Atmospheric Dynamics. Academic Press.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Tendency of Eastward Wind Due to TEM Northward Advection and Coriolis Term",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "utendvtem",
+      "positive": "",
+      "standard_name": "tendency_of_eastward_wind_due_to_advection_by_northward_transformed_eulerian_mean_air_velocity",
+      "type": "real",
+      "units": "m s-1 d-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "utendwtem": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of zonally averaged eastward wind, by the residual upward wind advection (on the native model grid). Reference: Andrews et al (1987): Middle Atmospheric Dynamics. Academic Press.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Tendency of Eastward Wind Due to TEM Upward Advection",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "utendwtem",
+      "positive": "",
+      "standard_name": "tendency_of_eastward_wind_due_to_advection_by_upward_transformed_eulerian_mean_air_velocity",
+      "type": "real",
+      "units": "m s-1 d-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "va": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Meridional wind (positive in a northward direction).",
+      "dimensions": [
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Northward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "va",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vtem": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Transformed Eulerian Mean Diagnostics v*, meridional component of the residual meridional circulation (v*, w*) derived from 6 hr or higher frequency data fields (use instantaneous daily fields or 12 hr fields if the 6 hr data are not available).",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Transformed Eulerian Mean Northward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vtem",
+      "positive": "",
+      "standard_name": "northward_transformed_eulerian_mean_air_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wtem": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Transformed Eulerian Mean Diagnostics w*, upward component of the residual meridional circulation (v*, w*) derived from 6 hr or higher frequency data fields (use instantaneous daily fields or 12 hr fields if the 6 hr data are not available). Scale height: 6950 m",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Transformed Eulerian Mean Upward Wind",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wtem",
+      "positive": "",
+      "standard_name": "upward_transformed_eulerian_mean_air_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zg": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Geopotential is the sum of the specific gravitational potential energy relative to the geoid and the specific centripetal potential energy. Geopotential height is the geopotential divided by the standard acceleration due to gravity. It is numerically similar to the altitude (or geometric height) and not to the quantity with standard name height, which is relative to the surface.",
+      "dimensions": [
+        "latitude",
+        "plev19",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Geopotential Height",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zg",
+      "positive": "",
+      "standard_name": "geopotential_height",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "APfx"
+  },
+  "variable_entry": {
+    "areacella": {
+      "cell_measures": "",
+      "cell_methods": "area: sum",
+      "comment": "For atmospheres with more than 1 mesh (e.g., staggered grids), report areas that apply to surface vertical fluxes of energy.",
+      "dimensions": [
+        "longitude",
+        "latitude"
+      ],
+      "frequency": "fx",
+      "long_name": "Grid-Cell Area for Atmospheric Grid Variables",
+      "modeling_realm": [
+        "atmos",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "areacella",
+      "positive": "",
+      "standard_name": "cell_area",
+      "type": "real",
+      "units": "m2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ps": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean",
+      "comment": "surface pressure (not mean sea-level pressure), 2-D field to calculate the 3-D pressure field from hybrid coordinates",
+      "dimensions": [
+        "longitude",
+        "latitude"
+      ],
+      "frequency": "fx",
+      "long_name": "Surface Air Pressure",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ps",
+      "positive": "",
+      "standard_name": "surface_air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rld": {
+      "cell_measures": "",
+      "cell_methods": "area: point",
+      "comment": "Downwelling Longwave Radiation (includes the fluxes at the surface and TOA)",
+      "dimensions": [
+        "alevhalf",
+        "spectband"
+      ],
+      "frequency": "fx",
+      "long_name": "Downwelling Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rld",
+      "positive": "down",
+      "standard_name": "downwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlu": {
+      "cell_measures": "",
+      "cell_methods": "area: point",
+      "comment": "Upwelling longwave radiation (includes the fluxes at the surface and TOA)",
+      "dimensions": [
+        "alevhalf",
+        "spectband"
+      ],
+      "frequency": "fx",
+      "long_name": "Upwelling Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlu",
+      "positive": "up",
+      "standard_name": "upwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsd": {
+      "cell_measures": "",
+      "cell_methods": "area: point",
+      "comment": "Downwelling shortwave radiation (includes the fluxes at the surface and top-of-atmosphere)",
+      "dimensions": [
+        "alevhalf",
+        "spectband"
+      ],
+      "frequency": "fx",
+      "long_name": "Downwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsd",
+      "positive": "down",
+      "standard_name": "downwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsu": {
+      "cell_measures": "",
+      "cell_methods": "area: point",
+      "comment": "Upwelling shortwave radiation  (includes also the fluxes at the surface and top of atmosphere)",
+      "dimensions": [
+        "alevhalf",
+        "spectband"
+      ],
+      "frequency": "fx",
+      "long_name": "Upwelling Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsu",
+      "positive": "up",
+      "standard_name": "upwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sftlf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean",
+      "comment": "Percentage of horizontal area occupied by land.",
+      "dimensions": [
+        "longitude",
+        "latitude"
+      ],
+      "frequency": "fx",
+      "long_name": "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sftlf",
+      "positive": "",
+      "standard_name": "land_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "siltfrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land",
+      "comment": "Volume fraction of silt in soil",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "sdepth"
+      ],
+      "frequency": "fx",
+      "long_name": "Silt Fraction",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "siltfrac",
+      "positive": "",
+      "standard_name": "volume_fraction_of_silt_in_soil",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zfull": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean",
+      "comment": "Height of full model levels above a reference ellipsoid. A reference ellipsoid is a mathematical figure that approximates the geoid. The geoid is a surface of constant geopotential with which mean sea level would coincide if the ocean were at rest. The ellipsoid is an approximation because the geoid is an irregular shape. A number of reference ellipsoids are defined for use in the field of geodesy. To specify which reference ellipsoid is being used, a grid_mapping variable should be attached to the data variable as described in Chapter 5.6 of the CF Convention.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel"
+      ],
+      "frequency": "fx",
+      "long_name": "Altitude of Model Full-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zfull",
+      "positive": "",
+      "standard_name": "height_above_reference_ellipsoid",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

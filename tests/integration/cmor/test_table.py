@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -14,7 +14,6 @@ from esmvalcore.cmor.table import (
     CMIP3Info,
     CMIP5Info,
     CMIP6Info,
-    CustomInfo,
     NoInfo,
     Obs4MIPsInfo,
     VariableInfo,
@@ -109,13 +108,6 @@ class TestCMIP6Info:
         )
         assert result.endswith(")")
 
-    def test_custom_tables_location(self):
-        """Test constructor with custom tables location."""
-        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        cmor_tables_path = os.path.join(cmor_path, "tables", "cmip6")
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP6Info(cmor_tables_path, default=None, strict=False)
-
     def test_get_table_frequency(self, variables_info):
         """Test get table frequency."""
         assert variables_info.get_table("Amon").frequency == "mon"
@@ -179,12 +171,6 @@ class TestCMIP6Info:
         activity = variables_info.activities["1pctCO2"]
         assert activity == ["CMIP"]
 
-    def test_invalid_path(self) -> None:
-        path = Path(__file__) / "path" / "does" / "not" / "exist"
-        msg = r"CMOR tables not found in"
-        with pytest.raises(ValueError, match=msg):
-            CMIP6Info(str(path))
-
     def test_invalid_paths(self) -> None:
         path = Path(__file__) / "path" / "does" / "not" / "exist"
         with pytest.raises(NotADirectoryError, match=str(path)):
@@ -222,8 +208,8 @@ class TestCMIP6Info:
         )
 
 
-class Testobs4mipsInfo:
-    """Tests for the obs4mips info class."""
+class Testobs4MIPsInfo:
+    """Tests for the Obs4MIPs info class."""
 
     @pytest.fixture
     def variables_info(self) -> Obs4MIPsInfo:
@@ -237,25 +223,14 @@ class Testobs4mipsInfo:
 
     def test_get_table_frequency(self, variables_info):
         """Test get table frequency."""
-        assert variables_info.get_table("monStderr").frequency == "mon"
+        assert variables_info.get_table("Amon").frequency == "mon"
 
-    def test_custom_tables_location(self):
-        """Test constructor with custom tables location."""
-        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        cmor_tables_path = os.path.join(cmor_path, "tables", "cmip6")
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP6Info(cmor_tables_path, None, True)
-
-    def test_get_variable_ndvistderr(self, variables_info):
-        """Get ndviStderr variable.
-
-        Note table name obs4MIPs_[mip]
-        """
-        var = variables_info.get_variable(
-            "obs4MIPs_monStderr",
-            "ndviStderr",
-        )
-        assert var.short_name == "ndviStderr"
+    def test_get_variable_ccb(self, variables_info):
+        """Get ccb variable."""
+        var = variables_info.get_variable("Amon", "ccb")
+        assert var.short_name == "ccb"
+        assert var.standard_name == "air_pressure_at_convective_cloud_base"
+        assert var.long_name == "Air Pressure at Convective Cloud Base"
         assert var.frequency == "mon"
 
     def test_get_variable_hus(self, variables_info):
@@ -271,14 +246,8 @@ class Testobs4mipsInfo:
         assert var.frequency == "mon"
 
     def test_get_variable_from_custom(self, variables_info):
-        """Get prStderr variable.
-
-        Note table name obs4MIPs_[mip]
-        """
-        var = variables_info.get_variable(
-            "monStderr",
-            "prStderr",
-        )
+        """Get prStderr variable."""
+        var = variables_info.get_variable("Amon", "prStderr")
         assert var.short_name == "prStderr"
         assert var.frequency == "mon"
 
@@ -304,6 +273,30 @@ class Testobs4mipsInfo:
         """Get none if a variable is not in the given table."""
         assert variables_info.get_variable("Omon", "tras") is None
 
+    def test_no_cv_file_availble(self, tmp_path: Path) -> None:
+        tmp_tables_path = tmp_path / "Tables"
+        tmp_tables_path.mkdir(parents=True, exist_ok=True)
+
+        original_coordinate_table = (
+            Path(esmvalcore.cmor.table.__file__).parent
+            / "tables"
+            / "obs4mips"
+            / "Tables"
+            / "obs4MIPs_coordinate.json"
+        )
+        shutil.copy2(original_coordinate_table, tmp_tables_path)
+
+        # Use coordinates table also as source_id table to simulate missing
+        # source_id information
+        shutil.copy2(
+            original_coordinate_table,
+            tmp_path / "obs4MIPs_source_id.json",
+        )
+
+        Obs4MIPsInfo(
+            paths=[tmp_tables_path],
+        )  # should not fail without CV file
+
 
 class TestCMIP5Info:
     """Tests for the CMIP5 info class."""
@@ -317,13 +310,6 @@ class TestCMIP5Info:
             ],
             strict=True,
         )
-
-    def test_custom_tables_location(self):
-        """Test constructor with custom tables location."""
-        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        cmor_tables_path = os.path.join(cmor_path, "tables", "cmip5")
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP5Info(cmor_tables_path, None, True)
 
     def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
@@ -428,13 +414,6 @@ class TestCMIP3Info:
             strict=True,
         )
 
-    def test_custom_tables_location(self):
-        """Test constructor with custom tables location."""
-        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        cmor_tables_path = os.path.join(cmor_path, "tables", "cmip3")
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP3Info(cmor_tables_path, None, True)
-
     def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
         var = variables_info.get_variable("A1", "tas")
@@ -511,12 +490,6 @@ class TestCORDEXInfo:
             ],
         )
 
-    def test_custom_tables_location(self):
-        """Test constructor with custom tables location."""
-        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        cmor_tables_path = os.path.join(cmor_path, "tables", "cordex")
-        CMIP5Info(cmor_tables_path)
-
     def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
         var = variables_info.get_variable("mon", "tas")
@@ -525,113 +498,6 @@ class TestCORDEXInfo:
     def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
         assert variables_info.get_variable("Omon", "tas") is None
-
-
-class TestCustomInfo:
-    """Tests for the custom info class."""
-
-    @pytest.fixture
-    def variables_info(self) -> CustomInfo:
-        return CustomInfo()
-
-    def test_repr(self, variables_info: CustomInfo) -> None:
-        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
-        expected_paths = [
-            builtin_tables_path / "old-custom-coordinates",
-            builtin_tables_path / "cmip5-custom",
-        ]
-        result = repr(variables_info)
-        assert result == f"CustomInfo(paths={expected_paths})"
-
-    def test_custom_tables_default_location(self, variables_info):
-        """Test constructor with default tables location."""
-        custom_info = CustomInfo()
-        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
-        default_paths = (
-            builtin_tables_path / "old-custom-coordinates",
-            builtin_tables_path / "cmip5-custom",
-        )
-        assert custom_info.paths == default_paths
-        assert custom_info.tables["custom"]
-        assert custom_info.coords
-
-    def test_custom_tables_location(self, variables_info):
-        """Test constructor with custom tables location."""
-        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        cmor_tables_path = os.path.join(cmor_path, "tables", "cmip5")
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
-
-        custom_info = CustomInfo(cmor_tables_path)
-
-        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
-        default_paths = (
-            builtin_tables_path / "old-custom-coordinates",
-            builtin_tables_path / "cmip5-custom",
-        )
-        assert custom_info.paths == (*default_paths, Path(cmor_tables_path))
-        assert custom_info.tables["custom"]
-        assert custom_info.coords
-
-    def test_custom_tables_invalid_location(self):
-        """Test constructor with invalid custom tables location."""
-        with pytest.raises(ValueError):
-            CustomInfo("this_file_does_not_exist.dat")
-
-    def test_get_variable_netcre(self, variables_info):
-        """Get tas variable."""
-        CustomInfo()
-        var = variables_info.get_variable("Amon", "netcre")
-        assert var.short_name == "netcre"
-
-    def test_get_bad_variable(self, variables_info):
-        """Get none if a variable is not in the given table."""
-        assert variables_info.get_variable("Omon", "badvar") is None
-
-    def test_get_variable_tasconf5(self, variables_info):
-        """Get tas variable."""
-        CustomInfo()
-        var = variables_info.get_variable("Amon", "tasConf5")
-        assert var.short_name == "tasConf5"
-        assert (
-            var.long_name == "Near-Surface Air Temperature Uncertainty Range"
-        )
-        assert var.units == "K"
-
-    def test_get_variable_tasconf95(self, variables_info):
-        """Get tas variable."""
-        CustomInfo()
-        var = variables_info.get_variable("Amon", "tasConf95")
-        assert var.short_name == "tasConf95"
-        assert (
-            var.long_name == "Near-Surface Air Temperature Uncertainty Range"
-        )
-        assert var.units == "K"
-
-    def test_get_variable_tasaga(self, variables_info):
-        """Get tas variable."""
-        CustomInfo()
-        var = variables_info.get_variable("Amon", "tasaga")
-        assert var.short_name == "tasaga"
-        assert (
-            var.long_name == "Global-mean Near-Surface Air Temperature Anomaly"
-        )
-        assert var.units == "K"
-
-    def test_get_variable_ch4s(self, variables_info):
-        """Get ch4s variable."""
-        CustomInfo()
-        var = variables_info.get_variable("Amon", "ch4s")
-        assert var.short_name == "ch4s"
-        assert var.long_name == "Atmosphere CH4 surface"
-        assert var.units == "1e-09"
-
-    def test_get_variable_tosstderr(self, variables_info):
-        """Get tosStderr variable."""
-        CustomInfo()
-        var = variables_info.get_variable("Omon", "tosStderr")
-        assert var.short_name == "tosStderr"
-        assert var.long_name == "Sea Surface Temperature Error"
-        assert var.units == "K"
 
 
 class TestNoInfo:
@@ -706,7 +572,7 @@ def test_get_mips_cmip5() -> None:
 def test_get_mips_cmip7() -> None:
     """Test ``_get_mips``."""
     mips = _get_mips(project="CMIP7", short_name="tas")
-    expected = {"atmos", "land", "landIce"}
+    expected = {"atmos", "landIce"}
     assert set(mips) == expected
 
 

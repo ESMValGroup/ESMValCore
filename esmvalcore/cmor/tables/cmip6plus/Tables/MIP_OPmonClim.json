@@ -1,0 +1,257 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "OPmonClim"
+  },
+  "variable_entry": {
+    "difmxybo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Lateral biharmonic viscosity applied to the momentum equations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Momentum XY Biharmonic Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "difmxybo2d",
+      "positive": "",
+      "standard_name": "ocean_momentum_xy_biharmonic_diffusivity",
+      "type": "real",
+      "units": "m4 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "difmxylo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Lateral Laplacian viscosity applied to the momentum equations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Momentum XY Laplacian Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "difmxylo2d",
+      "positive": "",
+      "standard_name": "ocean_momentum_xy_laplacian_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrbbo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Parameterized mesoscale eddy advection occurs on a spatial scale of many tens of kilometres and an evolutionary time of weeks(sometimes called bolus advection). Reference: James C. McWilliams 2016, Submesoscale currents in the ocean, Proceedings of the Royal Society A: Mathematical, Physical and Engineering Sciences, volume 472, issue 2189. DOI: 10.1098/rspa.2016.0117. ",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Tracer Bolus Biharmonic Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrbbo2d",
+      "positive": "",
+      "standard_name": "ocean_tracer_biharmonic_diffusivity_due_to_parameterized_mesoscale_eddy_advection",
+      "type": "real",
+      "units": "m4 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrblo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Ocean tracer diffusivity associated with parameterized eddy-induced advective transport. Sometimes this diffusivity is called the 'thickness' diffusivity. For CMIP5, this diagnostic was called 'ocean tracer bolus laplacian diffusivity'.  The CMIP6 name is physically more relevant.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Tracer Diffusivity Due to Parameterized Mesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrblo2d",
+      "positive": "",
+      "standard_name": "ocean_tracer_laplacian_diffusivity_due_to_parameterized_mesoscale_eddy_advection",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrebo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Epineutral diffusivity means a lateral diffusivity along a either a neutral or isopycnal density surface due to motion which is not resolved on the grid scale of an ocean model. The type of density surface is dependent on the model formulation. ",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Tracer Epineutral Biharmonic Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrebo2d",
+      "positive": "",
+      "standard_name": "ocean_tracer_epineutral_biharmonic_diffusivity",
+      "type": "real",
+      "units": "m4 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrelo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Ocean tracer diffusivity associated with parameterized eddy-induced diffusive transport oriented along neutral or isopycnal directions. Sometimes this diffusivity is called the neutral diffusivity or isopycnal diffusivity or Redi diffusivity.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Tracer Epineutral Laplacian Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrelo2d",
+      "positive": "",
+      "standard_name": "ocean_tracer_epineutral_laplacian_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrxybo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Diffusivity is also sometimes known as the coefficient of diffusion. Diffusion occurs as a result of a gradient in the spatial distribution of mass concentration, temperature or momentum.  The diffusivity may be very different in the vertical and horizontal directions. 'xy diffusivity' means the lateral along_coordinate component of diffusivity due to motion which is not resolved on the grid scale of the model.  xy diffusivities are used in some ocean models to counteract the numerical instabilities inherent in certain implementations of rotated neutral diffusion. 'biharmonic diffusivity' means diffusivity for use with a biharmonic diffusion operator.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Tracer XY Biharmonic Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrxybo2d",
+      "positive": "",
+      "standard_name": "ocean_tracer_xy_biharmonic_diffusivity",
+      "type": "real",
+      "units": "m4 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrxylo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Diffusivity is also sometimes known as the coefficient of diffusion. Diffusion occurs as a result of a gradient in the spatial distribution of mass concentration, temperature or momentum.  The diffusivity may be very different in the vertical and horizontal directions. 'xy diffusivity' means the lateral along_coordinate component of diffusivity due to motion which is not resolved on the grid scale of the model.  xy diffusivities are used in some ocean models to counteract the numerical instabilities inherent in certain implementations of rotated neutral diffusion. 'laplacian diffusivity' means diffusivity for use with a Laplacian diffusion operator.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Tracer XY Laplacian Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrxylo2d",
+      "positive": "",
+      "standard_name": "ocean_tracer_xy_laplacian_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dispkexyfo2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Depth integrated impacts on kinetic energy arising from lateral frictional dissipation associated with Laplacian and/or biharmonic viscosity. For CMIP5, this diagnostic was 3d, whereas the CMIP6 depth integrated diagnostic is sufficient for many purposes and reduces archive requirements.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Ocean Kinetic Energy Dissipation per Unit Area Due to XY Friction",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dispkexyfo2d",
+      "positive": "",
+      "standard_name": "ocean_kinetic_energy_dissipation_per_unit_area_due_to_xy_friction",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tnkebto2d": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean time: mean within years time: mean over years",
+      "comment": "Depth integrated impacts on kinetic energy arising from parameterized eddy-induced advection. For CMIP5, this diagnostic was 3d, whereas the CMIP6 depth integrated diagnostic is sufficient for many purposes and reduces archive requirements.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time2"
+      ],
+      "frequency": "monC",
+      "long_name": "Tendency of Ocean Eddy Kinetic Energy Content Due to Parameterized Eddy Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tnkebto2d",
+      "positive": "",
+      "standard_name": "tendency_of_ocean_eddy_kinetic_energy_content_due_to_parameterized_eddy_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

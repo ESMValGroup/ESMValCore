@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 import iris.coords
 
@@ -14,7 +14,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-PREPROCESSOR_SUPPLEMENTARIES = {}
+
+class RequiredSupplementaries(TypedDict):
+    variables: list[str]
+    required: Literal["require_at_least_one", "prefer_at_least_one"]
+
+
+PREPROCESSOR_SUPPLEMENTARIES: dict[str, RequiredSupplementaries] = {}
 
 
 def register_supplementaries(
@@ -158,7 +164,7 @@ def find_matching_coord_dims(
 def get_data_dims(
     cube: Cube,
     ancillary: Cube | iris.coords.AncillaryVariable,
-) -> list[None | int]:
+) -> list[int | None]:
     """Get matching data dimensions between cube and ancillary variable.
 
     Parameters
@@ -179,7 +185,7 @@ def get_data_dims(
     """
     # Match the coordinates of the ancillary cube to coordinates and
     # dimensions in the input cube before adding the ancillary variable.
-    data_dims: list[None | int] = []
+    data_dims: list[int | None] = []
     if isinstance(ancillary, iris.coords.AncillaryVariable):
         start_dim = cube.ndim - len(ancillary.shape)
         data_dims = list(range(start_dim, cube.ndim))

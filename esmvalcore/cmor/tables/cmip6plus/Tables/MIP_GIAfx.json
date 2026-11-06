@@ -1,0 +1,109 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "GIAfx"
+  },
+  "variable_entry": {
+    "areacellg": {
+      "cell_measures": "",
+      "cell_methods": "area: sum",
+      "comment": "Area of the target grid (not the interpolated area of the source grid).",
+      "dimensions": [
+        "longitude",
+        "latitude"
+      ],
+      "frequency": "fx",
+      "long_name": "Grid-Cell Area for Ice Sheet Variables",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "areacellg",
+      "positive": "",
+      "standard_name": "cell_area",
+      "type": "real",
+      "units": "m2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfgeoubed": {
+      "cell_measures": "area: areacellg",
+      "cell_methods": "area: mean where grounded_ice_sheet",
+      "comment": "Upward geothermal heat flux per unit area into the base of grounded land ice. This is related to the geothermal heat flux out of the bedrock, but may be modified by horizontal transport due to run-off and by melting at the interface.",
+      "dimensions": [
+        "xant",
+        "yant"
+      ],
+      "frequency": "fx",
+      "long_name": "Geothermal Heat Flux Beneath Land Ice",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfgeoubed",
+      "positive": "",
+      "standard_name": "upward_geothermal_heat_flux_at_ground_level_in_land_ice",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "lithk": {
+      "cell_measures": "area: areacellg",
+      "cell_methods": "area: mean where ice_sheet",
+      "comment": "The thickness of the ice sheet",
+      "dimensions": [
+        "xant",
+        "yant"
+      ],
+      "frequency": "fx",
+      "long_name": "Ice Sheet Thickness",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "lithk",
+      "positive": "",
+      "standard_name": "land_ice_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "topg": {
+      "cell_measures": "area: areacellg",
+      "cell_methods": "area: mean where grounded_ice_sheet",
+      "comment": "The bedrock topography beneath the land ice",
+      "dimensions": [
+        "xant",
+        "yant"
+      ],
+      "frequency": "fx",
+      "long_name": "Bedrock Altitude",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "topg",
+      "positive": "",
+      "standard_name": "bedrock_altitude",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

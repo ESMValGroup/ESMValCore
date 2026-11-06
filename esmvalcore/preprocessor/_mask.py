@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+from functools import lru_cache
 from typing import TYPE_CHECKING, Literal
 
 import cartopy.io.shapereader as shpreader
@@ -280,11 +281,12 @@ def mask_glaciated(
     return cube
 
 
+@lru_cache
 def _get_geometries_from_shp(shapefilename):
     """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    geometries = list(reader.geometries())
+    geometries = tuple(reader.geometries())
     if not geometries:
         msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)

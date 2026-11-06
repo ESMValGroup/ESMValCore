@@ -1,6 +1,9 @@
 """Tests for `esmvalcore.preprocessor.PreprocessingTask`."""
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import iris
 import iris.cube
@@ -12,9 +15,19 @@ from esmvalcore.dataset import Dataset
 from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
+if TYPE_CHECKING:
+    import pytest_mock
+
+    from esmvalcore.config import Session
+
 
 @pytest.mark.parametrize("scheduler_lock", [False, True])
-def test_load_save_task(tmp_path, mocker, scheduler_lock):
+def test_load_save_task(
+    tmp_path: Path,
+    mocker: pytest_mock.MockerFixture,
+    session: Session,
+    scheduler_lock: bool,
+) -> None:
     """Test that a task that just loads and saves a file."""
     # Prepare a test dataset
     cube = iris.cube.Cube(data=[273.0], var_name="tas", units="K")
@@ -22,7 +35,12 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
     iris.save(cube, in_file)
     dataset = Dataset(short_name="tas")
     dataset.files = [in_file]
-    dataset.load = lambda: in_file.to_iris()[0]
+    mocker.patch.object(
+        dataset,
+        "load",
+        autospec=True,
+        side_effect=lambda: in_file.to_iris()[0],
+    )
 
     # Create task
     task = PreprocessingTask(
@@ -44,7 +62,8 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
     if scheduler_lock:
         task.scheduler_lock = mocker.Mock()
 
-    task.run()
+    session.run_dir.mkdir(parents=True)
+    task.run(session)
 
     assert len(task.products) == 1
     preproc_file = task.products.pop().filename
@@ -60,7 +79,11 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
         assert task.scheduler_lock is None
 
 
-def test_load_save_and_other_task(tmp_path, monkeypatch):
+def test_load_save_and_other_task(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    session: Session,
+) -> None:
     """Test that a task just copies one file and preprocesses another file."""
     # Prepare test datasets
     in_cube = iris.cube.Cube(data=[0.0], var_name="tas", units="degrees_C")
@@ -74,11 +97,19 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
 
     dataset1 = Dataset(short_name="tas", dataset="dataset1")
     dataset1.files = [file1]
-    dataset1.load = lambda: file1.to_iris()[0]
+    monkeypatch.setattr(
+        dataset1,
+        "load",
+        lambda: file1.to_iris()[0],
+    )
 
     dataset2 = Dataset(short_name="tas", dataset="dataset1")
     dataset2.files = [file2]
-    dataset2.load = lambda: file2.to_iris()[0]
+    monkeypatch.setattr(
+        dataset2,
+        "load",
+        lambda: file2.to_iris()[0],
+    )
 
     # Create some mock preprocessor functions and patch
     # `esmvalcore.preprocessor` so it uses them.
@@ -166,7 +197,8 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
     activity = provenance.activity("software:esmvalcore")
     task.initialize_provenance(activity)
 
-    task.run()
+    session.run_dir.mkdir(parents=True)
+    task.run(session)
 
     # Check that three files were saved and the preprocessor functions were
     # only applied to the second one.

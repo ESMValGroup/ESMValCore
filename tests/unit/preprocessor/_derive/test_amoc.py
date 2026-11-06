@@ -48,11 +48,16 @@ def cubes():
 def test_amoc_preamble(cubes):
     derived_var = amoc.DerivedVariable()
 
-    cmip5_required = derived_var.required("CMIP5")
-    assert cmip5_required[0]["short_name"] == "msftmyz"
-    cmip6_required = derived_var.required("CMIP6")
-    assert cmip6_required[0]["short_name"] == "msftmz"
-    assert cmip6_required[1]["short_name"] == "msftyz"
+    assert derived_var.required("CMIP5") == [
+        {"short_name": "msftmyz", "mip": "Omon"},
+    ]
+    assert derived_var.required("CMIP6") == [
+        {"short_name": "msftmz", "optional": True},
+        {"short_name": "msftyz", "optional": True},
+    ]
+    assert derived_var.required("ICON") == [
+        {"short_name": "msftmz", "mip": "Omon"},
+    ]
 
     # if project s neither CMIP5 nor CMIP6
     with pytest.raises(ValueError, match="Project CMIPX can not be used"):

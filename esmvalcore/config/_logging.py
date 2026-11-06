@@ -78,7 +78,7 @@ def _purge_file_handlers(cfg: dict) -> None:
 def _get_log_files(
     cfg: dict,
     output_dir: os.PathLike | str | None = None,
-) -> list:
+) -> list[str]:
     """Initialize log files for the file handlers."""
     log_files = []
 
@@ -114,21 +114,21 @@ def configure_logging(
     cfg_file: os.PathLike | str | None = None,
     output_dir: os.PathLike | str | None = None,
     console_log_level: str | None = None,
-) -> list:
+) -> list[str]:
     """Configure logging.
 
     Parameters
     ----------
-    cfg_file : str, optional
+    cfg_file:
         Logging config file. If `None`, defaults to `configure-logging.yml`
-    output_dir : str, optional
+    output_dir:
         Output directory for the log files. If `None`, log only to the console.
-    console_log_level : str, optional
+    console_log_level:
         If `None`, use the default (INFO).
 
     Returns
     -------
-    log_files : list
+    :
         Filenames that will be logged to.
     """
     if cfg_file is None:

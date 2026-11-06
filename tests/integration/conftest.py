@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import os
-from typing import TYPE_CHECKING
+import copy
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any
 
-import iris
 import pytest
 
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
@@ -13,31 +14,79 @@ from esmvalcore.io.local import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
     from esmvalcore.typing import Facets, FacetValue
 
+TAGS_FOR_TESTING: dict[str, dict[str, Any]] = {
+    "authors": {
+        "andela_bouwe": {
+            "name": "Bouwe, Andela",
+        },
+    },
+    "projects": {
+        "c3s-magic": "C3S MAGIC project",
+    },
+    "themes": {
+        "phys": "physics",
+    },
+    "realms": {
+        "atmos": "atmosphere",
+    },
+    "statistics": {
+        "mean": "mean",
+        "var": "variability",
+    },
+    "domains": {
+        "et": "extra tropics",
+        "trop": "tropics",
+    },
+    "plot_types": {
+        "zonal": "zonal",
+    },
+}
+"""Tags available in tests that use the :func:`tags` fixture."""
 
-def create_test_file(filename, tracking_id=None):
-    dirname = os.path.dirname(filename)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
 
-    attributes = {}
-    if tracking_id is not None:
-        attributes["tracking_id"] = tracking_id
-    cube = iris.cube.Cube([])
-    cube.attributes.globals = attributes
+@pytest.fixture
+def tags(mocker: MockerFixture) -> dict[str, dict[str, Any]]:
+    """Make :data:`TAGS_FOR_TESTING` the only available tags.
 
-    iris.save(cube, filename)
+    The global :data:`esmvalcore.config._diagnostics.TAGS` object is restored
+    after the test.
+    """
+    tags = copy.deepcopy(TAGS_FOR_TESTING)
+    mocker.patch.dict(TAGS, tags, clear=True)
+    return tags
+
+
+@pytest.fixture
+def recipe_documentation(tags: dict[str, dict[str, Any]]) -> str:
+    """Return a valid documentation section for a recipe.
+
+    The tags used in the documentation are available during the test.
+    """
+    return dedent("""
+        documentation:
+          title: Test recipe
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+        """)
 
 
 def _get_files(  # noqa: C901,PLR0912
     self: LocalDataSource,
     root_path: Path,
     facets: Facets,
-    tracking_id: Iterator[int],
     suffix: str = "nc",
 ) -> list[LocalFile]:
     """Return dummy files.
@@ -84,10 +133,6 @@ def _get_files(  # noqa: C901,PLR0912
         else:
             filenames.append(filename)
 
-        if suffix == "nc":
-            for filename in filenames:
-                create_test_file(filename, next(tracking_id))
-
         for filename in filenames:
             file = LocalFile(filename)
             file.facets = dict(expanded_facets)
@@ -103,23 +148,15 @@ def _get_files(  # noqa: C901,PLR0912
     return files
 
 
-def _tracking_ids(i=0):
-    while True:
-        yield i
-        i += 1
-
-
 def _get_find_data_func(
     path: Path,
     suffix: str = "nc",
 ) -> Callable[..., list[LocalFile]]:
-    tracking_id = _tracking_ids()
-
     def find_data(
         self: LocalDataSource,
         **facets: FacetValue,
     ) -> list[LocalFile]:
-        return _get_files(self, path, facets, tracking_id, suffix)
+        return _get_files(self, path, facets, suffix)
 
     return find_data
 
@@ -156,13 +193,12 @@ def patched_failing_datafinder(
     Otherwise, return files just like `patched_datafinder`.
 
     """
-    tracking_id = _tracking_ids()
 
     def find_data(
         self: LocalDataSource,
         **facets: FacetValue,
     ) -> list[LocalFile]:
-        files = _get_files(self, tmp_path, facets, tracking_id)
+        files = _get_files(self, tmp_path, facets)
         if facets["frequency"] == "fx":
             files = []
         returned_files = []

@@ -26,13 +26,13 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.12"
+    rev: "v0.17.3"
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.20.2"
+    rev: "v2.4.1"
     hooks:
       - id: mypy
         additional_dependencies:
@@ -44,17 +44,17 @@ repos:
     hooks:
       - id: yamllint
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.2"
+    rev: "v2.4.3"
     hooks:
       - id: codespell
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.39.0
     hooks:
       - id: check-citation-file-format
       - id: check-github-workflows
       - id: check-circle-ci
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.31.1
     hooks:
       - id: zizmor
         args: [--fix=safe]
