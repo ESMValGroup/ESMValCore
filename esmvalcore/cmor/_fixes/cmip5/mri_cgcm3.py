@@ -2,10 +2,7 @@
 
 from dask import array as da
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-
-Cl = ClFixHybridPressureCoord
 
 
 class Msftmyz(Fix):

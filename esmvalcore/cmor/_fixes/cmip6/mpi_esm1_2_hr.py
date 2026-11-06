@@ -1,6 +1,5 @@
 """Fixes for MPI-ESM1-2-HR model."""
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import (
     add_scalar_height_coord,
@@ -21,13 +20,6 @@ class AllVars(Fix):
                     coord_names=["latitude"],
                 )
         return cubes
-
-
-Cl = ClFixHybridPressureCoord
-
-Cli = ClFixHybridPressureCoord
-
-Clw = ClFixHybridPressureCoord
 
 
 class Tas(Fix):

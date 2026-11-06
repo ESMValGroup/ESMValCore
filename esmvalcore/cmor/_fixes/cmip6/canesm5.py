@@ -2,19 +2,34 @@
 
 import dask.array as da
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
-Cl = ClFixHybridPressureCoord
+
+class Cl(Fix):
+    """Fixes for ``cl``."""
+
+    def fix_metadata(self, cubes):
+        """Remove the wrong standard name ``air_pressure`` from ``ps``.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        cube.coord(var_name="ps").standard_name = None
+        return cubes
 
 
-Cli = ClFixHybridPressureCoord
+Cli = Cl
 
 
-Clw = ClFixHybridPressureCoord
-
-
-Ps = ClFixHybridPressureCoord
+Clw = Cl
 
 
 class Co2(Fix):

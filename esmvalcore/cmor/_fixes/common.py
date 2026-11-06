@@ -20,7 +20,7 @@ class ClFixHybridHeightCoord(Fix):
     """Fixes for ``cl`` regarding hybrid sigma height coordinates."""
 
     def fix_metadata(self, cubes):
-        """Fix hybrid sigma height coordinate and add pressure levels.
+        """Add pressure levels computed from the hybrid height coordinate.
 
         Parameters
         ----------
@@ -32,33 +32,20 @@ class ClFixHybridHeightCoord(Fix):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-
-        # Remove all existing aux_factories
-        for aux_factory in cube.aux_factories:
-            cube.remove_aux_factory(aux_factory)
-
-        # Fix bounds
-        fix_bounds(cube, cubes, ("lev", "b"))
-
-        # Add aux_factory again
-        height_coord_factory = iris.aux_factory.HybridHeightFactory(
-            delta=cube.coord(var_name="lev"),
-            sigma=cube.coord(var_name="b"),
-            orography=cube.coord(var_name="orog"),
-        )
-        cube.add_aux_factory(height_coord_factory)
-
-        # Add pressure level coordinate
         add_plev_from_altitude(cube)
-
         return iris.cube.CubeList([cube])
 
 
 class ClFixHybridPressureCoord(Fix):
-    """Fixes for ``cl`` regarding hybrid sigma pressure coordinates."""
+    """Fixes for ``cl`` in files that do not define the coordinate correctly.
+
+    Use this for files where the hybrid sigma pressure coordinate cannot be
+    read by :mod:`iris`. The coordinates ``ap``, ``b`` and ``ps`` need to be
+    added to the cube before calling :meth:`fix_metadata`.
+    """
 
     def fix_metadata(self, cubes):
-        """Fix hybrid sigma pressure coordinate.
+        """Add the bounds and the derived hybrid sigma pressure coordinate.
 
         Parameters
         ----------
@@ -70,45 +57,14 @@ class ClFixHybridPressureCoord(Fix):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-
-        # Remove all existing aux_factories
-        for aux_factory in cube.aux_factories:
-            cube.remove_aux_factory(aux_factory)
-
-        # Fix bounds
-        coords_to_fix = ["b"]
-        try:
-            cube.coord(var_name="a")
-            coords_to_fix.append("a")
-        except iris.exceptions.CoordinateNotFoundError:
-            coords_to_fix.append("ap")
-        fix_bounds(cube, cubes, coords_to_fix)
-
-        # Fix bounds for ap if only a is given in original file
-        # This was originally done by iris, but it has to be repeated since
-        # a has bounds now
-        ap_coord = cube.coord(var_name="ap")
-        if not ap_coord.has_bounds():
-            cube.remove_coord(ap_coord)
-            a_coord = cube.coord(var_name="a")
-            p0_coord = cube.coord(var_name="p0")
-            ap_coord = a_coord * p0_coord.points[0]
-            ap_coord.units = a_coord.units * p0_coord.units
-            ap_coord.rename("vertical pressure")
-            ap_coord.var_name = "ap"
-            cube.add_aux_coord(ap_coord, cube.coord_dims(a_coord))
-
-        # Add aux_factory again
-        pressure_coord_factory = iris.aux_factory.HybridPressureFactory(
-            delta=ap_coord,
-            sigma=cube.coord(var_name="b"),
-            surface_air_pressure=cube.coord(var_name="ps"),
+        fix_bounds(cube, cubes, ("ap", "b"))
+        cube.add_aux_factory(
+            iris.aux_factory.HybridPressureFactory(
+                delta=cube.coord(var_name="ap"),
+                sigma=cube.coord(var_name="b"),
+                surface_air_pressure=cube.coord(var_name="ps"),
+            ),
         )
-        cube.add_aux_factory(pressure_coord_factory)
-
-        # Remove attributes from Surface Air Pressure coordinate
-        cube.coord(var_name="ps").attributes = {}
-
         return iris.cube.CubeList([cube])
 
 

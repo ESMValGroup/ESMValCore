@@ -6,13 +6,9 @@ from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.mpi_esm1_2_hr import (
     AllVars,
-    Cl,
-    Cli,
-    Clw,
     SfcWind,
     Tas,
 )
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -123,39 +119,6 @@ def tas_cubes():
     )
     scalar_cube = iris.cube.Cube(0.0, var_name="ps")
     return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fixes = Fix.get_fixes("CMIP6", "MPI-ESM1-2-HR", "Amon", "cl")
-    assert Cl(None) in fixes
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
-
-
-def test_get_cli_fix():
-    """Test getting of fix."""
-    fixes = Fix.get_fixes("CMIP6", "MPI-ESM1-2-HR", "Amon", "cli")
-    assert Cli(None) in fixes
-
-
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert Cli is ClFixHybridPressureCoord
-
-
-def test_get_clw_fix():
-    """Test getting of fix."""
-    fixes = Fix.get_fixes("CMIP6", "MPI-ESM1-2-HR", "Amon", "clw")
-    assert Clw(None) in fixes
-
-
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert Clw is ClFixHybridPressureCoord
 
 
 def test_get_sfcwind_fix():
