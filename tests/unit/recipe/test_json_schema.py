@@ -428,40 +428,81 @@ def test_validate_recipe_arguments_invalid(
 
 
 @pytest.mark.parametrize(
-    ("definition", "keys", "anchor"),
+    ("definition", "key", "target"),
     [
-        ("documentation", (), "recipe-documentation"),
-        (None, ("datasets",), "datasets"),
-        ("facets", ("alias",), "dataset-alias"),
-        (None, ("preprocessors",), "preprocessors"),
-        (None, ("diagnostics",), "diagnostics"),
+        ("documentation", None, "overview.html#recipe-documentation"),
+        (None, "datasets", "overview.html#datasets"),
+        (None, "preprocessors", "overview.html#preprocessors"),
+        (None, "diagnostics", "overview.html#diagnostics"),
+        ("documentation", "authors", "overview.html#recipe-documentation"),
+        ("documentation", "maintainer", "overview.html#recipe-documentation"),
+        ("documentation", "projects", "overview.html#recipe-documentation"),
+        ("documentation", "references", "overview.html#recipe-documentation"),
+        ("diagnostic", "themes", "overview.html#diagnostics"),
+        ("diagnostic", "realms", "overview.html#diagnostics"),
         (
             "diagnostic",
-            ("additional_datasets",),
-            "diagnostic-and-variable-specific-datasets",
+            "variables",
+            "overview.html#variable-and-dataset-definitions",
         ),
+        ("diagnostic", "scripts", "overview.html#running-a-simple-diagnostic"),
+        (
+            "diagnostic",
+            "additional_datasets",
+            "overview.html#diagnostic-and-variable-specific-datasets",
+        ),
+        ("script", "script", "overview.html#running-a-simple-diagnostic"),
+        ("script", "ancestors", "overview.html#ancestor-tasks"),
+        ("variable", "preprocessor", "overview.html#preprocessors"),
         (
             "variable",
-            ("additional_datasets",),
-            "diagnostic-and-variable-specific-datasets",
+            "additional_datasets",
+            "overview.html#diagnostic-and-variable-specific-datasets",
+        ),
+        ("preprocessor", "custom_order", "overview.html#preprocessors"),
+        ("facets", "alias", "overview.html#dataset-alias"),
+        (
+            "facets",
+            "ensemble",
+            (
+                "overview.html"
+                "#short-notation-of-ensemble-members-and-sub-experiments"
+            ),
+        ),
+        ("facets", "domain", "overview.html#cordex-datasets"),
+        ("facets", "driver", "overview.html#cordex-datasets"),
+        ("facets", "rcm_version", "overview.html#cordex-datasets"),
+        ("facets", "timerange", "overview.html#timerange-examples"),
+        ("facets", "derive", "preprocessor.html#derive"),
+        ("facets", "force_derivation", "preprocessor.html#derive"),
+        (
+            "facets",
+            "supplementary_variables",
+            "overview.html#supplementary-variables",
         ),
     ],
 )
 def test_recipe_item_documentation_link(
     schema: dict[str, Any],
     definition: str | None,
-    keys: tuple[str, ...],
-    anchor: str,
+    key: str | None,
+    target: str,
 ) -> None:
     item = schema if definition is None else schema["definitions"][definition]
-    for key in keys:
+    if key is not None:
         item = item["properties"][key]
     assert item["description"]
-    assert item["markdownDescription"].startswith(item["description"])
     assert item["markdownDescription"].endswith(
         "(https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/"
-        f"overview.html#{anchor}).",
+        f"{target}).",
     )
+    assert "\n\nRefer to [" in item["markdownDescription"]
+
+
+def test_documentation_link_keeps_markdown(schema: dict[str, Any]) -> None:
+    timerange = schema["definitions"]["facets"]["properties"]["timerange"]
+    assert "`" not in timerange["description"]
+    assert "`1990/2000`" in timerange["markdownDescription"]
 
 
 def test_step_schema_documentation_link(schema: dict[str, Any]) -> None:

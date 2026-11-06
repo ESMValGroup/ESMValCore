@@ -727,42 +727,66 @@ def _recipe_documentation_url(step: str) -> str:
     return _documentation_url(f"recipe/preprocessor.html#{anchor}")
 
 
-def _described(description: str, topic: str, anchor: str) -> JSONSchema:
-    """Describe a recipe item, with a link to the recipe documentation.
+# Places in the recipe documentation that several items link to.
+_CORDEX_DOCS = ("CORDEX datasets", "cordex-datasets")
+_DERIVATION_DOCS = ("how to derive a variable", "derive", "preprocessor")
+_DIAGNOSTICS_DOCS = ("the `diagnostics` section of a recipe", "diagnostics")
+_DOCUMENTATION_DOCS = (
+    "the `documentation` section of a recipe",
+    "recipe-documentation",
+)
+_PREPROCESSORS_DOCS = (
+    "the `preprocessors` section of a recipe",
+    "preprocessors",
+)
+_SCRIPTS_DOCS = ("how to run a diagnostic", "running-a-simple-diagnostic")
+
+
+def _linked(
+    schema: JSONSchema,
+    topic: str,
+    anchor: str,
+    page: str = "overview",
+) -> JSONSchema:
+    """Add a link to the recipe documentation to the description of a schema.
 
     Editors show the ``markdownDescription`` instead of the ``description``.
     """
-    url = _documentation_url(f"recipe/overview.html#{anchor}")
+    url = _documentation_url(f"recipe/{page}.html#{anchor}")
+    markdown = schema.get("markdownDescription", schema["description"])
     return {
-        "description": description,
-        "markdownDescription": f"{description}\n\nRefer to [{topic}]({url}).",
+        **schema,
+        "markdownDescription": f"{markdown}\n\nRefer to [{topic}]({url}).",
     }
 
 
 def _additional_datasets_schema(description: str) -> JSONSchema:
     """Create a JSON Schema for the ``additional_datasets`` of a recipe item."""
-    return {
-        "type": "array",
-        "items": {"$ref": "#/definitions/dataset"},
-        **_described(
-            description,
-            "how to use `additional_datasets` in a recipe",
-            "diagnostic-and-variable-specific-datasets",
-        ),
-    }
+    return _linked(
+        {
+            "type": "array",
+            "items": {"$ref": "#/definitions/dataset"},
+            "description": description,
+        },
+        "how to use `additional_datasets` in a recipe",
+        "diagnostic-and-variable-specific-datasets",
+    )
 
 
 def _preprocessor_schema() -> JSONSchema:
     """Create a JSON Schema for a preprocessor."""
     properties: JSONSchema = {
-        "custom_order": {
-            "type": "boolean",
-            "default": False,
-            "description": (
-                "Apply the preprocessor steps in the order in which they "
-                "are listed instead of the default order."
-            ),
-        },
+        "custom_order": _linked(
+            {
+                "type": "boolean",
+                "default": False,
+                "description": (
+                    "Apply the preprocessor steps in the order in which they "
+                    "are listed instead of the default order."
+                ),
+            },
+            *_PREPROCESSORS_DOCS,
+        ),
     }
     for step in DEFAULT_ORDER:
         properties[step] = {"$ref": f"#/definitions/steps/{step}"}
@@ -1133,33 +1157,49 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
             "exp": _string_or_list(
                 "Experiment, or a list of experiments to concatenate.",
             ),
-            "ensemble": _string_or_list("Ensemble member(s)."),
+            "ensemble": _linked(
+                _string_or_list("Ensemble member(s)."),
+                "the short notation of ensemble members",
+                "short-notation-of-ensemble-members-and-sub-experiments",
+            ),
             "activity": _facet_value(
                 "Activity, for example `CMIP` or `ScenarioMIP`.",
             ),
             "branding_suffix": _facet_value(
                 "Variable branding suffix (CMIP7).",
             ),
-            "domain": _facet_value("CORDEX domain, for example `EUR-11`."),
-            "driver": _facet_value(
-                "Driving global model of a CORDEX dataset.",
+            "domain": _linked(
+                _facet_value("CORDEX domain, for example `EUR-11`."),
+                *_CORDEX_DOCS,
+            ),
+            "driver": _linked(
+                _facet_value("Driving global model of a CORDEX dataset."),
+                *_CORDEX_DOCS,
             ),
             "frequency": _facet_value("Frequency, for example `mon`."),
             "grid": _facet_value("Grid label, for example `gn`."),
             "institute": _facet_value("Institute that produced the data."),
             "product": _facet_value("Product (CMIP5)."),
-            "rcm_version": _facet_value(
-                "Version of the regional climate model (CORDEX).",
+            "rcm_version": _linked(
+                _facet_value(
+                    "Version of the regional climate model (CORDEX).",
+                ),
+                *_CORDEX_DOCS,
             ),
             "realm": _facet_value("Realm, for example `atmos`."),
             "region": _facet_value("Region (CMIP7)."),
             "version": _facet_value("Version of the dataset."),
-            "timerange": {
-                "type": ["string", "integer"],
-                **_markdown_description(
-                    "Time range in ISO 8601 format, for example `1990/2000`.",
-                ),
-            },
+            "timerange": _linked(
+                {
+                    "type": ["string", "integer"],
+                    **_markdown_description(
+                        "Time range in ISO 8601 format, for example "
+                        "`1990/2000`.",
+                    ),
+                },
+                "examples of time ranges",
+                "timerange-examples",
+            ),
             "start_year": {
                 **year,
                 "description": "First year. Alternative to `timerange`.",
@@ -1168,43 +1208,57 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
                 **year,
                 "description": "Last year. Alternative to `timerange`.",
             },
-            "alias": {
-                "type": "string",
-                **_described(
-                    "Name of the dataset to use in diagnostics.",
-                    "how to use `alias` in a recipe",
-                    "dataset-alias",
-                ),
-            },
+            "alias": _linked(
+                {
+                    "type": "string",
+                    "description": (
+                        "Name of the dataset to use in diagnostics."
+                    ),
+                },
+                "how to use `alias` in a recipe",
+                "dataset-alias",
+            ),
             "tier": _tier_schema(),
             "type": _type_schema(),
-            "derive": {
-                "type": "boolean",
-                "description": "Derive the variable from other variables.",
-            },
-            "force_derivation": {
-                "type": "boolean",
-                "description": (
-                    "Derive the variable even if it is available directly."
-                ),
-            },
-            "supplementary_variables": {
-                "type": "array",
-                "items": {
-                    "allOf": [{"$ref": "#/definitions/facets"}],
-                    "properties": {
-                        "skip": {
-                            "type": "boolean",
-                            "description": (
-                                "Do not add this supplementary variable."
-                            ),
+            "derive": _linked(
+                {
+                    "type": "boolean",
+                    "description": (
+                        "Derive the variable from other variables."
+                    ),
+                },
+                *_DERIVATION_DOCS,
+            ),
+            "force_derivation": _linked(
+                {
+                    "type": "boolean",
+                    "description": (
+                        "Derive the variable even if it is available directly."
+                    ),
+                },
+                *_DERIVATION_DOCS,
+            ),
+            "supplementary_variables": _linked(
+                {
+                    "type": "array",
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/facets"}],
+                        "properties": {
+                            "skip": {
+                                "type": "boolean",
+                                "description": (
+                                    "Do not add this supplementary variable."
+                                ),
+                            },
                         },
                     },
+                    "description": (
+                        "Supplementary variables, for example cell measures."
+                    ),
                 },
-                "description": (
-                    "Supplementary variables, for example cell measures."
-                ),
-            },
+                "how to define supplementary variables",
+                "supplementary-variables",
+            ),
         },
     }
 
@@ -1220,10 +1274,13 @@ def _variable_schema() -> JSONSchema:
     return {
         "allOf": [{"$ref": "#/definitions/facets"}],
         "properties": {
-            "preprocessor": {
-                "type": "string",
-                "description": "Name of the preprocessor to apply.",
-            },
+            "preprocessor": _linked(
+                {
+                    "type": "string",
+                    "description": "Name of the preprocessor to apply.",
+                },
+                *_PREPROCESSORS_DOCS,
+            ),
             "reference_dataset": {
                 "type": "string",
                 "description": "Reference dataset for this variable.",
@@ -1243,17 +1300,24 @@ def _script_schema() -> JSONSchema:
     return {
         "type": "object",
         "properties": {
-            "script": {
-                "type": "string",
-                "description": (
-                    "Path to the diagnostic script, relative to the "
-                    "diagnostics directory or absolute."
+            "script": _linked(
+                {
+                    "type": "string",
+                    "description": (
+                        "Path to the diagnostic script, relative to the "
+                        "diagnostics directory or absolute."
+                    ),
+                },
+                *_SCRIPTS_DOCS,
+            ),
+            "ancestors": _linked(
+                _string_list(
+                    "Tasks whose output this script uses, as "
+                    "`diagnostic/variable_group` or `diagnostic/script`. "
+                    "Wildcards are allowed.",
                 ),
-            },
-            "ancestors": _string_list(
-                "Tasks whose output this script uses, as "
-                "`diagnostic/variable_group` or `diagnostic/script`. "
-                "Wildcards are allowed.",
+                "ancestor tasks",
+                "ancestor-tasks",
             ),
         },
         "required": ["script"],
@@ -1269,23 +1333,36 @@ def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
                 "type": ["string", "null"],
                 "description": "Description of the diagnostic.",
             },
-            "themes": _names_list("Themes.", "themes", names),
-            "realms": _names_list("Realms.", "realms", names),
-            "variables": {
-                "type": ["object", "null"],
-                "additionalProperties": {
-                    "anyOf": [
-                        {"$ref": "#/definitions/variable"},
-                        {"type": "null"},
-                    ],
+            "themes": _linked(
+                _names_list("Themes.", "themes", names),
+                *_DIAGNOSTICS_DOCS,
+            ),
+            "realms": _linked(
+                _names_list("Realms.", "realms", names),
+                *_DIAGNOSTICS_DOCS,
+            ),
+            "variables": _linked(
+                {
+                    "type": ["object", "null"],
+                    "additionalProperties": {
+                        "anyOf": [
+                            {"$ref": "#/definitions/variable"},
+                            {"type": "null"},
+                        ],
+                    },
+                    "description": "Variable groups to preprocess.",
                 },
-                "description": "Variable groups to preprocess.",
-            },
-            "scripts": {
-                "type": ["object", "null"],
-                "additionalProperties": {"$ref": "#/definitions/script"},
-                "description": "Diagnostic scripts to run.",
-            },
+                "how variables and datasets are combined",
+                "variable-and-dataset-definitions",
+            ),
+            "scripts": _linked(
+                {
+                    "type": ["object", "null"],
+                    "additionalProperties": {"$ref": "#/definitions/script"},
+                    "description": "Diagnostic scripts to run.",
+                },
+                *_SCRIPTS_DOCS,
+            ),
             "additional_datasets": _additional_datasets_schema(
                 "Datasets to use for this diagnostic only.",
             ),
@@ -1296,45 +1373,58 @@ def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
 
 
 def _documentation_schema(names: dict[str, _Names]) -> JSONSchema:
-    return {
-        "type": "object",
-        # This is here because a draft-07 $ref ignores the keys next to it.
-        **_described(
-            "Title, description, authors, and other details of the recipe.",
-            "the `documentation` section of a recipe",
-            "recipe-documentation",
-        ),
-        "properties": {
-            "title": {"type": "string", "description": "Recipe title."},
-            "description": {
-                "type": "string",
-                "description": "Description of the recipe.",
+    return _linked(
+        {
+            "type": "object",
+            # This is here because a draft-07 $ref ignores the keys next to it.
+            "description": (
+                "Title, description, authors, and other details of the recipe."
+            ),
+            "properties": {
+                "title": {"type": "string", "description": "Recipe title."},
+                "description": {
+                    "type": "string",
+                    "description": "Description of the recipe.",
+                },
+                "authors": _linked(
+                    _names_list(
+                        "Authors, as defined in `config-references.yml`.",
+                        "authors",
+                        names,
+                        min_items=1,
+                    ),
+                    *_DOCUMENTATION_DOCS,
+                ),
+                "maintainer": _linked(
+                    _names_list(
+                        "Maintainers, as defined in `config-references.yml`.",
+                        "authors",
+                        names,
+                    ),
+                    *_DOCUMENTATION_DOCS,
+                ),
+                "projects": _linked(
+                    _names_list(
+                        "Projects, as defined in `config-references.yml`.",
+                        "projects",
+                        names,
+                    ),
+                    *_DOCUMENTATION_DOCS,
+                ),
+                "references": _linked(
+                    _names_list(
+                        "References, as bibtex keys.",
+                        "references",
+                        names,
+                    ),
+                    *_DOCUMENTATION_DOCS,
+                ),
             },
-            "authors": _names_list(
-                "Authors, as defined in `config-references.yml`.",
-                "authors",
-                names,
-                min_items=1,
-            ),
-            "maintainer": _names_list(
-                "Maintainers, as defined in `config-references.yml`.",
-                "authors",
-                names,
-            ),
-            "projects": _names_list(
-                "Projects, as defined in `config-references.yml`.",
-                "projects",
-                names,
-            ),
-            "references": _names_list(
-                "References, as bibtex keys.",
-                "references",
-                names,
-            ),
+            "required": ["title", "description", "authors"],
+            "additionalProperties": False,
         },
-        "required": ["title", "description", "authors"],
-        "additionalProperties": False,
-    }
+        *_DOCUMENTATION_DOCS,
+    )
 
 
 def generate_recipe_schema() -> JSONSchema:
@@ -1367,35 +1457,37 @@ def _recipe_schema(
         "type": "object",
         "properties": {
             "documentation": {"$ref": "#/definitions/documentation"},
-            "datasets": {
-                "type": "array",
-                "items": {"$ref": "#/definitions/dataset"},
-                **_described(
-                    "Datasets to use in all diagnostics.",
-                    "the `datasets` section of a recipe",
-                    "datasets",
-                ),
-            },
-            "preprocessors": {
-                "type": "object",
-                "additionalProperties": {
-                    "$ref": "#/definitions/preprocessor",
+            "datasets": _linked(
+                {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/dataset"},
+                    "description": "Datasets to use in all diagnostics.",
                 },
-                **_described(
-                    "Preprocessors that variables can refer to.",
-                    "the `preprocessors` section of a recipe",
-                    "preprocessors",
-                ),
-            },
-            "diagnostics": {
-                "type": ["object", "null"],
-                "additionalProperties": {"$ref": "#/definitions/diagnostic"},
-                **_described(
-                    "Diagnostics to run.",
-                    "the `diagnostics` section of a recipe",
-                    "diagnostics",
-                ),
-            },
+                "the `datasets` section of a recipe",
+                "datasets",
+            ),
+            "preprocessors": _linked(
+                {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/preprocessor",
+                    },
+                    "description": (
+                        "Preprocessors that variables can refer to."
+                    ),
+                },
+                *_PREPROCESSORS_DOCS,
+            ),
+            "diagnostics": _linked(
+                {
+                    "type": ["object", "null"],
+                    "additionalProperties": {
+                        "$ref": "#/definitions/diagnostic",
+                    },
+                    "description": "Diagnostics to run.",
+                },
+                *_DIAGNOSTICS_DOCS,
+            ),
         },
         "required": ["documentation", "diagnostics"],
         "definitions": {
