@@ -64,6 +64,8 @@ def test_cl_fix_file(tmp_path: Path, test_data_path: Path) -> None:
         "atmosphere_hybrid_sigma_pressure_coordinate"
     )
     assert lev_coord.units == "1"
+    np.testing.assert_allclose(lev_coord.points, [1.0, 3.0])
+    np.testing.assert_allclose(lev_coord.bounds, [[-1.0, 2.0], [2.0, 5.0]])
     np.testing.assert_allclose(a_coord.points, [1.0, 2.0])
     np.testing.assert_allclose(a_coord.bounds, [[0.0, 1.5], [1.5, 3.0]])
     np.testing.assert_allclose(b_coord.points, [0.0, 1.0])

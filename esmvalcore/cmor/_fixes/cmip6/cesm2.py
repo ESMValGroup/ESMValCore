@@ -42,6 +42,13 @@ class Cl(Fix):
         lev.set_attrval("units", "1")
         dataset.variables["lev_bnds"].attributes.pop("units")
 
+    @staticmethod
+    def _fix_bounds_order(dataset: ncdata.NcData) -> None:
+        """Correct the order of the bounds of ``a`` and ``b``."""
+        for var_name in ("a_bnds", "b_bnds"):
+            bounds = dataset.variables[var_name]
+            bounds.data = bounds.data[::-1, :]
+
     def fix_file(
         self,
         file: Path,
@@ -52,26 +59,19 @@ class Cl(Fix):
 
         Adds missing ``formula_terms`` attribute to file.
 
-        Note
-        ----
-        Fixing this with :mod:`iris` in ``fix_metadata`` or ``fix_data`` is
-        **not** possible, since the bounds of the vertical coordinates ``a``
-        and ``b`` are not present in the loaded :class:`iris.cube.CubeList`,
-        even when :func:`iris.load_raw` is used.
-
         Parameters
         ----------
-        file : str
+        file:
             Path to the original file.
-        output_dir: Path
+        output_dir:
             Output directory for fixed files.
-        add_unique_suffix: bool, optional (default: False)
+        add_unique_suffix:
             Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
-        str
-            Path to the fixed file.
+        :
+            The fixed cube.
 
         """
         dataset = ncdata.netcdf4.from_nc4(
@@ -88,12 +88,7 @@ class Cl(Fix):
             },
         )
         self._fix_formula_terms(dataset)
-
-        # Correct order of bounds data
-        a_bnds = dataset.variables["a_bnds"]
-        a_bnds.data = a_bnds.data[::-1, :]
-        b_bnds = dataset.variables["b_bnds"]
-        b_bnds.data = b_bnds.data[::-1, :]
+        self._fix_bounds_order(dataset)
 
         # Correct lev and lev_bnds data
         lev = dataset.variables["lev"]
