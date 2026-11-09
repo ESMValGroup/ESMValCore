@@ -3,15 +3,14 @@
 import iris
 import numpy as np
 
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
-class Cl(ClFixHybridHeightCoord):
+class Cl(Fix):
     """Fixes for cl."""
 
     def fix_metadata(self, cubes):
-        """Fix hybrid coefficient b, then call fix_metadata from parent.
+        """Fix hybrid coefficient b.
 
         Parameters
         ----------
@@ -109,7 +108,7 @@ class Cl(ClFixHybridHeightCoord):
                 ]
             except iris.exceptions.CoordinateNotFoundError:
                 pass
-        return super().fix_metadata(cubes)
+        return cubes
 
 
 Cli = Cl

@@ -5,43 +5,10 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.kace_1_0_g import AllVars, Cl, Cli, Clw, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord, OceanFixGrid
+from esmvalcore.cmor._fixes.cmip6.kace_1_0_g import AllVars, Tos
+from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "KACE-1-0-G", "Amon", "cl")
-    assert fix == [Cl(None), AllVars(None), GenericFix(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridHeightCoord
-
-
-def test_get_cli_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "KACE-1-0-G", "Amon", "cli")
-    assert fix == [Cli(None), AllVars(None), GenericFix(None)]
-
-
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert Cli is ClFixHybridHeightCoord
-
-
-def test_get_clw_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "KACE-1-0-G", "Amon", "clw")
-    assert fix == [Clw(None), AllVars(None), GenericFix(None)]
-
-
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert Clw is ClFixHybridHeightCoord
 
 
 def test_get_tos_fix():

@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -32,9 +31,6 @@ class AllVars(Fix):
                 lat.bounds = np.clip(lat.core_bounds(), -90.0, 90.0)
 
         return cubes
-
-
-Cl = ClFixHybridHeightCoord
 
 
 class O2(Fix):

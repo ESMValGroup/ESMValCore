@@ -7,33 +7,9 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
-from .shared import (
-    add_plev_from_altitude,
-    add_scalar_areatype_coord,
-    fix_bounds,
-)
+from .shared import add_scalar_areatype_coord, fix_bounds
 
 logger = logging.getLogger(__name__)
-
-
-class ClFixHybridHeightCoord(Fix):
-    """Fixes for ``cl`` regarding hybrid sigma height coordinates."""
-
-    def fix_metadata(self, cubes):
-        """Add pressure levels computed from the hybrid height coordinate.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes which need to be fixed.
-
-        Returns
-        -------
-        iris.cube.CubeList
-        """
-        cube = self.get_cube_from_list(cubes)
-        add_plev_from_altitude(cube)
-        return iris.cube.CubeList([cube])
 
 
 class ClFixHybridPressureCoord(Fix):
