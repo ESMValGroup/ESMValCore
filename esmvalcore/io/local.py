@@ -981,6 +981,11 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
     def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
+        Cubes that iris loads for the reference surface of a derived
+        coordinate (e.g., surface air pressure for hybrid pressure
+        coordinates) are not returned, because they duplicate the auxiliary
+        coordinate of the cube that uses them.
+
         Returns
         -------
         iris.cube.CubeList

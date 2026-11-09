@@ -48,6 +48,14 @@ class DataElement(Protocol):
     def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
+        Iris loads the reference surface of a derived coordinate (e.g.,
+        surface air pressure for hybrid pressure coordinates) both as an
+        auxiliary coordinate of the cube that uses it and as a separate cube.
+        Implementations should not return the separate cube, because it is a
+        duplicate. :func:`esmvalcore.iris_helpers.dataset_to_iris` takes care
+        of this when converting an :class:`xarray.Dataset` or
+        :class:`ncdata.NcData` object.
+
         Returns
         -------
         iris.cube.CubeList
