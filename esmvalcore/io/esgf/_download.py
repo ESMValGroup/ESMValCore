@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import contextlib
-import datetime
+import datetime as dt
 import functools
 import hashlib
 import itertools
@@ -23,7 +23,6 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
-from esmvalcore.config import CFG
 from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
@@ -137,7 +136,7 @@ def get_preferred_hosts():
 
     # Figure out which hosts recently returned an error
     mtime = HOSTS_FILE.stat().st_mtime
-    now = datetime.datetime.now().timestamp()
+    now = dt.datetime.now().timestamp()
     age = now - mtime
     if age > 60 * 60:
         # Ignore errors older than an hour
@@ -217,7 +216,9 @@ class ESGFFile(DataElement):
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
         self.dest_folder = (
-            CFG.get("download_dir") if dest_folder is None else dest_folder
+            Path("~/climate_data").expanduser()
+            if dest_folder is None
+            else dest_folder
         )
         self._attributes: dict[str, Any] | None = None
 
@@ -367,9 +368,7 @@ class ESGFFile(DataElement):
             keys = keys[1:]
         # Read values from dataset_id
         # Pick the first dataset_id if there are differences in case
-        dataset_id = sorted(
-            r.json["dataset_id"].split("|")[0] for r in results
-        )[0]
+        dataset_id = min(r.json["dataset_id"].split("|")[0] for r in results)
         values = dataset_id.split(".")[1:]
         facets = {}
         if len(keys) == len(values):
@@ -394,9 +393,7 @@ class ESGFFile(DataElement):
     def _get_dataset_id(results):
         """Simplify dataset_id so it is always composed of the same facets."""
         # Pick the first dataset_id if there are differences in case
-        dataset_id = sorted(
-            r.json["dataset_id"].split("|")[0] for r in results
-        )[0]
+        dataset_id = min(r.json["dataset_id"].split("|")[0] for r in results)
 
         project = results[0].json["project"][0]
         if project != "obs4MIPs":
@@ -523,7 +520,7 @@ class ESGFFile(DataElement):
         tmp_file = self._tmp_local_file(local_file)
 
         logger.debug("Downloading %s to %s", url, tmp_file)
-        start_time = datetime.datetime.now()
+        start_time = dt.datetime.now()
         response = requests.get(url, stream=True, timeout=TIMEOUT)
         response.raise_for_status()
         with tmp_file.open("wb") as file:
@@ -535,7 +532,7 @@ class ESGFFile(DataElement):
                     hasher.update(chunk)
                 file.write(chunk)
 
-        duration = datetime.datetime.now() - start_time
+        duration = dt.datetime.now() - start_time
 
         if hasher is None:
             logger.warning(
@@ -613,7 +610,7 @@ def download(files, dest_folder=None, n_jobs=4):
         file.download(dest_folder)
 
     total_size = 0
-    start_time = datetime.datetime.now()
+    start_time = dt.datetime.now()
 
     errors = []
     random.shuffle(files)
@@ -636,7 +633,7 @@ def download(files, dest_folder=None, n_jobs=4):
             else:
                 total_size += file.size
 
-    duration = datetime.datetime.now() - start_time
+    duration = dt.datetime.now() - start_time
     logger.info(
         "Downloaded %s in %s (%s/s)",
         format_size(total_size),

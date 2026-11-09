@@ -25,8 +25,6 @@ def test_config_class():
         "remove_preproc_dir": True,
         "max_parallel_tasks": None,
         "profile_diagnostic": False,
-        "rootpath": {"CMIP6": "~/data/CMIP6"},
-        "drs": {"CMIP6": "default"},
     }
 
     cfg = Config(config)
@@ -43,48 +41,6 @@ def test_config_update():
 
     with pytest.raises(InvalidConfigParameter):
         config.update(fail_dict)
-
-
-@pytest.mark.parametrize("update_format", ["mapping", "kwargs", "tuple"])
-def test_config_update_config_developer_set_last(
-    monkeypatch: pytest.MonkeyPatch,
-    update_format: str,
-) -> None:
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    new_config = {
-        "config_developer_file": Path(esmvalcore.__file__).parent
-        / "config-developer.yml",
-        "projects": {
-            "CMIP6": {
-                "cmor_table": {
-                    "type": "esmvalcore.cmor.table.NoInfo",
-                },
-            },
-        },
-    }
-    config = Config({"output_dir": "directory"})
-    if update_format == "mapping":
-        config.update(new_config)
-    elif update_format == "kwargs":
-        config.update(**new_config)
-    elif update_format == "tuple":
-        config.update(tuple(new_config.items()))
-
-    assert len(esmvalcore.cmor.table.CMOR_TABLES) > 1
-    assert "CMIP6" in esmvalcore.cmor.table.CMOR_TABLES
-    assert isinstance(
-        esmvalcore.cmor.table.CMOR_TABLES["CMIP6"],
-        esmvalcore.cmor.table.CMIP6Info,
-    )
-
-
-def test_config_update_too_many_args() -> None:
-    config = Config({"output_dir": "directory"})
-    with pytest.raises(
-        TypeError,
-        match=r"Expected at most 1 positional argument, got 2",
-    ):
-        config.update(1, 2)
 
 
 def test_set_bad_item():
@@ -212,7 +168,7 @@ def _setup_config_dirs(tmp_path):
         dedent(
             """
         output_file_type: '1'
-        rootpath:
+        logging:
           default: '1'
           '1': '1'
         """,
@@ -222,7 +178,7 @@ def _setup_config_dirs(tmp_path):
         dedent(
             """
         output_file_type: '2a'
-        rootpath:
+        logging:
           default: '2a'
           '2': '2a'
         """,
@@ -232,7 +188,7 @@ def _setup_config_dirs(tmp_path):
         dedent(
             """
         output_file_type: '2b'
-        rootpath:
+        logging:
           default: '2b'
           '2': '2b'
         """,
@@ -241,10 +197,10 @@ def _setup_config_dirs(tmp_path):
 
 
 @pytest.mark.parametrize(
-    ("dirs", "output_file_type", "rootpath"),
+    ("dirs", "output_file_type", "logging"),
     [
-        ([], "png", {"default": "~/climate_data"}),
-        (["/this/path/does/not/exist"], "png", {"default": "~/climate_data"}),
+        ([], "png", {}),
+        (["/this/path/does/not/exist"], "png", {}),
         (["{tmp_path}/config1"], "1", {"default": "1", "1": "1"}),
         (
             ["{tmp_path}/config1", "/this/path/does/not/exist"],
@@ -263,28 +219,23 @@ def _setup_config_dirs(tmp_path):
         ),
     ],
 )
-def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
+def test_load_from_dirs(dirs, output_file_type, logging, tmp_path):
     """Test `Config.load_from_dirs`."""
     _setup_config_dirs(tmp_path)
 
     config_dirs = []
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
-    for name, path in rootpath.items():
-        abspath = Path(path).expanduser().absolute()
-        rootpath[name] = [abspath]
 
     cfg = Config()
     assert not cfg
-    cfg["rootpath"] = {"X": "x"}
+    cfg["logging"] = {"X": "x"}
     cfg["search_data"] = "complete"
 
     cfg.load_from_dirs(config_dirs)
 
     assert cfg["output_file_type"] == output_file_type
-    if any(Path(d).exists() for d in config_dirs):
-        # Legacy setting "rootpath" is not available in default config.
-        assert cfg["rootpath"] == rootpath
+    assert cfg["logging"] == {"log_progress_interval": 0.0, **logging}
     assert cfg["search_data"] == "quick"
 
 
@@ -333,7 +284,7 @@ def test_get_all_config_sources(cli_config_dir, output, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("dirs", "output_file_type", "rootpath"),
+    ("dirs", "output_file_type", "logging"),
     [
         ([], None, {"X": "x"}),
         (["/this/path/does/not/exist"], None, {"X": "x"}),
@@ -355,20 +306,17 @@ def test_get_all_config_sources(cli_config_dir, output, monkeypatch):
         ),
     ],
 )
-def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
+def test_update_from_dirs(dirs, output_file_type, logging, tmp_path):
     """Test `Config.update_from_dirs`."""
     _setup_config_dirs(tmp_path)
 
     config_dirs = []
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
-    for name, path in rootpath.items():
-        abspath = Path(path).expanduser().absolute()
-        rootpath[name] = [abspath]
 
     cfg = Config()
     assert not cfg
-    cfg["rootpath"] = {"X": "x"}
+    cfg["logging"] = {"X": "x"}
     cfg["search_data"] = "quick"
 
     cfg.update_from_dirs(config_dirs)
@@ -377,7 +325,7 @@ def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
         assert "output_file_type" not in cfg
     else:
         assert cfg["output_file_type"] == output_file_type
-    assert cfg["rootpath"] == rootpath
+    assert cfg["logging"] == logging
     assert cfg["search_data"] == "quick"
 
 
@@ -386,13 +334,13 @@ def test_nested_update():
     cfg = Config()
     assert not cfg
 
-    cfg["drs"] = {"X": "x", "Z": "z"}
+    cfg["logging"] = {"X": "x", "Z": "z"}
     cfg["search_data"] = "quick"
 
-    cfg.nested_update({"drs": {"Y": "y", "X": "xx"}, "max_years": 1})
+    cfg.nested_update({"logging": {"Y": "y", "X": "xx"}, "max_years": 1})
 
     assert len(cfg) == 3
-    assert cfg["drs"] == {"Y": "y", "X": "xx", "Z": "z"}
+    assert cfg["logging"] == {"Y": "y", "X": "xx", "Z": "z"}
     assert cfg["search_data"] == "quick"
     assert cfg["max_years"] == 1
 

@@ -9,6 +9,7 @@ import logging
 import re
 import string
 from collections.abc import Sequence
+from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Any
@@ -22,7 +23,6 @@ from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -297,15 +297,6 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
         .get(dataset.facets["project"], {})
         .get("preprocessor_filename_template", default_template)
     )
-    if template is default_template:
-        try:
-            # Use config-developer.yml for backward compatibility, remove in v2.16.
-            return _get_output_file(
-                dataset.facets,
-                dataset.session.preproc_dir,
-            )
-        except RecipeError:
-            pass
 
     def normalize(value: FacetValue) -> str:
         """Normalize a facet value to a string that can be used in a filename."""
@@ -371,6 +362,47 @@ def _get_itype(step: str) -> str:
     return next(iter(inspect.signature(function).parameters))
 
 
+@lru_cache
+def _get_signature(
+    step: str,
+) -> tuple[inspect.Signature, list[str], bool, int | None]:
+    """Get the signature of a preprocessor function."""
+    function = globals()[step]
+    # Note: below, we do not use inspect.getfullargspec since this does not
+    # work with decorated functions. On the other hand, inspect.signature
+    # behaves correctly with properly decorated functions (those that use
+    # functools.wraps).
+    signature = inspect.signature(function)
+    args = [
+        n
+        for (n, p) in signature.parameters.items()
+        if p.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ][1:]
+
+    # Set up check for invalid arguments (only possible if no *args or **kwargs
+    # allowed)
+    var_kinds = [p.kind for p in signature.parameters.values()]
+    check_args = not any(
+        [
+            inspect.Parameter.VAR_POSITIONAL in var_kinds,
+            inspect.Parameter.VAR_KEYWORD in var_kinds,
+        ],
+    )
+
+    # Set up check for missing arguments
+    defaults = [
+        p.default
+        for p in signature.parameters.values()
+        if p.default is not inspect.Parameter.empty
+    ]
+    end = None if not defaults else -len(defaults)
+    return signature, args, check_args, end
+
+
 def check_preprocessor_settings(settings: dict[str, Any]) -> None:
     """Check preprocessor settings."""
     for step, kwargs in settings.items():
@@ -381,32 +413,9 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
             )
             raise ValueError(msg)
 
-        function = globals()[step]
+        signature, args, check_args, end = _get_signature(step)
 
-        # Note: below, we do not use inspect.getfullargspec since this does not
-        # work with decorated functions. On the other hand, inspect.signature
-        # behaves correctly with properly decorated functions (those that use
-        # functools.wraps).
-        signature = inspect.signature(function)
-        args = [
-            n
-            for (n, p) in signature.parameters.items()
-            if p.kind
-            in (
-                inspect.Parameter.POSITIONAL_ONLY,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            )
-        ][1:]
-
-        # Check for invalid arguments (only possible if no *args or **kwargs
-        # allowed)
-        var_kinds = [p.kind for p in signature.parameters.values()]
-        check_args = not any(
-            [
-                inspect.Parameter.VAR_POSITIONAL in var_kinds,
-                inspect.Parameter.VAR_KEYWORD in var_kinds,
-            ],
-        )
+        # Check for invalid arguments (only possible if no *args or **kwargs allowed)
         if check_args:
             invalid_args = set(kwargs) - set(args)
             if invalid_args:
@@ -418,12 +427,6 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
                 raise ValueError(msg)
 
         # Check for missing arguments
-        defaults = [
-            p.default
-            for p in signature.parameters.values()
-            if p.default is not inspect.Parameter.empty
-        ]
-        end = None if not defaults else -len(defaults)
         missing_args = set(args[:end]) - set(kwargs)
         if missing_args:
             msg = (
@@ -656,13 +659,12 @@ class PreprocessorFile(TrackedFile):
         if settings is None:
             settings = {}
 
-        # Create a copy of any datasets in settings. This drops the information
-        # in Dataset.files and avoids issues with deepcopying and pickling
-        # those files. This is needed because
-        # esmvalcore.io.intake_esgf.IntakeESGFDataset objects use a
-        # cached_requests.CachedSession object that cannot be deepcopied or
-        # pickled.
-        settings = {
+        # Create a copy of any datasets in settings and deepcopy the rest.
+        # This avoids deepcopying the large session object attached to each
+        # dataset, which is slow for recipes with many datasets.
+        # This drops the information in Dataset.files and avoids potential
+        # issues with deepcopying and pickling those file objects.
+        self.settings = {
             fn: {
                 arg: (
                     value.copy() if is_dataset(value) else copy.deepcopy(value)
@@ -671,7 +673,6 @@ class PreprocessorFile(TrackedFile):
             }
             for fn, kwargs in settings.items()
         }
-        self.settings = copy.deepcopy(settings)
         if attributes is None:
             attributes = {}
         attributes = copy.deepcopy(attributes)

@@ -389,6 +389,29 @@ class Test:
             np.array([3.5], dtype=np.float32).reshape(1, 1),
         )
 
+    def test_regrid__linear_with_cell_measure(
+        self,
+    ) -> None:
+        """Test that cell measures are preserved when present on the target grid."""
+        cube = self.cube.copy()
+        target_grid = self.grid_for_linear.copy()
+        target_grid.add_cell_measure(
+            iris.coords.CellMeasure(
+                np.ones((1, 1), dtype=np.float32),
+                standard_name="cell_area",
+                units="m2",
+            ),
+            (0, 1),
+        )
+        result = regrid(cube, target_grid, "linear")
+
+        cell_measure_result = result.cell_measure("cell_area")
+        assert isinstance(cell_measure_result, iris.coords.CellMeasure)
+        assert_array_equal(
+            cell_measure_result.data,
+            np.array([1.0], dtype=np.float32).reshape(1, 1),
+        )
+
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__nearest(self, cache_weights):
         data = np.empty((1, 1))
