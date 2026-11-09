@@ -60,7 +60,10 @@ from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-from esmvalcore.iris_helpers import ignore_warnings_context
+from esmvalcore.iris_helpers import (
+    _remove_formula_term_cubes,
+    ignore_warnings_context,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -993,6 +996,8 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
                 cubes = iris.load(file, callback=_restore_lat_lon_units)
             else:
                 cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
+
+        cubes = _remove_formula_term_cubes(cubes)
 
         for cube in cubes:
             cube.attributes.globals["source_file"] = str(file)
