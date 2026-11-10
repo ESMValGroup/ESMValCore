@@ -643,11 +643,20 @@ of the dependency you want to add and any of its dependencies are
 with the
 `Apache 2.0 <https://github.com/ESMValGroup/ESMValCore/blob/main/LICENSE/>`_
 license that applies to the ESMValCore.
-Note that GPL version 2 license is considered incompatible with the Apache 2.0
-license, while the compatibility of GPL version 3 license with the Apache 2.0
-license is questionable.
+Permissively licensed dependencies (e.g. MIT, BSD, Apache 2.0) can be added,
+as can dependencies licensed under a weak copyleft license such as the LGPL or
+MPL 2.0.
+Do not add dependencies with licenses that restrict the use or redistribution
+of ESMValCore, for example licenses that are not open source or that restrict
+commercial use.
+The most widespread license with such restrictions is the GPL: the combination
+of ESMValCore with a GPL-licensed dependency can only be distributed under the
+terms of the GPL version 3, and the Free Software Foundation considers the GPL
+version 2 only incompatible with Apache 2.0.
 See this `statement <https://www.apache.org/licenses/GPL-compatibility.html>`__
 by the authors of the Apache 2.0 license for more information.
+Please note that, for historical reasons, some existing functionality relies on
+dependencies that do not meet these requirements.
 
 When adding or removing dependencies, please consider applying the changes in
 the following locations in ``pyproject.toml``:

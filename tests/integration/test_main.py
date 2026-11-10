@@ -72,6 +72,7 @@ def test_run():
         run()
 
 
+@pytest.mark.usefixtures("tags")
 def test_empty_run(tmp_path):
     """Test real run with no diags."""
     recipe_file = tmp_path / "recipe.yml"
