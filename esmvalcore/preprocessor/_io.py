@@ -222,7 +222,7 @@ def _load_zarr(
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
 
 
-def save(  # noqa: C901
+def save(
     cubes: Sequence[Cube],
     filename: Path | str,
     optimize_access: str = "",
@@ -233,6 +233,10 @@ def save(  # noqa: C901
 ) -> Delayed | None:
     """Save iris cubes to file.
 
+    The file format is chosen based on the extension of ``filename``. Use
+    ``.nc`` for NetCDF and ``.zarr`` for a Zarr store. An existing Zarr store
+    is overwritten.
+
     Parameters
     ----------
     cubes:
@@ -242,7 +246,7 @@ def save(  # noqa: C901
         Name of target file
 
     optimize_access:
-        Set internal NetCDF chunking to favour a reading scheme
+        Set internal NetCDF or Zarr chunking to favour a reading scheme
 
         Values can be map or timeseries, which improve performance when
         reading the file one map or time series at a time.
@@ -251,7 +255,8 @@ def save(  # noqa: C901
         in that coordinate at a time
 
     compress:
-        Use NetCDF internal compression.
+        Use NetCDF or Zarr internal compression. For Zarr, the default
+        compressor of :func:`zarr.create_array` is used.
 
     alias:
         Var name to use when saving instead of the one in the cube.
@@ -268,8 +273,9 @@ def save(  # noqa: C901
         parallel, by passing a list of them into a :func:`dask.compute` call.
 
     **kwargs:
-        See :func:`iris.fileformats.netcdf.saver.save` for additional
-        keyword arguments.
+        See :func:`iris.fileformats.netcdf.saver.save` and
+        :func:`iris.fileformats.zarr.saver.save` for additional keyword
+        arguments.
 
     Returns
     -------
@@ -285,12 +291,11 @@ def save(  # noqa: C901
         msg = f"Cannot save empty cubes '{cubes}'"
         raise ValueError(msg)
 
-    if Path(filename).suffix.lower() == ".nc":
-        kwargs["compute"] = compute
+    suffix = Path(filename).suffix.lower()
+    is_zarr = suffix == ".zarr"
 
     # Rename some arguments
     kwargs["target"] = filename
-    kwargs["zlib"] = compress
 
     dirname = os.path.dirname(filename)
     if not os.path.exists(dirname):
@@ -329,10 +334,12 @@ def save(  # noqa: C901
                 for dim in cube.coord_dims(coord_name)
             }
 
-        kwargs["chunksizes"] = tuple(
+        kwargs["chunks" if is_zarr else "chunksizes"] = tuple(
             length if index in dims else 1
             for index, length in enumerate(cube.shape)
         )
+
+    _set_format_kwargs(cubes[0], suffix, compress, compute, kwargs)
 
     kwargs["fill_value"] = GLOBAL_FILL_VALUE
     if alias:
@@ -356,6 +363,46 @@ def save(  # noqa: C901
             module="iris",
         )
         return iris.save(cubes, **kwargs)
+
+
+def _set_format_kwargs(
+    cube: Cube,
+    suffix: str,
+    compress: bool,
+    compute: bool,
+    kwargs: dict[str, Any],
+) -> None:
+    """Set the keyword arguments that depend on the file format."""
+    if suffix in (".nc", ".zarr"):
+        kwargs["compute"] = compute
+    if suffix != ".zarr":
+        kwargs["zlib"] = compress
+        return
+    # Overwrite existing stores, like iris does for NetCDF files.
+    kwargs.setdefault("mode", "w")
+    if not compress:
+        kwargs["compressors"] = None
+    if not cube.ndim:
+        return
+    # Write about one file per Dask chunk, because filesystems like Lustre
+    # perform poorly with many small files.
+    dask_chunks = cube.lazy_data().chunksize
+    if "chunks" in kwargs:
+        # Combine small chunks into shards that are about the size of a Dask
+        # chunk. A shard must consist of whole chunks.
+        kwargs.setdefault(
+            "shards",
+            tuple(
+                -(-length // chunk) * chunk
+                for length, chunk in zip(
+                    dask_chunks,
+                    kwargs["chunks"],
+                    strict=True,
+                )
+            ),
+        )
+    elif "shards" not in kwargs:
+        kwargs["chunks"] = dask_chunks
 
 
 def _get_debug_filename(filename, step):
