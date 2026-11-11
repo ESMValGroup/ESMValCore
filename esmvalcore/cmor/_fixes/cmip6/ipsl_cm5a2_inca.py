@@ -33,7 +33,6 @@ class Snw(Fix):
         iris.cube.CubeList
 
         """
-
         for cube in cubes:
             for lon_coord in cube.coords(standard_name="longitude"):
                 if lon_coord.points[0] == 360.0:
