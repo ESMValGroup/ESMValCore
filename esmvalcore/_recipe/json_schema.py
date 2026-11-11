@@ -2203,14 +2203,14 @@ def _ambiguous_scalar(value: str, tag: str) -> str | None:
     ):
         return None
     if old == "text":
-        hint = "Quote it if it is text, or write " + (
+        hint = "quote it if it is text, or write " + (
             f"{_dump(float(value))} for the number"
             if new == "a number"
             else f"{_yaml_12_integer(value)} for the integer"
         )
     else:
         hint = (
-            f"Write {_dump(yaml.safe_load(value))} for {old}, "
+            f"write {_dump(yaml.safe_load(value))} for {old}, "
             "or quote it if it is text"
         )
     if old == new:
@@ -2220,7 +2220,8 @@ def _ambiguous_scalar(value: str, tag: str) -> str | None:
         read = old, new
     return (
         f"ambiguous value '{value}', read as {read[0]} by ESMValCore but as "
-        f"{read[1]} by YAML 1.2 parsers, for example in editors. {hint}."
+        f"{read[1]} by YAML 1.2 parsers, for example in editors. This is "
+        f"deprecated and will not work in v2.18.0: {hint}."
     )
 
 

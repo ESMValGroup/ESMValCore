@@ -3,7 +3,7 @@
 Recipes are checked against a `JSON Schema <https://json-schema.org>`__ that
 describes their structure and the arguments of all preprocessor functions.
 The same schema can be used by editors to check recipes while writing them,
-see :ref:`recipe_editor_support`.
+see :ref:`recipe_validation`.
 
 Example
 -------

@@ -15,6 +15,21 @@ over the preprocessed data. This information is provided to ESMValTool in four
 main recipe sections: :ref:`Documentation <recipe_documentation>`, Datasets_,
 Preprocessors_, and Diagnostics_, respectively.
 
+.. _recipe_editor_support:
+
+Editor support
+==============
+
+The `ESMValTool language server
+<https://github.com/ESMValGroup/esmvaltool-language-server>`__ helps you write
+recipes in editors such as Visual Studio Code, Neovim, and Emacs.
+It checks recipes while you write them, with many of the same checks that
+ESMValCore runs before running a recipe, and offers completion and documentation.
+Refer to its documentation for installation instructions and the supported
+editors.
+If you cannot use the language server, the
+:ref:`recipe JSON Schema <recipe_validation>` offers more limited support.
+
 .. _recipe_documentation:
 
 Recipe section: ``documentation``
@@ -809,6 +824,8 @@ the absolute path to the diagnostic:
 This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
+.. _recipe_reuse_parameters:
+
 Reusing parameters from one ``script`` to another
 -------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
@@ -830,107 +847,61 @@ for use with other diagnostics. Here is an example:
 In this example the hook ``&cycle_settings`` can be used to pass the ``cycle:``
 parameters to ``grading:`` via the shortcut ``<<: *cycle_settings``.
 
-.. _recipe_editor_support:
+To merge several mappings, use a single merge key with a list of mappings, for
+example ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
+Note that the first mapping in the list has priority.
 
-Editor support
-==============
+.. _recipe_validation:
 
-ESMValCore provides a `JSON Schema <https://json-schema.org>`__ that describes
-recipes, including all preprocessor functions and their arguments.
-ESMValCore uses it to check a recipe for mistakes before running it.
-Editors that support JSON Schema for YAML files can use it too, to check a
-recipe and to offer completion and documentation while you write it.
+Recipe validation
+=================
 
-The schema for each version of ESMValCore is published with its documentation,
-for example the schema for the latest version is available at
-https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json.
-To write the schema that matches the version of ESMValCore you have installed
-to the file ``recipe_schema.json`` in the current working directory, run
+ESMValCore checks a recipe for mistakes before running it, using a
+`JSON Schema <https://json-schema.org>`__ that describes recipes, including all
+preprocessor functions and their arguments.
+To write the schema that matches your installation to the file
+``recipe_schema.json``, run
 
 .. code-block:: bash
 
     esmvaltool recipes schema
 
-The schema checks that each project is defined in the :ref:`projects section
-<config-projects>` of the configuration and that each ``mip`` is one of the
-:ref:`CMOR tables <cmor_table_configuration>` of its project.
-If the project is defined elsewhere in the recipe, for example for the dataset
-while the ``mip`` is defined for the variable, the ``mip`` is checked against
-the tables of all projects.
-An unknown ``mip`` is a warning instead of an error for projects where the
-CMOR checks are not strict, because ESMValCore then looks for the variable in
-all tables of the project.
-A ``branding_suffix`` is checked against the branding suffixes of all
-variables in the CMOR table given by the ``mip``, because the variable is often
-defined by the name of the variable group.
-When running the recipe, ESMValCore checks that the branding suffix is
-available for the variable.
-The published schema uses the default configuration, so if you have configured
-additional projects or CMOR tables, use the schema written by
-``esmvaltool recipes schema``.
-
-If ESMValTool is installed, this schema also checks that the authors,
-maintainers, projects, realms, and themes in the recipe are defined in
-ESMValTool's ``config-references.yml`` file and that there is a bibtex file
-for each reference.
-These problems are shown as warnings, because they only make the provenance
-information less complete.
-ESMValCore runs the same checks before running a recipe and logs a warning for
-each of them.
-
-In `Visual Studio Code <https://code.visualstudio.com>`__, install the
-`YAML extension <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`__
-and add the following to your ``settings.json`` to use the schema for all
-files whose name starts with ``recipe_``:
-
-.. code-block:: json
-
-    {
-        "yaml.schemas": {
-            "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json": "recipe_*.yml"
-        }
-    }
-
-Replace the URL by the path to the file written by
-``esmvaltool recipes schema`` to use the schema that matches your installation.
-Alternatively, add a comment to the top of a recipe to use the schema for that
-recipe only:
+If ESMValTool is installed, this schema also checks that the
+:ref:`provenance items <config-ref>` in the recipe are defined in ESMValTool.
+The schema for each version of ESMValCore is also published with its
+documentation, for example at
+https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json,
+but it uses the default configuration and does not contain the items defined
+in ESMValTool.
+Editors that support JSON Schema for YAML files can use the schema to check
+recipes, for example by adding this comment to the top of a recipe:
 
 .. code-block:: yaml
 
-    # yaml-language-server: $schema=https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json
+    # yaml-language-server: $schema=recipe_schema.json
 
-The same comment works in other editors that use the
-`YAML language server <https://github.com/redhat-developer/yaml-language-server>`__,
-for example Neovim and Emacs.
+Unlike the :ref:`language server <recipe_editor_support>`, the schema cannot
+run all checks, for example it does not check that the preprocessors and
+ancestors used in the recipe are defined.
 
-The schema checks the structure of a recipe and the arguments of the
-preprocessor functions.
-Apart from the project and ``mip``, it does not check facet values, for
-example whether a dataset or variable exists, or the settings of diagnostic
-scripts.
-It also cannot check that the preprocessors used by variable groups and
-datasets and the ``ancestors`` of each script are defined in the recipe, but
-ESMValCore checks this before running a recipe.
-ESMValCore also warns if the ``reference_dataset`` or ``alternative_dataset``
-of a variable group is not the name or ``alias`` of one of the datasets of the
-group.
+.. _recipe_ambiguous_yaml:
 
-Before running a recipe, ESMValCore also warns about YAML that is ignored or
-that other YAML parsers, for example those in editors, read differently:
+Ambiguous YAML
+--------------
+
+Before running a recipe, ESMValCore warns about YAML that is ignored or that
+other YAML parsers interpret differently:
 
 - Keys that are defined more than once in a mapping: only the last
   definition is used.
 - Merge keys (``<<``) that are used more than once in a mapping, or aliases
-  that refer to the anchor of a mapping that contains them.
-  Other YAML parsers do not accept these, so they are deprecated and will
-  not work in ESMValCore v2.18.0.
-  Use a single merge key with a list of mappings instead, for example
-  ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
-  Note that the first mapping in the list has priority.
-- Values that YAML 1.1, which ESMValCore uses, and YAML 1.2 read as
-  different types or numbers, for example ``1e-2``, which is text in YAML 1.1
-  and a number in YAML 1.2, and ``yes``, which is a boolean in YAML 1.1 and
-  text in YAML 1.2.
+  inside the mapping that defines their anchor.
+  Other YAML parsers, for example those in editors, do not accept these, so
+  they are deprecated and will not work in ESMValCore v2.18.0.
+  Refer to :ref:`recipe_reuse_parameters` for how to merge several mappings.
+- Values that YAML 1.1, which ESMValCore currently uses, and YAML 1.2 read differently,
+  for example ``1e-2``, which is text in YAML 1.1 and a number in YAML 1.2,
+  and ``yes``, which is a boolean in YAML 1.1 and text in YAML 1.2.
+  These values are deprecated and will not work in ESMValCore v2.18.0.
   Write ``1.0e-2`` or ``0.01`` for the number, ``true`` for the boolean, or
   quote the value if it is text.

@@ -1013,59 +1013,45 @@ def test_validate_recipe_self_merge() -> None:
 
 
 @pytest.mark.parametrize(
-    ("value", "message"),
+    ("value", "read", "hint"),
     [
         (
             "1e-2",
-            (
-                "read as text by ESMValCore but as a number by YAML 1.2 parsers, "
-                "for example in editors. Quote it if it is text, or write 0.01 "
-                "for the number."
-            ),
+            "as text by ESMValCore but as a number",
+            "quote it if it is text, or write 0.01 for the number",
         ),
         (
             "0o12",
-            (
-                "read as text by ESMValCore but as an integer by YAML 1.2 "
-                "parsers, for example in editors. Quote it if it is text, or "
-                "write 10 for the integer."
-            ),
+            "as text by ESMValCore but as an integer",
+            "quote it if it is text, or write 10 for the integer",
         ),
         (
             "yes",
-            (
-                "read as a boolean by ESMValCore but as text by YAML 1.2 parsers, "
-                "for example in editors. Write true for a boolean, or quote it "
-                "if it is text."
-            ),
+            "as a boolean by ESMValCore but as text",
+            "write true for a boolean, or quote it if it is text",
         ),
         (
             "012",
-            (
-                "read as 10 by ESMValCore but as 12 by YAML 1.2 parsers, for "
-                "example in editors. Write 10 for an integer, or quote it if "
-                "it is text."
-            ),
+            "as 10 by ESMValCore but as 12",
+            "write 10 for an integer, or quote it if it is text",
         ),
         (
             "1_000",
-            (
-                "read as an integer by ESMValCore but as text by YAML 1.2 "
-                "parsers, for example in editors. Write 1000 for an integer, or "
-                "quote it if it is text."
-            ),
+            "as an integer by ESMValCore but as text",
+            "write 1000 for an integer, or quote it if it is text",
         ),
         (
             "1:30",
-            (
-                "read as an integer by ESMValCore but as text by YAML 1.2 "
-                "parsers, for example in editors. Write 90 for an integer, or "
-                "quote it if it is text."
-            ),
+            "as an integer by ESMValCore but as text",
+            "write 90 for an integer, or quote it if it is text",
         ),
     ],
 )
-def test_validate_recipe_ambiguous_value(value: str, message: str) -> None:
+def test_validate_recipe_ambiguous_value(
+    value: str,
+    read: str,
+    hint: str,
+) -> None:
     text = f"{RECIPE}\n        threshold: {value}\n"
     issues = [
         issue
@@ -1075,7 +1061,11 @@ def test_validate_recipe_ambiguous_value(value: str, message: str) -> None:
     assert [(i.path, i.message, i.severity) for i in issues] == [
         (
             ("diagnostics", "example", "scripts", "plot", "threshold"),
-            f"ambiguous value '{value}', {message}",
+            (
+                f"ambiguous value '{value}', read {read} by YAML 1.2 "
+                "parsers, for example in editors. This is deprecated and "
+                f"will not work in v2.18.0: {hint}."
+            ),
             "warning",
         ),
     ]
