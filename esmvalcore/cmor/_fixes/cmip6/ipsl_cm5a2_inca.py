@@ -33,24 +33,12 @@ class Snw(Fix):
         iris.cube.CubeList
 
         """
-        cubes = super().fix_metadata(cubes)
 
         for cube in cubes:
-            coord_names = [cor.standard_name for cor in cube.coords()]
-            if "longitude" in coord_names:
-                lon_coord = cube.coord("longitude")
+            for lon_coord in cube.coords(standard_name="longitude"):
                 if lon_coord.points[0] == 360.0:
                     lon_coord.points[0] = 0.0
 
-                dim = iris.coords.DimCoord(
-                    lon_coord.points,
-                    bounds=lon_coord.bounds,
-                    standard_name=lon_coord.standard_name,
-                    units=lon_coord.units,
-                )
-
-                dimension = cube.coord_dims(lon_coord)
-                cube.remove_coord(lon_coord)
-                cube.add_dim_coord(dim, dimension)
+                iris.util.promote_aux_coord_to_dim_coord(cube, lon_coord)
 
         return cubes
