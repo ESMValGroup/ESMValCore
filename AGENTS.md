@@ -126,9 +126,12 @@ In short:
 2. Import it in `esmvalcore/preprocessor/__init__.py` and add it to `__all__`.
    The position in `__all__` sets the default order in which preprocessor
    steps are applied, so choose it carefully.
-3. Add type hints for all arguments and document each one in the docstring.
-   Recipe arguments are checked against the function signature; add any
-   further validation of argument values to `esmvalcore/_recipe/check.py`.
+3. Add type hints for all arguments and document each one in the docstring:
+   the recipe JSON Schema in `esmvalcore/_recipe/json_schema.py` is generated
+   from them. If ESMValCore sets or converts any of the arguments, update the
+   constants in that module as described in the "Recipe schema" section of the
+   guide above. Add any validation of argument values that the schema cannot
+   express to `esmvalcore/_recipe/check.py`.
 4. Preserve laziness: lazy input data must give lazy output, real input data
    must give real output. Prefer calling iris over hand-written NumPy/Dask code.
 5. Document it for recipe users in `doc/recipe/preprocessor.rst`.

@@ -3183,6 +3183,42 @@ Example:
 
 See also :func:`esmvalcore.preprocessor.histogram`.
 
+.. _save:
+
+``save``
+--------
+
+This function saves the preprocessed data to a NetCDF file.
+It is always applied as the last step, but its settings can be changed in the
+recipe.
+
+The ``save`` preprocessor supports the following arguments in the recipe:
+
+* ``compress`` (:obj:`bool`; optional): Use NetCDF compression.
+  If not given, use the :ref:`configuration option <config_options>`
+  ``compress_netcdf``.
+* ``optimize_access`` (:obj:`str`; optional): Set the NetCDF chunk sizes to
+  make reading the file faster.
+  Use ``map`` to read one map at a time, ``timeseries`` to read one time series
+  at a time, or the names of one or more coordinates separated by spaces, e.g.
+  ``time latitude``, to read all values along those coordinates at a time.
+* ``alias`` (:obj:`str`; optional): Variable name to use in the file.
+  If not given, use the short name of the variable.
+* Further arguments are passed to
+  :func:`iris.fileformats.netcdf.saver.save`, for example ``complevel``.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      compressed_maps:
+        save:
+          compress: true
+          optimize_access: map
+
+See also :func:`esmvalcore.preprocessor.save`.
+
 
 .. _Memory use:
 

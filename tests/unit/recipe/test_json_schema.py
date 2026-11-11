@@ -244,7 +244,7 @@ def test_schema_is_valid(schema: dict[str, Any]) -> None:
 
 def test_schema_has_all_preprocessor_steps(schema: dict[str, Any]) -> None:
     steps = schema["definitions"]["steps"]
-    assert list(steps) == list(esmvalcore.preprocessor.DEFAULT_ORDER)
+    assert list(steps) == list(json_schema.RECIPE_STEPS)
     for step, step_schema in steps.items():
         assert step_schema["description"], step
 
@@ -511,7 +511,9 @@ def test_step_schema_documentation_link(schema: dict[str, Any]) -> None:
         "Refer to [how to use `regrid` in a recipe](https://docs.esmvaltool."
         "org/projects/ESMValCore/en/latest/recipe/preprocessor.html#regrid).",
     )
-    assert "markdownDescription" not in steps["save"]
+    assert steps["save"]["markdownDescription"].endswith(
+        "preprocessor.html#save).",
+    )
 
 
 @pytest.mark.parametrize(
@@ -552,10 +554,7 @@ def test_recipe_documentation_anchors() -> None:
     text = PREPROCESSOR_DOCS.read_text(encoding="utf-8")
     titles = set(re.findall(r"^``(\w+)``\n[=\-~^*]{4,}$", text, re.MULTILINE))
     labels = set(re.findall(r"^\.\. _(\w+):$", text, re.MULTILINE))
-    documented = set(esmvalcore.preprocessor.DEFAULT_ORDER) - (
-        json_schema.UNDOCUMENTED_STEPS
-    )
-    assert documented - titles - labels == set()
+    assert set(json_schema.RECIPE_STEPS) - titles - labels == set()
 
 
 DOC_DIR = Path(__file__).parents[3] / "doc"
@@ -566,7 +565,7 @@ def test_documentation_labels() -> None:
     """Check that the labels referred to in the docstrings are known."""
     docstrings = "\n".join(
         inspect.getdoc(getattr(esmvalcore.preprocessor, step)) or ""
-        for step in esmvalcore.preprocessor.DEFAULT_ORDER
+        for step in json_schema.RECIPE_STEPS
     )
     references = re.findall(
         r":ref:`(?:[^`<]+?\s+<([^`>]+)>|([^`]+))`",
@@ -601,6 +600,76 @@ def test_step_schema_descriptions(schema: dict[str, Any]) -> None:
     axis_statistics = schema["definitions"]["steps"]["axis_statistics"]
     properties = axis_statistics["anyOf"][0]["properties"]
     assert all(p.get("description") for p in properties.values())
+
+
+# Arguments of preprocessor functions that accept any value in a recipe.
+UNTYPED_ARGUMENTS = {
+    # The type `ArrayLike` accepts numbers and lists of numbers.
+    ("extract_point", "latitude"),
+    ("extract_point", "longitude"),
+}
+
+
+@pytest.mark.parametrize("step", json_schema.RECIPE_STEPS)
+def test_step_schema_arguments_documented(
+    schema: dict[str, Any],
+    step: str,
+) -> None:
+    """Check that the arguments of each step have a type and description.
+
+    An argument without a type hint that can be converted to a JSON Schema
+    accepts any value in a recipe.
+    """
+    settings = schema["definitions"]["steps"][step]["anyOf"][0]
+    for name, argument in settings["properties"].items():
+        assert argument.get("description"), f"{step}: {name}"
+        constraints = set(argument) - {
+            "default",
+            "description",
+            "markdownDescription",
+        }
+        if (step, name) not in UNTYPED_ARGUMENTS:
+            assert constraints, f"{step}: {name}"
+
+
+def test_untyped_arguments_exist(schema: dict[str, Any]) -> None:
+    steps = schema["definitions"]["steps"]
+    for step, name in UNTYPED_ARGUMENTS:
+        assert name in steps[step]["anyOf"][0]["properties"], (step, name)
+
+
+@pytest.mark.parametrize(
+    "constant",
+    ["AUTOMATIC_ARGUMENTS", "INTERNAL_ARGUMENTS", "RECIPE_ARGUMENTS"],
+)
+def test_argument_constants_match_functions(constant: str) -> None:
+    """Check that the constants refer to existing arguments.
+
+    This catches renamed or removed arguments, but not new arguments that
+    ESMValCore fills in, which must be added to the constants by hand. The
+    argument ``session`` is listed for all final steps, whether they have it
+    or not.
+    """
+    for step, names in getattr(json_schema, constant).items():
+        function = getattr(esmvalcore.preprocessor, step)
+        parameters = inspect.signature(function).parameters
+        assert set(names) - {"session"} <= set(parameters), step
+
+
+def test_exclude_steps_match_functions() -> None:
+    assert set(json_schema.RECIPE_STEPS) >= json_schema.EXCLUDE_STEPS
+
+
+@pytest.mark.skipif(
+    not PREPROCESSOR_DOCS.exists(),
+    reason="documentation not available",
+)
+def test_statistics_operators_documented() -> None:
+    """Check that the operators match the table in the documentation."""
+    text = PREPROCESSOR_DOCS.read_text(encoding="utf-8")
+    table = text.split(".. _supported_stat_operator:", 1)[1].split("\n\n")[1]
+    operators = re.findall(r"^``(\w+)``", table, re.MULTILINE)
+    assert tuple(operators) == json_schema.STATISTICS_OPERATORS
 
 
 def test_step_schema_internal_arguments(schema: dict[str, Any]) -> None:
@@ -692,6 +761,20 @@ def test_recipe_is_valid(schema: dict[str, Any]) -> None:
 
 def test_validate_recipe_valid() -> None:
     assert validate_recipe(yaml.safe_load(RECIPE)) == []
+
+
+@pytest.mark.parametrize("step", esmvalcore.preprocessor.INITIAL_STEPS)
+def test_validate_recipe_initial_step(step: str) -> None:
+    """Check that the initial steps cannot be used in a recipe."""
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["pp"][step] = False
+    issues = [str(issue) for issue in validate_recipe(recipe)]
+    message = (
+        f"preprocessors > pp > {step}: this preprocessor function cannot be "
+        "used in a recipe, because it is always applied when the data is "
+        "loaded."
+    )
+    assert issues == [message]
 
 
 @pytest.mark.parametrize(

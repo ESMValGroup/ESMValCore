@@ -54,6 +54,10 @@ SEVERITY_KEYWORD = "x-severity"
 # Facet values can be glob patterns, see :func:`esmvalcore.dataset._isglob`.
 NOT_A_PATTERN = {"not": {"pattern": r"[*?]|\[.*\]"}}
 
+# Preprocessor steps that can be used in a recipe. ESMValCore always applies
+# the initial steps when it loads the data, ignoring the recipe.
+RECIPE_STEPS = tuple(s for s in DEFAULT_ORDER if s not in INITIAL_STEPS)
+
 # Preprocessor steps that support excluding datasets with ``exclude``.
 EXCLUDE_STEPS = MULTI_MODEL_FUNCTIONS | {"weighting_landsea_fraction"}
 
@@ -64,10 +68,10 @@ AUTOMATIC_ARGUMENTS = {
 }
 
 # Arguments that ESMValCore always sets, so they cannot be used in a recipe.
-# For the initial and final steps, this also includes all arguments without
-# a default value.
+# For the final steps, this also includes all arguments without a default
+# value.
 INTERNAL_ARGUMENTS: dict[str, set[str]] = {
-    step: {"session"} for step in INITIAL_STEPS + FINAL_STEPS
+    step: {"session"} for step in FINAL_STEPS
 }
 INTERNAL_ARGUMENTS["bias"] = {"reference"}
 INTERNAL_ARGUMENTS["derive"] = {
@@ -210,10 +214,6 @@ PERCENT_SCHEMA: JSONSchema = {
 _OPERATOR_TABLE = re.compile(
     r"given in\s+:ref:`this table\s+<supported_stat_operator>`",
 )
-
-# Preprocessor steps without a section in the recipe documentation. The
-# section of each other step can be found at the anchor with its name.
-UNDOCUMENTED_STEPS = {"clip_timerange", "concatenate", "load", "save"}
 
 # Labels that the docstrings of preprocessor functions refer to with :ref:,
 # with the document that defines them and the title of their section, which
@@ -635,7 +635,7 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
     summary, descriptions = _parse_docstring(inspect.getdoc(function) or "")
     parameters = list(inspect.signature(function).parameters.values())[1:]
 
-    always_applied = step in INITIAL_STEPS + FINAL_STEPS
+    final_step = step in FINAL_STEPS
     internal = INTERNAL_ARGUMENTS.get(step, set())
     automatic = AUTOMATIC_ARGUMENTS.get(step, set())
 
@@ -649,7 +649,7 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
         if param.kind is inspect.Parameter.VAR_POSITIONAL:
             continue
         no_default = param.default is inspect.Parameter.empty
-        if param.name in internal or (always_applied and no_default):
+        if param.name in internal or (final_step and no_default):
             continue
         if no_default and param.name not in automatic:
             required.append(param.name)
@@ -693,19 +693,17 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
                 "description": "Enable this step with its default settings.",
             },
         )
-    schema: JSONSchema = {
+    # Editors show the Markdown description instead of the description, with
+    # a link to the documentation of using the step in a recipe.
+    url = _recipe_documentation_url(step)
+    return {
         "description": _rst_to_text(summary),
-        "anyOf": options,
-    }
-    if step not in UNDOCUMENTED_STEPS:
-        # Editors show this instead of the description, with a link to the
-        # documentation of using the step in a recipe.
-        url = _recipe_documentation_url(step)
-        schema["markdownDescription"] = (
+        "markdownDescription": (
             f"{_rst_to_text(summary, markdown=True)}\n\n"
             f"Refer to [how to use `{step}` in a recipe]({url})."
-        )
-    return schema
+        ),
+        "anyOf": options,
+    }
 
 
 def _documentation_url(path: str) -> str:
@@ -788,7 +786,7 @@ def _preprocessor_schema() -> JSONSchema:
             *_PREPROCESSORS_DOCS,
         ),
     }
-    for step in DEFAULT_ORDER:
+    for step in RECIPE_STEPS:
         properties[step] = {"$ref": f"#/definitions/steps/{step}"}
     return {
         "type": "object",
@@ -1500,7 +1498,7 @@ def _recipe_schema(
             "diagnostic": _diagnostic_schema(names),
             "preprocessor": _preprocessor_schema(),
             "steps": {
-                step: _preprocessor_step_schema(step) for step in DEFAULT_ORDER
+                step: _preprocessor_step_schema(step) for step in RECIPE_STEPS
             },
         },
     }
@@ -1709,7 +1707,8 @@ def _describe_unknown_keys(
 ) -> list[RecipeIssue]:
     path = tuple(error.absolute_path)
     known = error.schema.get("properties", {})
-    if len(path) == 2 and path[0] == "preprocessors":
+    in_preprocessor = len(path) == 2 and path[0] == "preprocessors"
+    if in_preprocessor:
         problem = "unknown preprocessor function."
     elif _in_step(path):
         problem = "unknown argument."
@@ -1718,6 +1717,13 @@ def _describe_unknown_keys(
     issues = []
     for key in error.instance:
         if key in known:
+            continue
+        if in_preprocessor and key in INITIAL_STEPS:
+            message = (
+                "this preprocessor function cannot be used in a recipe, "
+                "because it is always applied when the data is loaded."
+            )
+            issues.append(RecipeIssue((*path, key), message))
             continue
         message = problem + _suggest(key, known)
         if _in_step(path):
