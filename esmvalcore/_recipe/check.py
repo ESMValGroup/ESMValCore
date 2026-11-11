@@ -516,12 +516,11 @@ def _check_regular_stat(step: str, step_settings: dict[str, Any]) -> None:
     step_settings = dict(step_settings)
 
     # Some preprocessors like climate_statistics use default 'mean' for
-    # operator. If 'operator' is missing for those preprocessors with no
-    # default, this will be detected in PreprocessorFile.check() later.
+    # operator. A missing 'operator' for those preprocessors with no default
+    # has already been detected by the recipe schema.
     operator = step_settings.pop("operator", "mean")
 
-    # If preprocessor does not exist, do nothing here; this will be detected in
-    # PreprocessorFile.check() later.
+    # Unknown preprocessors have already been detected by the recipe schema.
     try:
         preproc_func = getattr(esmvalcore.preprocessor, step)
     except AttributeError:
@@ -567,8 +566,7 @@ def regridding_schemes(settings: dict[str, Any]) -> None:
     if "regrid" not in settings:
         return
 
-    # Note: If 'scheme' is missing, this will be detected in
-    # PreprocessorFile.check() later
+    # A missing 'scheme' has already been detected by the recipe schema.
     scheme = settings["regrid"].get("scheme")
 
     # Check generic regridding schemes (given as dict)
