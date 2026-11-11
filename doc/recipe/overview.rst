@@ -272,7 +272,7 @@ Automatic definition of supplementary variables
 -----------------------------------------------
 
 If an ancillary variable or cell measure is
-:ref:`needed by a preprocessor function <preprocessors_using_supplementary_variables>`,
+:ref:`needed by a preprocessor function <add_supplementary_variables>`,
 but it is not specified in the recipe, the tool will automatically make a best
 guess using the syntax above.
 Usually this will work fine, but if it does not, it is recommended to explicitly
@@ -280,7 +280,7 @@ define the supplementary variables in the recipe.
 
 To disable this automatic addition, define the supplementary variable as usual,
 but add the special facet ``skip`` with value ``true``.
-See :ref:`preprocessors_using_supplementary_variables` for an example recipe.
+See :ref:`add_supplementary_variables` for an example recipe.
 
 Saving ancillary variables and cell measures
 --------------------------------------------
