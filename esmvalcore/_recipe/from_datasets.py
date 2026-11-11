@@ -169,64 +169,35 @@ def _group_identical_facets(variable: Mapping[str, Any]) -> Recipe:
 
 
 def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
-    """Group ensemble members and sub-experiments into ranges.
+    """Group ensemble members.
 
-    This is the inverse operation of `Dataset.from_ranges`.
+    This is the inverse operation of `Dataset.from_ranges` for
+    ensembles.
     """
-    result = list(dataset_facets)
-    for key in "ensemble", "sub_experiment":
-        if any(isinstance(facets.get(key), str) for facets in result):
-            result = _group_range_facet(result, key)
-    return result
-
-
-def _group_range_facet(dataset_facets: list[Facets], key: str) -> list[Facets]:
-    """Group the values of a facet into ranges."""
 
     def grouper(facets):
-        return sorted((f, str(v)) for f, v in facets.items() if f != key)
+        return sorted(
+            (f, str(v)) for f, v in facets.items() if f != "ensemble"
+        )
 
-    result: list[Facets] = []
+    result = []
     dataset_facets = sorted(dataset_facets, key=grouper)
     for _, group_iter in itertools.groupby(dataset_facets, key=grouper):
         group = list(group_iter)
-        named = [f for f in group if isinstance(f.get(key), str)]
-        # Facets without a name, e.g. with a list of names, are kept once.
-        others = [f for f in group if not isinstance(f.get(key), str)]
-        result.extend(f for i, f in enumerate(others) if f not in others[:i])
-        if named:
-            for name in _group_ensemble_names(f[key] for f in named):
-                facets = dict(named[0])
-                facets[key] = name
+        ensembles = [f["ensemble"] for f in group if "ensemble" in f]
+        group_facets = group[0]
+        if not ensembles:
+            result.append(dict(group_facets))
+        else:
+            for ensemble in _group_ensemble_names(ensembles):
+                facets = dict(group_facets)
+                facets["ensemble"] = ensemble
                 result.append(facets)
     return result
 
 
-def _split_numbers(name: str) -> tuple[tuple[str, ...], tuple[int, ...]]:
-    """Split a name into the text around its numbers and the numbers.
-
-    Numbers with leading zeros are kept as text, because ranges such as
-    ``r(1:3)`` are expanded to numbers without leading zeros. Names that
-    already contain a range are kept as they are.
-    """
-    if "(" in name:
-        return (name,), ()
-    parts = re.split(r"(\d+)", name)
-    texts = [parts[0]]
-    numbers: list[int] = []
-    for number, text in zip(parts[1::2], parts[2::2], strict=True):
-        if number.startswith("0") and number != "0":
-            texts[-1] += number + text
-        else:
-            numbers.append(int(number))
-            texts.append(text)
-    return tuple(texts), tuple(numbers)
-
-
 def _group_ensemble_names(ensemble_names: Iterable[str]) -> list[str]:
-    """Group ensemble names or sub-experiments.
-
-    Names are grouped if they only differ in their numbers.
+    """Group ensemble names.
 
     Examples
     --------
@@ -241,23 +212,23 @@ def _group_ensemble_names(ensemble_names: Iterable[str]) -> list[str]:
         'r1i1p2',
     ].
     """
-    templates: dict[tuple[str, ...], set[tuple[int, ...]]] = {}
-    for name in ensemble_names:
-        texts, numbers = _split_numbers(name)
-        templates.setdefault(texts, set()).add(numbers)
+    ensemble_tuples = [
+        tuple(int(i) for i in re.findall(r"\d+", ens))
+        for ens in ensemble_names
+    ]
+
+    ensemble_ranges = _create_ensemble_ranges(ensemble_tuples)
 
     groups = []
-    for texts, tuples in sorted(templates.items()):
-        for ensemble_range in _create_ensemble_ranges(sorted(tuples)):
-            txt = texts[0]
-            for (start, end), text in zip(
-                ensemble_range,
-                texts[1:],
-                strict=True,
-            ):
-                txt += f"{start}" if start == end else f"({start}:{end})"
-                txt += text
-            groups.append(txt)
+    for ensemble_range in ensemble_ranges:
+        txt = ""
+        for name, value in zip("ripf", ensemble_range, strict=False):
+            txt += name
+            if value[0] == value[1]:
+                txt += f"{value[0]}"
+            else:
+                txt += f"({value[0]}:{value[1]})"
+        groups.append(txt)
 
     return groups
 
@@ -349,11 +320,6 @@ def datasets_to_recipe(
     recipe: Path | str | dict[str, Any] | None = None,
 ) -> dict:
     """Create or update a recipe from datasets.
-
-    Ensemble members and sub-experiments of datasets that are otherwise the
-    same are written as ranges, for example ``ensemble: r(1:10)i1p(1:2)f1``
-    and ``sub_experiment: s(1960:1970)``, as described in
-    :ref:`Datasets`.
 
     Parameters
     ----------
