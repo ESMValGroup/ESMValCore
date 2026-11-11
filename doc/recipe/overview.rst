@@ -45,8 +45,11 @@ The documentation section includes:
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
   the :ref:`config-ref`)
-- the project or projects associated with the recipe (``projects``, matching
-  the definitions in the :ref:`config-ref`)
+- The research projects that funded the development of the recipe
+  (``projects``, matching the definitions in the :ref:`config-ref`).
+  These are not the same as the ``project`` facet of a dataset, which
+  describes the project that provides the data, such as ``CMIP6``
+  (refer to :ref:`Datasets`).
 
 For example, the documentation section of ``recipes/recipe_ocean_amoc.yml`` is
 the following:
@@ -97,7 +100,8 @@ The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
 define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
-- project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
+- project that provides the data (key ``project``, value ``CMIP5`` or
+  ``CMIP6`` for CMIP data,
   ``OBS`` for observational data, ``ana4MIPs`` for ana4MIPs data,
   ``obs4MIPs`` for obs4MIPs data, ``ICON`` for ICON data).
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,

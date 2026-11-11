@@ -1169,7 +1169,11 @@ References configuration file
 =============================
 
 The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
-projects, and other tags used to record provenance, such as realms and themes.
+the research projects that funded the development of the recipes and
+diagnostics, and other tags used to record provenance, such as realms and
+themes.
+These research projects are not related to the projects that provide data,
+which are configured in :ref:`config-projects`.
 Each author, maintainer, and project referred to in the documentation section
 of a recipe should be in the relevant section of this file.
 Each reference should have a bibtex file with the same name in the

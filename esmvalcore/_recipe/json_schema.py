@@ -1405,7 +1405,8 @@ def _documentation_schema(names: dict[str, _Names]) -> JSONSchema:
                 ),
                 "projects": _linked(
                     _names_list(
-                        "Projects, as defined in `config-references.yml`.",
+                        "Research projects that funded the development of "
+                        "the recipe, as defined in `config-references.yml`.",
                         "projects",
                         names,
                     ),
