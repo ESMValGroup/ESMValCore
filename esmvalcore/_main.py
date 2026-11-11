@@ -90,6 +90,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
     import yaml
 
     from esmvalcore._recipe.recipe import read_recipe_file
+    from esmvalcore._task import available_cpu_count
 
     if not recipe_file.is_file():
         import errno
@@ -121,7 +122,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
         recipe_file.read_text(encoding="utf-8"),
     )
 
-    n_processes = session["max_parallel_tasks"] or os.cpu_count()
+    n_processes = session["max_parallel_tasks"] or available_cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
