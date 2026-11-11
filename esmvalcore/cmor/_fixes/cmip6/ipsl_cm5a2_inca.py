@@ -36,6 +36,8 @@ class Snw(Fix):
         """
         for cube in cubes:
             for lon_coord in cube.coords(standard_name="longitude"):
+                # if needed, rename first longitude from 360 deg to 0 deg
+                # to ensure monotonic behavior
                 if lon_coord.points[0] == 360.0:
                     lon_coord.points[0] = 0.0
 
@@ -43,11 +45,13 @@ class Snw(Fix):
 
             for coord_name in ["latitude", "longitude"]:
                 coord = cube.coord(coord_name)
+                # add bounds if missing
                 if not coord.has_bounds():
                     coord.guess_bounds()
-                coord.bounds = np.round(
-                    coord.core_bounds().astype(np.float64),
-                    4,
+                # make sure coordinates and bounds are double precision
+                coord.bounds = coord.bounds.astype(np.float32).astype(
+                    np.float64
                 )
+                coord.points = coord.points.astype(np.float64)
 
         return cubes
