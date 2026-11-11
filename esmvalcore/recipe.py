@@ -1,13 +1,13 @@
-"""Validate recipes.
+"""Work with recipes.
 
+Validation
+----------
 Recipes are checked against a `JSON Schema <https://json-schema.org>`__ that
 describes their structure and the arguments of all preprocessor functions.
 The same schema can be used by editors to check recipes while writing them,
-see :ref:`recipe_validation`.
+refer to :ref:`recipe_validation` for details.
 
-Example
--------
-Find the problems in a recipe, with their line numbers:
+For example, to find the problems in a recipe, with their line numbers:
 
 >>> import yaml
 >>> from esmvalcore.recipe import validate_recipe
