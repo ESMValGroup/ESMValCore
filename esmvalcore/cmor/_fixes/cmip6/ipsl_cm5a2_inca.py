@@ -33,7 +33,6 @@ class Snw(Fix):
         iris.cube.CubeList
 
         """
-        cubes = super().fix_metadata(cubes)
 
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
