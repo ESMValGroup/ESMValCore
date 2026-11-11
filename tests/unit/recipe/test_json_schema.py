@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import inspect
-import json
 import re
 import typing
 from collections.abc import Iterable, Sequence
@@ -27,7 +26,6 @@ from esmvalcore._recipe.json_schema import (
     _rst_to_text,
     generate_recipe_schema,
     validate_recipe,
-    write_recipe_schema,
 )
 from esmvalcore.config import CFG
 from esmvalcore.config._diagnostics import Diagnostics, TagsManager
@@ -1252,14 +1250,6 @@ def test_recipe_with_schema_no_file(tmp_path: Path) -> None:
     )
     with pytest.raises(RecipeError, match=re.escape(msg)):
         check.recipe_with_schema(recipe, path)
-
-
-def test_write_recipe_schema(tmp_path: Path) -> None:
-    path = tmp_path / "recipe_schema.json"
-    write_recipe_schema(path)
-    assert json.loads(path.read_text(encoding="utf-8")) == (
-        generate_recipe_schema()
-    )
 
 
 AUTHORS = [f"author_{i}" for i in range(12)]

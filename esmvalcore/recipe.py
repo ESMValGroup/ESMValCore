@@ -32,12 +32,10 @@ from esmvalcore._recipe.json_schema import (
     RecipeIssue,
     generate_recipe_schema,
     validate_recipe,
-    write_recipe_schema,
 )
 
 __all__ = [
     "RecipeIssue",
     "generate_recipe_schema",
     "validate_recipe",
-    "write_recipe_schema",
 ]

@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import json
 import os
 import sys
 from datetime import datetime
@@ -519,9 +520,12 @@ def _write_recipe_schema(
     """Publish the recipe JSON Schema alongside the HTML documentation."""
     if exception is not None or app.builder.format != "html":
         return
-    from esmvalcore.recipe import write_recipe_schema
+    from esmvalcore.recipe import generate_recipe_schema
 
-    write_recipe_schema(Path(app.outdir, "recipe_schema.json"))
+    Path(app.outdir, "recipe_schema.json").write_text(
+        json.dumps(generate_recipe_schema(), indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def setup(app: "Sphinx") -> None:

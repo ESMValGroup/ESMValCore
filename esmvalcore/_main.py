@@ -29,6 +29,7 @@ Have fun!
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
@@ -490,10 +491,13 @@ class Recipes:
             Path to the file where the schema will be written.
         """
         from .config._logging import configure_logging
-        from .recipe import write_recipe_schema
+        from .recipe import generate_recipe_schema
 
         configure_logging(console_log_level="info")
-        write_recipe_schema(output)
+        Path(output).write_text(
+            json.dumps(generate_recipe_schema(), indent=2) + "\n",
+            encoding="utf-8",
+        )
         logger.info("Recipe schema written to %s", output)
 
 

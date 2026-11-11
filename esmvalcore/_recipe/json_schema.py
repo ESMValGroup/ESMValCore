@@ -1504,20 +1504,6 @@ def _recipe_schema(
     }
 
 
-def write_recipe_schema(path: Path | str) -> None:
-    """Write a JSON Schema for recipes to a file.
-
-    Parameters
-    ----------
-    path:
-        Path to the file where the schema will be written.
-    """
-    Path(path).write_text(
-        json.dumps(generate_recipe_schema(), indent=2) + "\n",
-        encoding="utf-8",
-    )
-
-
 # Descriptions of JSON Schema types in terms of YAML, for error messages.
 TYPE_DESCRIPTIONS = {
     "array": "a list",
