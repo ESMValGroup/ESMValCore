@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import logging
 import re
 import typing
 from collections.abc import Iterable, Sequence
@@ -1372,6 +1373,7 @@ def test_recipe_with_schema_warnings(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
+    caplog.set_level(logging.WARNING)
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = ["author_100"]
     path = tmp_path / "recipe_test.yml"
@@ -1631,6 +1633,7 @@ def test_recipe_with_schema_duplicate_keys(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
+    caplog.set_level(logging.WARNING)
     recipe = yaml.safe_load(DUPLICATE_RECIPE)
     path = tmp_path / "recipe_test.yml"
     path.write_text(DUPLICATE_RECIPE, encoding="utf-8")
