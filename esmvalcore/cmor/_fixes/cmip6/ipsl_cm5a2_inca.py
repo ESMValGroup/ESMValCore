@@ -1,6 +1,7 @@
 """Fixes for IPSL-CM5A2-INCA model."""
 
 import iris.coords
+import numpy as np
 
 from esmvalcore.cmor._fixes.fix import Fix
 
@@ -39,5 +40,14 @@ class Snw(Fix):
                     lon_coord.points[0] = 0.0
 
                 iris.util.promote_aux_coord_to_dim_coord(cube, lon_coord)
+
+            for coord_name in ["latitude", "longitude"]:
+                coord = cube.coord(coord_name)
+                if not coord.has_bounds():
+                    coord.guess_bounds()
+                coord.bounds = np.round(
+                    coord.core_bounds().astype(np.float64),
+                    4,
+                )
 
         return cubes
