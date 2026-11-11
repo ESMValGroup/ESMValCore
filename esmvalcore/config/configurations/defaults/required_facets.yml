@@ -1,5 +1,5 @@
 # Facets that recipes must specify to find the data of a project, in addition
-# to dataset, mip, and short_name.
+# to project, dataset, mip, and short_name.
 #
 # For projects hosted on ESGF, these are the facets that are used to search
 # ESGF, except those that are derived from other facets, such as institute

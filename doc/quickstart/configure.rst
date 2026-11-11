@@ -687,7 +687,7 @@ The following project-specific options are available:
      - :obj:`str`
      - Refer to :ref:`config-preprocessor-filename-template`.
    * - ``required_facets``
-     - Facets that recipes must specify for datasets of the project, in addition to ``dataset``, ``mip``, and ``short_name``. Refer to :ref:`config-required-facets` for details.
+     - Facets that recipes must specify for datasets of the project, in addition to ``project``, ``dataset``, ``mip``, and ``short_name``. Refer to :ref:`config-required-facets` for details.
      - :obj:`list` of :obj:`str`
      - Refer to :ref:`config-required-facets`.
 
@@ -1019,8 +1019,8 @@ Required facets
 ---------------
 
 The facets that a recipe must specify for each dataset of a project, in
-addition to ``dataset``, ``mip``, and ``short_name``, are configured using
-``required_facets``.
+addition to ``project``, ``dataset``, ``mip``, and ``short_name``, are
+configured using ``required_facets``.
 Recipes are checked for these facets before running, and also while editing
 them if the editor supports this (refer to :ref:`recipe_editor_support`).
 Facets that can be added from the :ref:`extra facets <config-extra-facets>`
