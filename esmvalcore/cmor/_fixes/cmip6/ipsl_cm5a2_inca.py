@@ -39,15 +39,6 @@ class Snw(Fix):
                 if lon_coord.points[0] == 360.0:
                     lon_coord.points[0] = 0.0
 
-                dim = iris.coords.DimCoord(
-                    lon_coord.points,
-                    bounds=lon_coord.bounds,
-                    standard_name=lon_coord.standard_name,
-                    units=lon_coord.units,
-                )
-
-                dimension = cube.coord_dims(lon_coord)
-                cube.remove_coord(lon_coord)
-                cube.add_dim_coord(dim, dimension)
+                iris.util.promote_aux_coord_to_dim_coord(cube, lon_coord)
 
         return cubes
