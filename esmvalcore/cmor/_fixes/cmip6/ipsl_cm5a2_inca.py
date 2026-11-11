@@ -35,9 +35,7 @@ class Snw(Fix):
         """
 
         for cube in cubes:
-            coord_names = [cor.standard_name for cor in cube.coords()]
-            if "longitude" in coord_names:
-                lon_coord = cube.coord("longitude")
+            for lon_coord in cube.coords(standard_name="longitude"):
                 if lon_coord.points[0] == 360.0:
                     lon_coord.points[0] = 0.0
 
