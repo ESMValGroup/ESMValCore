@@ -22,7 +22,7 @@ class Snw(Fix):
     """Fixes for ``snw``."""
 
     def fix_metadata(self, cubes):
-        """Fix ``lon`` coordinate.
+        """Fix ``lon`` coordinate, bounds and types of lat/lon.
 
         Parameters
         ----------
@@ -50,7 +50,7 @@ class Snw(Fix):
                     coord.guess_bounds()
                 # make sure coordinates and bounds are double precision
                 coord.bounds = coord.bounds.astype(np.float32).astype(
-                    np.float64
+                    np.float64,
                 )
                 coord.points = coord.points.astype(np.float64)
 
