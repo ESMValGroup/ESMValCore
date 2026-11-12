@@ -806,22 +806,22 @@ def _string_or_list(description: str) -> JSONSchema:
     }
 
 
-class _Names(typing.NamedTuple):
-    """Names that are defined by the installed ESMValTool."""
+class _Tags(typing.NamedTuple):
+    """Tags that are defined by the installed ESMValTool."""
 
-    names: tuple[str, ...]
+    tags: tuple[str, ...]
     hint: str
-    """Explains what an unknown name means and where to define it."""
+    """Explains what an unknown tag means and where to define it."""
 
 
-def _known_names() -> dict[str, _Names]:
-    """Get the names that are defined by the installed ESMValTool.
+def _known_tags() -> dict[str, _Tags]:
+    """Get the tags that are defined by the installed ESMValTool.
 
     These are the tags in ``config-references.yml``, by section, and the
     references that have a bibtex file. Without ESMValTool, there are none.
     """
-    names = {
-        section: _Names(
+    tags = {
+        section: _Tags(
             tuple(TAGS[section] or ()),
             f"Not defined in section '{section}' of "
             f"`{DIAGNOSTICS.tags_config}`, so the provenance will be "
@@ -831,7 +831,7 @@ def _known_names() -> dict[str, _Names]:
         if section in TAGS
     }
     if DIAGNOSTICS.references.is_dir():
-        names["references"] = _Names(
+        tags["references"] = _Tags(
             tuple(
                 sorted(
                     p.stem for p in DIAGNOSTICS.references.glob("*.bibtex")
@@ -840,24 +840,24 @@ def _known_names() -> dict[str, _Names]:
             f"No bibtex file in `{DIAGNOSTICS.references}`, so the citation "
             "will be incomplete.",
         )
-    return names
+    return tags
 
 
-def _names_list(
+def _tags_list(
     description: str,
     section: str,
-    names: dict[str, _Names],
+    tags: dict[str, _Tags],
     min_items: int = 0,
 ) -> JSONSchema:
     """Create a JSON Schema for a list of tags or references."""
     schema = _string_list(description, min_items)
-    if section in names:
-        # An unknown name only makes the provenance less complete, so it is
+    if section in tags:
+        # An unknown tag only makes the provenance less complete, so it is
         # reported as a warning. Editors also show it as a warning.
         schema["items"] = {
             "type": "string",
-            "enum": list(names[section].names),
-            "errorMessage": names[section].hint,
+            "enum": list(tags[section].tags),
+            "errorMessage": tags[section].hint,
             SEVERITY_KEYWORD: "warning",
         }
     return schema
@@ -1322,7 +1322,7 @@ def _script_schema() -> JSONSchema:
     }
 
 
-def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
+def _diagnostic_schema(tags: dict[str, _Tags]) -> JSONSchema:
     return {
         "type": "object",
         "properties": {
@@ -1332,11 +1332,11 @@ def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
                 "description": "Description of the diagnostic.",
             },
             "themes": _linked(
-                _names_list("Themes.", "themes", names),
+                _tags_list("Themes.", "themes", tags),
                 *_DIAGNOSTICS_DOCS,
             ),
             "realms": _linked(
-                _names_list("Realms.", "realms", names),
+                _tags_list("Realms.", "realms", tags),
                 *_DIAGNOSTICS_DOCS,
             ),
             "variables": _linked(
@@ -1370,7 +1370,7 @@ def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
     }
 
 
-def _documentation_schema(names: dict[str, _Names]) -> JSONSchema:
+def _documentation_schema(tags: dict[str, _Tags]) -> JSONSchema:
     return _linked(
         {
             "type": "object",
@@ -1385,36 +1385,36 @@ def _documentation_schema(names: dict[str, _Names]) -> JSONSchema:
                     "description": "Description of the recipe.",
                 },
                 "authors": _linked(
-                    _names_list(
+                    _tags_list(
                         "Authors, as defined in `config-references.yml`.",
                         "authors",
-                        names,
+                        tags,
                         min_items=1,
                     ),
                     *_DOCUMENTATION_DOCS,
                 ),
                 "maintainer": _linked(
-                    _names_list(
+                    _tags_list(
                         "Maintainers, as defined in `config-references.yml`.",
                         "authors",
-                        names,
+                        tags,
                     ),
                     *_DOCUMENTATION_DOCS,
                 ),
                 "projects": _linked(
-                    _names_list(
+                    _tags_list(
                         "Research projects that funded the development of "
                         "the recipe, as defined in `config-references.yml`.",
                         "projects",
-                        names,
+                        tags,
                     ),
                     *_DOCUMENTATION_DOCS,
                 ),
                 "references": _linked(
-                    _names_list(
+                    _tags_list(
                         "References, as bibtex keys.",
                         "references",
-                        names,
+                        tags,
                     ),
                     *_DOCUMENTATION_DOCS,
                 ),
@@ -1439,14 +1439,14 @@ def generate_recipe_schema() -> JSONSchema:
     :
         A JSON Schema (draft-07) that describes a recipe.
     """
-    return _recipe_schema(_known_names(), _known_tables())
+    return _recipe_schema(_known_tags(), _known_tables())
 
 
 def _recipe_schema(
-    names: dict[str, _Names],
+    tags: dict[str, _Tags],
     tables: dict[str, _Tables | None],
 ) -> JSONSchema:
-    """Generate a JSON Schema for recipes, given the known names."""
+    """Generate a JSON Schema for recipes, given the known tags."""
     return {
         "$schema": SCHEMA_DIALECT,
         "title": "ESMValTool recipe",
@@ -1490,12 +1490,12 @@ def _recipe_schema(
         },
         "required": ["documentation", "diagnostics"],
         "definitions": {
-            "documentation": _documentation_schema(names),
+            "documentation": _documentation_schema(tags),
             "facets": _facets_schema(tables),
             "dataset": _dataset_schema(),
             "variable": _variable_schema(),
             "script": _script_schema(),
-            "diagnostic": _diagnostic_schema(names),
+            "diagnostic": _diagnostic_schema(tags),
             "preprocessor": _preprocessor_schema(),
             "steps": {
                 step: _preprocessor_step_schema(step) for step in RECIPE_STEPS
@@ -1517,21 +1517,21 @@ TYPE_DESCRIPTIONS = {
 
 
 def _get_validator() -> jsonschema.Draft7Validator:
-    # The known names are part of the cache key, because they may change,
+    # The known tags are part of the cache key, because they may change,
     # for example when the tags or the configuration are updated.
     return _create_validator(
-        tuple(_known_names().items()),
+        tuple(_known_tags().items()),
         tuple(_known_tables().items()),
     )
 
 
 @functools.cache
 def _create_validator(
-    names: tuple[tuple[str, _Names], ...],
+    tags: tuple[tuple[str, _Tags], ...],
     tables: tuple[tuple[str, _Tables | None], ...],
 ) -> jsonschema.Draft7Validator:
     return jsonschema.Draft7Validator(
-        _recipe_schema(dict(names), dict(tables)),
+        _recipe_schema(dict(tags), dict(tables)),
     )
 
 
