@@ -22,13 +22,13 @@ def _snw_cube(lon_points):
         units="degrees_east",
     )
     lat = DimCoord(
-        [0.0],
+        [0.0, 90.0],
         standard_name="latitude",
         var_name="lat",
         units="degrees_north",
     )
     return Cube(
-        np.ones((1, len(lon_points))),
+        np.ones((2, len(lon_points))),
         var_name="snw",
         units="kg m-2",
         dim_coords_and_dims=[(lat, 0)],
