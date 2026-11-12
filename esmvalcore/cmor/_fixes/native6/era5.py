@@ -1,6 +1,6 @@
 """Fixes for ERA5."""
 
-import datetime
+import datetime as dt
 import logging
 
 import numpy as np
@@ -608,6 +608,12 @@ class AllVars(Fix):
         fixed_cubes = CubeList()
         for orig_cube in cubes:
             cube = orig_cube.copy()
+            # remove scalar string coordinates written by the CDS
+            # grib to netCDF converter
+            for coord in cube.coords("expver"):
+                cube.remove_coord(coord)
+            for coord in cube.coords("realization"):
+                cube.remove_coord(coord)
             cube.var_name = self.vardef.short_name
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
@@ -615,7 +621,7 @@ class AllVars(Fix):
             cube = self._fix_coordinates(cube)
             cube = safe_convert_units(cube, self.vardef.units)
             cube.data = cube.core_data().astype("float32")
-            year = datetime.datetime.now().year
+            year = dt.datetime.now().year
             cube.attributes["comment"] = (
                 "Contains modified Copernicus Climate Change "
                 f"Service Information {year}"

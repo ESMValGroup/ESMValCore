@@ -473,6 +473,12 @@ def _regional_stock_cube(spec: dict[str, Any]) -> Cube:
         londata=londata,
         circular=True,
     )
+    # Only a grid that covers the full great circle wraps around, otherwise
+    # regridders would connect the first and last longitude.
+    cube.coord("latitude").circular = False
+    cube.coord("longitude").circular = bool(
+        len(londata) * abs(spec["step_longitude"]) >= 360,
+    )
 
     def add_bounds_from_step(
         coord: iris.coords.DimCoord | iris.coords.AuxCoord,

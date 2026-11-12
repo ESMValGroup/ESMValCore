@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-import esmvalcore.local
-from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
+from esmvalcore.exceptions import InvalidConfigParameter
 from esmvalcore.io import load_data_sources
 
 if TYPE_CHECKING:
@@ -22,7 +21,7 @@ def _get_data_sources(
     session: Session,
     project: str,
 ) -> list[DataSource]:
-    """Get the list of available data sources including legacy configuration.
+    """Get the list of available data sources.
 
     Arguments
     ---------
@@ -44,29 +43,14 @@ def _get_data_sources(
     """
     try:
         return load_data_sources(session, project)
-    except ValueError:
-        pass
-
-    # Use legacy data sources from config-user.yml and config-developer.yml.
-    data_sources: list[DataSource] = []
-    try:
-        legacy_local_data_sources = esmvalcore.local._get_data_sources(  # noqa: SLF001
-            project,
-        )
-    except (RecipeError, KeyError):
-        # The project is not configured in config-developer.yml
-        legacy_local_data_sources = []
-    data_sources.extend(legacy_local_data_sources)
-
-    if not data_sources:
+    except ValueError as exc:
         cfg_snippet = {
             "projects": {
-                p: {
-                    "data": session["projects"].get(p, {}).get("data", {}),
-                }
-                for p in (
-                    session["projects"] if project is None else [project]
-                )
+                project: {
+                    "data": session["projects"]
+                    .get(project, {})
+                    .get("data", {}),
+                },
             },
         }
         msg = (
@@ -76,5 +60,4 @@ def _get_data_sources(
             "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
             "quickstart/configure.html#project-specific-configuration"
         )
-        raise InvalidConfigParameter(msg)
-    return data_sources
+        raise InvalidConfigParameter(msg) from exc

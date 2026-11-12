@@ -458,6 +458,7 @@ AREA_WEIGHTS = CellMeasure(
 def test_distance_metric(  # noqa: PLR0913, PLR0915
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     data,
     ref_data,
@@ -656,6 +657,7 @@ def test_distance_metric_lazy(
 def test_distance_metric_cubes(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     data,
     long_name,
@@ -701,6 +703,7 @@ def test_distance_metric_cubes(  # noqa: PLR0913
 def test_distance_metric_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     data,
     long_name,
@@ -794,6 +797,7 @@ def test_distance_metric_masked_data(  # noqa: PLR0913
 def test_distance_metric_fully_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     long_name,
     var_name,

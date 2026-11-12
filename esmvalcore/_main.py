@@ -84,12 +84,13 @@ def parse_resume(resume, recipe):
 
 def process_recipe(recipe_file: Path, session: Session) -> None:
     """Process recipe."""
-    import datetime
+    import datetime as dt
     import shutil
 
     import yaml
 
     from esmvalcore._recipe.recipe import read_recipe_file
+    from esmvalcore._task import available_cpu_count
 
     if not recipe_file.is_file():
         import errno
@@ -100,7 +101,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
             recipe_file,
         )
 
-    timestamp1 = datetime.datetime.now(datetime.UTC)
+    timestamp1 = dt.datetime.now(dt.UTC)
     timestamp_format = "%Y-%m-%d %H:%M:%S"
 
     logger.info(
@@ -121,7 +122,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
         recipe_file.read_text(encoding="utf-8"),
     )
 
-    n_processes = session["max_parallel_tasks"] or os.cpu_count()
+    n_processes = session["max_parallel_tasks"] or available_cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
@@ -152,7 +153,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
     # run
     recipe.run()
     # End time timing
-    timestamp2 = datetime.datetime.now(datetime.UTC)
+    timestamp2 = dt.datetime.now(dt.UTC)
     logger.info(
         "Ending the Earth System Model Evaluation Tool at time: %s UTC",
         timestamp2.strftime(timestamp_format),

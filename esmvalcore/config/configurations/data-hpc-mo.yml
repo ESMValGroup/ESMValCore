@@ -2,21 +2,21 @@
 projects:
   CMIP6:
     data:
-      mo: &cmip6
+      mo:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
   CMIP5:
     data:
-      mo: &cmip5
+      mo:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
   CORDEX:
     data:
-      mo: &cordex
+      mo:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
