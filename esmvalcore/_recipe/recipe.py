@@ -26,7 +26,10 @@ from esmvalcore._recipe.to_datasets import (
     _representative_datasets,
     datasets_from_recipe,
 )
-from esmvalcore._recipe.validate import yaml_error_issue
+from esmvalcore._recipe.validate import (
+    ensure_valid_recipe,
+    yaml_error_issue,
+)
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._dask import validate_dask_config
@@ -896,7 +899,7 @@ class Recipe:
         recipe_file: Path,
     ) -> None:
         """Parse a recipe file into an object."""
-        check.recipe_with_schema(raw_recipe, recipe_file, session)
+        ensure_valid_recipe(raw_recipe, recipe_file, session)
         validate_dask_config(session["dask"])
 
         # Clear the global variable containing the set of files to download

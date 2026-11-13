@@ -16,25 +16,14 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
-import warnings
 from functools import partial
-from pathlib import Path
 from pprint import pformat
 from shutil import which
 from typing import TYPE_CHECKING, Any
 
 import isodate
 
-from esmvalcore._recipe.validate import (
-    _find_incomplete_datasets,
-    _validate,
-    validate_recipe,
-)
-from esmvalcore.exceptions import (
-    ESMValCoreDeprecationWarning,
-    InputFilesNotFound,
-    RecipeError,
-)
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._other import _get_var_info
@@ -45,9 +34,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from esmvalcore._recipe.validate import RecipeIssue
     from esmvalcore._task import TaskSet
-    from esmvalcore.config import Session
     from esmvalcore.dataset import Dataset
     from esmvalcore.typing import Facets
 
@@ -115,76 +102,6 @@ def ncl_version() -> None:
             "a recipe containing NCL scripts."
         )
         raise RecipeError(msg)
-
-
-def recipe_with_schema(
-    recipe: dict,
-    path: Path,
-    session: Session | None = None,
-) -> None:
-    """Check if the recipe content matches schema."""
-    logger.debug("Checking recipe %s against schema", path)
-    # The text is used to find duplicate keys and the line numbers of issues.
-    try:
-        text = Path(path).read_text(encoding="utf-8")
-    except OSError:
-        text = None
-    issues = validate_recipe(recipe, text, session)
-    for issue in issues:
-        if issue.severity == "warning":
-            logger.warning("Recipe %s: %s", path, issue)
-    errors = [issue for issue in issues if issue.severity == "error"]
-    if errors:
-        msg = f"Recipe {path} is invalid:\n" + "\n".join(
-            f"- {issue}" for issue in errors
-        )
-        raise RecipeError(msg)
-
-
-def _is_about_datasets(issue: RecipeIssue) -> bool:
-    """Check if a problem is in the datasets or variables of a recipe."""
-    path = issue.path
-    return path[:1] == ("datasets",) or (
-        path[:1] == ("diagnostics",)
-        and path[2:3] in (("additional_datasets",), ("variables",))
-    )
-
-
-def datasets_in_recipe(
-    recipe: dict,
-    text: str | None,
-    session: Session,
-) -> None:
-    """Check the datasets and variables in a recipe.
-
-    The recipe may be incomplete, so problems in other sections and facets
-    that are needed to find the data but missing are ignored. Problems that
-    prevent reading the datasets raise an error, other problems a deprecation
-    warning.
-    """
-    issues = [
-        issue
-        for issue in _validate(recipe, text, session, required_facets=False)
-        if _is_about_datasets(issue)
-    ]
-    for issue in issues:
-        if issue.severity == "warning":
-            logger.warning("Recipe: %s", issue)
-    errors = [issue for issue in issues if issue.severity == "error"]
-    fatal = {(i.path, i.message) for i in _find_incomplete_datasets(recipe)}
-    if any((i.path, i.message) in fatal for i in errors):
-        msg = "The datasets in the recipe are invalid:\n" + "\n".join(
-            f"- {issue}" for issue in errors
-        )
-        raise RecipeError(msg)
-    if errors:
-        msg = (
-            "The datasets in the recipe are invalid:\n"
-            + "".join(f"- {issue}\n" for issue in errors)
-            + "Reading datasets from an invalid recipe is deprecated in "
-            "ESMValCore v2.16.0 and will raise an error in ESMValCore v2.18.0."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=3)
 
 
 def get_no_data_message(dataset: Dataset) -> str:

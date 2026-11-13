@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -10,8 +12,13 @@ import yaml
 
 import esmvalcore.io.esgf.facets
 import esmvalcore.preprocessor
-from esmvalcore._recipe.validate import RecipeIssue, validate_recipe
+from esmvalcore._recipe.validate import (
+    RecipeIssue,
+    ensure_valid_recipe,
+    validate_recipe,
+)
 from esmvalcore.config import CFG
+from esmvalcore.exceptions import RecipeError
 from tests.unit.recipe.example_recipes import (
     DUPLICATE_RECIPE,
     INVALID_RECIPE,
@@ -1065,3 +1072,65 @@ def test_validate_recipe_unknown_ancestor(
             message,
         ),
     ]
+
+
+def test_ensure_valid_recipe(tmp_path: Path) -> None:
+    recipe = yaml.safe_load(INVALID_RECIPE)
+    path = tmp_path / "recipe_test.yml"
+    path.write_text(INVALID_RECIPE, encoding="utf-8")
+    msg = (
+        f"Recipe {path} is invalid:\n"
+        "- line 5: datasets > 1: missing required key 'dataset'.\n"
+        "- line 5: datasets > 1 > tier: expected at most 3, got 7.\n"
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        ensure_valid_recipe(recipe, path)
+
+
+def test_ensure_valid_recipe_no_file(tmp_path: Path) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"].pop("scripts")
+    path = tmp_path / "recipe_test.yml"
+    msg = (
+        f"Recipe {path} is invalid:\n"
+        "- diagnostics > example: missing required key 'scripts'."
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        ensure_valid_recipe(recipe, path)
+
+
+@pytest.mark.usefixtures("esmvaltool")
+def test_ensure_valid_recipe_warnings(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING)
+    recipe = yaml.safe_load(RECIPE)
+    recipe["documentation"]["authors"] = ["author_100"]
+    path = tmp_path / "recipe_test.yml"
+    path.write_text(yaml.safe_dump(recipe), encoding="utf-8")
+    ensure_valid_recipe(recipe, path)
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelname == "WARNING"
+    message = caplog.records[0].getMessage()
+    assert message.startswith(f"Recipe {path}: line ")
+    assert (
+        "documentation > authors > 0: unknown value 'author_100'." in message
+    )
+
+
+def test_ensure_valid_recipe_duplicate_keys(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING)
+    recipe = yaml.safe_load(DUPLICATE_RECIPE)
+    path = tmp_path / "recipe_test.yml"
+    path.write_text(DUPLICATE_RECIPE, encoding="utf-8")
+    ensure_valid_recipe(recipe, path)
+    assert [r.levelname for r in caplog.records] == ["WARNING", "WARNING"]
+    assert caplog.records[1].getMessage() == (
+        f"Recipe {path}: line 16: diagnostics > example > variables > tas: "
+        "duplicate key, this definition is ignored because 'tas' is defined "
+        "again on line 18."
+    )

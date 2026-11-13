@@ -13,6 +13,7 @@ import yaml
 
 import esmvalcore
 import esmvalcore._recipe.recipe as _recipe
+import esmvalcore._recipe.validate as _validate
 import esmvalcore.config
 import esmvalcore.experimental.recipe_output
 from esmvalcore.dataset import Dataset
@@ -1060,7 +1061,7 @@ def test_recipe_is_validated(
     tmp_path: Path,
 ) -> None:
     """Test that the recipe is validated, also when not read from a file."""
-    validate = mocker.spy(_recipe.check, "validate_recipe")
+    validate = mocker.spy(_validate, "validate_recipe")
     recipe_file = tmp_path / "recipe_test.yml"
     msg = "recipe: missing required key 'documentation'."
     with pytest.raises(RecipeError, match=re.escape(msg)):

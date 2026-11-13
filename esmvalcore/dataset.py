@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from esmvalcore._recipe import check
 from esmvalcore._recipe._io import _load_recipe, _recipe_text
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
+from esmvalcore._recipe.validate import ensure_valid_datasets
 from esmvalcore.cmor.table import (
     NoInfo,
     _get_branding_suffixes,
@@ -185,7 +186,7 @@ class Dataset:
 
         text = _recipe_text(recipe)
         loaded = _load_recipe(recipe if text is None else text)
-        check.datasets_in_recipe(loaded, text, session)
+        ensure_valid_datasets(loaded, text, session)
         return datasets_from_recipe(loaded, session)
 
     def _file_to_dataset(
