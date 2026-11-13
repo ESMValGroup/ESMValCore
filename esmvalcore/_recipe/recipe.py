@@ -99,7 +99,12 @@ def read_recipe_file(filename: Path, session: Session) -> Recipe:
         issue = yaml_error_issue(exc)
         msg = f"Recipe {filename} is invalid:\n- {issue}"
         raise RecipeError(msg) from exc
-    return Recipe(raw_recipe, session, recipe_file=filename)
+    return Recipe(
+        raw_recipe,
+        session,
+        recipe_file=filename,
+        recipe_text=recipe_text,
+    )
 
 
 def _special_name_to_dataset(facets: Facets, special_name: str) -> str:
@@ -897,9 +902,10 @@ class Recipe:
         raw_recipe: dict[str, Any],
         session: Session,
         recipe_file: Path,
+        recipe_text: str | None = None,
     ) -> None:
         """Parse a recipe file into an object."""
-        ensure_valid_recipe(raw_recipe, recipe_file, session)
+        ensure_valid_recipe(raw_recipe, recipe_file, recipe_text, session)
         validate_dask_config(session["dask"])
 
         # Clear the global variable containing the set of files to download

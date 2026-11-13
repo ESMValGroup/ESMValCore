@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import pytest
 import yaml
@@ -1201,6 +1202,161 @@ def test_validate_recipe_unavailable_variable(
     assert [str(i) for i in validate_recipe(recipe)] == expected
 
 
+@pytest.mark.parametrize(
+    ("path", "value", "message", "severity"),
+    [
+        (
+            ("datasets", 0, "mip"),
+            "atmos",
+            "unknown value 'atmos'. Not a CMOR table of project 'CMIP5'.",
+            "error",
+        ),
+        (
+            ("datasets", 2, "mip"),
+            "Amonn",
+            (
+                "unknown value 'Amonn'. Not a CMOR table of project 'CMIP6'. "
+                "Did you mean 'Amon'?"
+            ),
+            "error",
+        ),
+        (
+            ("datasets", 1, "mip"),
+            "Lyr",
+            (
+                "unknown value 'Lyr'. Not a CMOR table of project 'native6'. "
+                "The variable will be looked up in all tables, because the "
+                "CMOR checks of this project are not strict. Did you mean "
+                "'Oyr'?"
+            ),
+            "warning",
+        ),
+    ],
+)
+def test_validate_recipe_mip_in_dataset(
+    path: tuple[str | int, ...],
+    value: str,
+    message: str,
+    severity: Literal["error", "warning"],
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][path[1]]["mip"] = value
+    issues = [i for i in validate_recipe(recipe) if i.path[-1] == "mip"]
+    assert issues == [RecipeIssue(path, message, severity=severity)]
+
+
+def test_validate_recipe_mip_in_variable_group() -> None:
+    # The project is defined in another section than the MIP.
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"]["mip"] = "Amonn"
+    path = ("diagnostics", "example", "variables", "ta", "mip")
+    issues = [i for i in validate_recipe(recipe) if i.path == path]
+    start = "unknown value 'Amonn'. Not a CMOR table of project "
+    assert [(i.message[: len(start) + 6], i.severity) for i in issues] == [
+        (f"{start}'CMIP5", "error"),
+        (f"{start}'nativ", "warning"),
+        (f"{start}'CMIP6", "error"),
+    ]
+    assert "Did you mean 'Amon'?" in issues[2].message
+
+
+def test_validate_recipe_mip_reported_once() -> None:
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["diagnostics"]["example"]["variables"] = {
+        "tas": {"mip": "Amonn"},
+        "pr": {"mip": "Amonn"},
+    }
+    recipe["datasets"].append({**recipe["datasets"][0], "dataset": "B"})
+    paths = [i.path for i in validate_recipe(recipe)]
+    assert paths == [
+        ("diagnostics", "example", "variables", "tas", "mip"),
+        ("diagnostics", "example", "variables", "pr", "mip"),
+    ]
+
+
+def test_validate_recipe_mip_not_strict_project() -> None:
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["datasets"] = [OBS6_DATASET]
+    recipe["diagnostics"]["example"]["variables"] = {"tas": {"mip": "Amonn"}}
+    (issue,) = validate_recipe(recipe)
+    assert issue.severity == "warning"
+    assert issue.path == ("diagnostics", "example", "variables", "tas", "mip")
+    assert "Not a CMOR table of project 'OBS6'. The variable will be" in (
+        issue.message
+    )
+
+
+def test_validate_recipe_mip_of_overridden_project() -> None:
+    # The dataset changes the project of the variable group, but not the MIP.
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["diagnostics"]["example"]["variables"] = {
+        "tas": {"mip": "Amon", "project": "CMIP6"},
+    }
+    recipe["diagnostics"]["example"]["additional_datasets"] = [
+        {"dataset": "B", "project": "CMIP7"},
+    ]
+    issues = [i for i in validate_recipe(recipe) if "CMOR table" in i.message]
+    assert [(i.path, i.severity) for i in issues] == [
+        (("diagnostics", "example", "additional_datasets", 0), "error"),
+    ]
+    assert issues[0].message.startswith(
+        "MIP 'Amon' of the variable group is not a CMOR table of project "
+        "'CMIP7'.",
+    )
+
+
+@pytest.mark.parametrize("mip", ["*", "A*", "Amo?", "[AO]mon", 1])
+def test_validate_recipe_mip_skipped(mip: str | int) -> None:
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["diagnostics"]["example"]["variables"] = {"tas": {"mip": mip}}
+    messages = [i.message for i in validate_recipe(recipe)]
+    assert not any("CMOR table" in m for m in messages)
+
+
+def _cmip7_recipe(**facets: Any) -> dict[str, Any]:
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["datasets"] = [
+        {
+            "project": "CMIP7",
+            "dataset": "X",
+            "exp": "historical",
+            "ensemble": "r1i1p1f1",
+            "grid": "g",
+            "region": "glb",
+            "frequency": "mon",
+            "activity": "CMIP",
+            "institute": "Y",
+            "version": "v1",
+        },
+    ]
+    variable = {"mip": "atmos", "branding_suffix": "tavg-h2m-hxy-u", **facets}
+    recipe["diagnostics"]["example"]["variables"] = {"tas": variable}
+    return recipe
+
+
+def test_validate_recipe_branding_suffix() -> None:
+    assert validate_recipe(_cmip7_recipe()) == []
+
+
+def test_validate_recipe_branding_suffix_invalid() -> None:
+    recipe = _cmip7_recipe(branding_suffix="tavg-h2m-hxy-uu")
+    (issue,) = validate_recipe(recipe)
+    assert issue.path == ("diagnostics", "example", "variables", "tas")
+    assert issue.message.startswith(
+        "variable 'tas' with branding suffix 'tavg-h2m-hxy-uu' not available "
+        "in table 'atmos' of project 'CMIP7'. Available branding suffixes "
+        "are: ",
+    )
+    assert issue.message.endswith(" Did you mean 'tavg-h2m-hxy-u'?")
+
+
+@pytest.mark.parametrize("branding_suffix", ["tavg-*", "tavg-h2m-hxy-[ul]"])
+def test_validate_recipe_branding_suffix_pattern(branding_suffix: str) -> None:
+    assert (
+        validate_recipe(_cmip7_recipe(branding_suffix=branding_suffix)) == []
+    )
+
+
 def _recipe_with_script(script: str) -> dict[str, Any]:
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = AUTHORS[:1]
@@ -1242,17 +1398,16 @@ def test_validate_recipe_script_without_esmvaltool(
 def test_ensure_valid_recipe(tmp_path: Path) -> None:
     recipe = yaml.safe_load(INVALID_RECIPE)
     path = tmp_path / "recipe_test.yml"
-    path.write_text(INVALID_RECIPE, encoding="utf-8")
     msg = (
         f"Recipe {path} is invalid:\n"
         "- line 5: datasets > 1: missing required key 'dataset'.\n"
         "- line 5: datasets > 1 > tier: expected at most 3, got 7.\n"
     )
     with pytest.raises(RecipeError, match=re.escape(msg)):
-        ensure_valid_recipe(recipe, path)
+        ensure_valid_recipe(recipe, path, INVALID_RECIPE)
 
 
-def test_ensure_valid_recipe_no_file(tmp_path: Path) -> None:
+def test_ensure_valid_recipe_no_text(tmp_path: Path) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["diagnostics"]["example"].pop("scripts")
     path = tmp_path / "recipe_test.yml"
@@ -1261,7 +1416,7 @@ def test_ensure_valid_recipe_no_file(tmp_path: Path) -> None:
         "- diagnostics > example: missing required key 'scripts'."
     )
     with pytest.raises(RecipeError, match=re.escape(msg)):
-        ensure_valid_recipe(recipe, path)
+        ensure_valid_recipe(recipe, path, None)
 
 
 @pytest.mark.usefixtures("esmvaltool")
@@ -1273,8 +1428,7 @@ def test_ensure_valid_recipe_warnings(
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = ["author_100"]
     path = tmp_path / "recipe_test.yml"
-    path.write_text(yaml.safe_dump(recipe), encoding="utf-8")
-    ensure_valid_recipe(recipe, path)
+    ensure_valid_recipe(recipe, path, yaml.safe_dump(recipe))
     assert len(caplog.records) == 1
     assert caplog.records[0].levelname == "WARNING"
     message = caplog.records[0].getMessage()
@@ -1292,7 +1446,7 @@ def test_ensure_valid_recipe_unknown_key(
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["domains"] = ["global"]
     path = tmp_path / "recipe_test.yml"
-    ensure_valid_recipe(recipe, path)
+    ensure_valid_recipe(recipe, path, None)
     assert [r.getMessage() for r in caplog.records] == [
         (
             f"Recipe {path}: documentation > domains: unknown key. Unknown "
@@ -1309,8 +1463,7 @@ def test_ensure_valid_recipe_duplicate_keys(
     caplog.set_level(logging.WARNING)
     recipe = yaml.safe_load(DUPLICATE_RECIPE)
     path = tmp_path / "recipe_test.yml"
-    path.write_text(DUPLICATE_RECIPE, encoding="utf-8")
-    ensure_valid_recipe(recipe, path)
+    ensure_valid_recipe(recipe, path, DUPLICATE_RECIPE)
     assert [r.levelname for r in caplog.records] == ["WARNING", "WARNING"]
     assert caplog.records[1].getMessage() == (
         f"Recipe {path}: line 16: diagnostics > example > variables > tas: "

@@ -815,183 +815,18 @@ def test_validate_recipe_names_updated() -> None:
     assert not validate_recipe(recipe)
 
 
-@pytest.mark.parametrize(
-    ("path", "value", "message", "severity"),
-    [
-        (
+def test_validate_recipe_unknown_project() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][0]["project"] = "CMIP8"
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
             ("datasets", 0, "project"),
-            "CMIP8",
             (
                 "unknown value 'CMIP8'. Not defined in the `projects` "
                 "section of the configuration. Did you mean 'CMIP7'?"
             ),
-            "error",
-        ),
-        (
-            ("datasets", 0, "mip"),
-            "atmos",
-            "unknown value 'atmos'. Not a CMOR table of project 'CMIP5'.",
-            "error",
-        ),
-        (
-            ("datasets", 2, "mip"),
-            "Amonn",
-            (
-                "unknown value 'Amonn'. Not a CMOR table of project 'CMIP6'. "
-                "Did you mean 'Amon'?"
-            ),
-            "error",
-        ),
-        (
-            ("datasets", 1, "mip"),
-            "Lyr",
-            (
-                "unknown value 'Lyr'. Not a CMOR table of project 'native6'. "
-                "The variable will be looked up in all tables, because the "
-                "CMOR checks of this project are not strict. Did you mean "
-                "'Oyr'?"
-            ),
-            "warning",
-        ),
-        (
-            ("diagnostics", "example", "variables", "ta", "mip"),
-            "Amonn",
-            (
-                "unknown value 'Amonn'. Not a CMOR table of any project. "
-                "Did you mean 'Amon'?"
-            ),
-            "warning",
-        ),
-    ],
-)
-def test_validate_recipe_projects_and_mips(
-    path: tuple[str | int, ...],
-    value: str,
-    message: str,
-    severity: Literal["error", "warning"],
-) -> None:
-    recipe = yaml.safe_load(RECIPE)
-    node = recipe
-    for key in path[:-1]:
-        node = node[key]
-    node[path[-1]] = value
-    assert validate_recipe(recipe) == [
-        RecipeIssue(path, message, severity=severity),
-    ]
-
-
-@pytest.mark.parametrize("mip", ["*", "A*", "Amo?", "[AO]mon"])
-def test_validate_recipe_mip_pattern(mip: str) -> None:
-    recipe = yaml.safe_load(RECIPE)
-    recipe["datasets"][0]["mip"] = mip
-    recipe["diagnostics"]["example"]["variables"]["ta"]["mip"] = mip
-    assert validate_recipe(recipe) == []
-
-
-@pytest.mark.parametrize(
-    ("mip", "branding_suffix"),
-    [
-        ("atmos", "tavg-h2m-hxy-u"),
-        ("atmos", "tavg-*"),
-        ("atmos", ["tavg-h2m-hxy-u", "tmax-h2m-hxy-u"]),
-        ("ocean", "tavg-u-hxy-sea"),
-        ("*", "anything"),
-    ],
-)
-def test_validate_recipe_branding_suffix(
-    mip: str,
-    branding_suffix: str | list[str],
-) -> None:
-    recipe = yaml.safe_load(RECIPE)
-    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
-    variable["mip"] = mip
-    variable["branding_suffix"] = branding_suffix
-    assert validate_recipe(recipe) == []
-
-
-def test_validate_recipe_branding_suffix_invalid() -> None:
-    recipe = yaml.safe_load(RECIPE)
-    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
-    variable["mip"] = "atmos"
-    variable["branding_suffix"] = "tavg-h2m-hxy-uu"
-    path = ("diagnostics", "example", "variables", "ta", "branding_suffix")
-    assert validate_recipe(recipe) == [
-        RecipeIssue(
-            path,
-            "unknown value 'tavg-h2m-hxy-uu'. Not a branding suffix of a "
-            "variable in CMOR table 'atmos'. Did you mean 'tavg-h2m-hxy-u'?",
         ),
     ]
-
-
-def test_branding_suffix_rules_not_strict() -> None:
-    tables: dict[str, json_schema._Tables | None] = {
-        "A": json_schema._Tables(
-            ("atmos",),
-            strict=True,
-            branding_suffixes=(("atmos", ("tavg-u-hxy-u",)),),
-        ),
-        "B": json_schema._Tables(
-            ("atmos",),
-            strict=False,
-            branding_suffixes=(("atmos", ("tpt-u-hxy-u",)),),
-        ),
-    }
-    (rule,) = json_schema._branding_suffix_rules(tables)
-    schema = rule["then"]["properties"]["branding_suffix"]
-    assert schema["enum"] == ["tavg-u-hxy-u", "tpt-u-hxy-u"]
-    assert schema[json_schema.SEVERITY_KEYWORD] == "warning"
-
-
-def test_validate_recipe_mip_of_other_project() -> None:
-    recipe = yaml.safe_load(RECIPE)
-    recipe["datasets"][2]["mip"] = "atmos"
-    recipe["datasets"][2]["project"] = "CMIP7"
-    recipe["datasets"][2].update(
-        branding_suffix="*",
-        frequency="mon",
-        region="glb",
-    )
-    assert validate_recipe(recipe) == []
-
-
-@pytest.mark.parametrize(
-    ("tables", "severity"),
-    [
-        (
-            {"A": json_schema._Tables(("Amon",), strict=True)},
-            "error",
-        ),
-        (
-            {
-                "A": json_schema._Tables(("Amon",), strict=True),
-                "B": json_schema._Tables(("Omon",), strict=False),
-            },
-            "warning",
-        ),
-        ({"A": json_schema._Tables(("Amon",), strict=True), "B": None}, None),
-    ],
-)
-def test_project_rules_without_project(
-    tables: dict[str, json_schema._Tables | None],
-    severity: str | None,
-) -> None:
-    rules = json_schema._project_rules(tables)
-    without_project = [
-        rule
-        for rule in rules
-        if rule["if"].get("not") == {"required": ["project"]}
-    ]
-    if severity is None:
-        # Any MIP can be used with a project without CMOR tables.
-        assert without_project == []
-    else:
-        (rule,) = without_project
-        mip = rule["then"]["properties"]["mip"]
-        assert mip["enum"] == sorted(
-            name for t in tables.values() if t for name in t.names
-        )
-        assert mip.get(json_schema.SEVERITY_KEYWORD, "error") == severity
 
 
 @pytest.mark.parametrize(

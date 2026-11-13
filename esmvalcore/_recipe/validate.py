@@ -25,6 +25,7 @@ import fnmatch
 import inspect
 import logging
 import re
+import typing
 import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -779,45 +780,6 @@ def _list(data: object, key: str) -> list:
     return value if isinstance(value, list) else []
 
 
-def _preprocessor_facets(
-    recipe: object,
-) -> collections.abc.Iterator[tuple[tuple[str | int, ...], object]]:
-    """Find the values of the ``preprocessor`` facet in a recipe.
-
-    Datasets can override the preprocessor of their variable group.
-    """
-    entries: list[tuple[tuple[str | int, ...], object]] = [
-        (("datasets", i), entry)
-        for i, entry in enumerate(_list(recipe, "datasets"))
-    ]
-    for diagnostic_name, diagnostic in _mapping(recipe, "diagnostics").items():
-        path: tuple[str | int, ...] = ("diagnostics", diagnostic_name)
-        entries.extend(
-            ((*path, "additional_datasets", i), entry)
-            for i, entry in enumerate(_list(diagnostic, "additional_datasets"))
-        )
-        for group, variable in _mapping(diagnostic, "variables").items():
-            group_path = (*path, "variables", group)
-            # The schema reports preprocessors of variable groups that are
-            # not a string.
-            name = (
-                variable.get("preprocessor")
-                if isinstance(variable, dict)
-                else None
-            )
-            if isinstance(name, str):
-                yield (*group_path, "preprocessor"), name
-            entries.extend(
-                ((*group_path, "additional_datasets", i), entry)
-                for i, entry in enumerate(
-                    _list(variable, "additional_datasets"),
-                )
-            )
-    for entry_path, entry in entries:
-        if isinstance(entry, dict) and "preprocessor" in entry:
-            yield (*entry_path, "preprocessor"), entry["preprocessor"]
-
-
 def _matches(pattern: str, value: object) -> bool:
     """Check if a facet value matches a pattern of the extra facets.
 
@@ -846,57 +808,78 @@ def _extra_facet_names(
     }
 
 
-def _variable_groups(
-    recipe: object,
-) -> collections.abc.Iterator[
-    tuple[
-        tuple[str | int, ...],
-        dict,
-        list[tuple[tuple[str | int, ...], dict]],
-    ]
-]:
-    """Find the variable groups with the datasets that they use."""
+_Path = tuple[str | int, ...]
+
+
+class _Dataset(typing.NamedTuple):
+    """A dataset of a variable group."""
+
+    path: _Path
+    """Path of the dataset in the recipe."""
+    group_path: _Path
+    """Path of the variable group that uses the dataset."""
+    entry: dict
+    """The dataset as defined in the recipe."""
+    facets: dict
+    """The facets of the dataset, which override those of its variable group."""
+    origin: dict[str, _Path]
+    """The path of the dataset or variable group that defines each facet."""
+
+
+class _Group(typing.NamedTuple):
+    """A variable group with the datasets that it uses."""
+
+    path: _Path
+    variable: dict
+    datasets: list[_Dataset]
+    """Datasets in the `datasets` section belong to every variable group."""
+
+
+def _variable_groups(recipe: object) -> collections.abc.Iterator[_Group]:
+    """Find the variable groups with their datasets."""
     datasets = [
         (("datasets", i), entry)
         for i, entry in enumerate(_list(recipe, "datasets"))
     ]
     for diagnostic_name, diagnostic in _mapping(recipe, "diagnostics").items():
-        path: tuple[str | int, ...] = ("diagnostics", diagnostic_name)
+        path: _Path = ("diagnostics", diagnostic_name)
         diagnostic_datasets = datasets + [
             ((*path, "additional_datasets", i), entry)
             for i, entry in enumerate(_list(diagnostic, "additional_datasets"))
         ]
-        for group, variable in _mapping(diagnostic, "variables").items():
-            group_path = (*path, "variables", group)
-            additional = _list(variable, "additional_datasets")
+        for name, variable in _mapping(diagnostic, "variables").items():
+            group_path = (*path, "variables", name)
+            facets = variable if isinstance(variable, dict) else {}
             group_datasets = diagnostic_datasets + [
                 ((*group_path, "additional_datasets", i), entry)
-                for i, entry in enumerate(additional)
+                for i, entry in enumerate(
+                    _list(variable, "additional_datasets"),
+                )
             ]
-            yield (
+            yield _Group(
                 group_path,
-                variable if isinstance(variable, dict) else {},
-                [(p, e) for p, e in group_datasets if isinstance(e, dict)],
+                facets,
+                [
+                    _Dataset(
+                        dataset_path,
+                        group_path,
+                        entry,
+                        {**facets, **entry},
+                        {
+                            **dict.fromkeys(facets, group_path),
+                            **dict.fromkeys(entry, dataset_path),
+                        },
+                    )
+                    for dataset_path, entry in group_datasets
+                    if isinstance(entry, dict)
+                ],
             )
 
 
-def _datasets(
-    recipe: object,
-) -> collections.abc.Iterator[
-    tuple[tuple[str | int, ...], dict, dict[str, tuple[str | int, ...]]]
-]:
-    """Find the datasets of each variable group with their facets.
-
-    The facets of a dataset override those of its variable group. Also
-    yields the path of the dataset or variable group that defines each facet.
-    """
-    for group_path, facets, group_datasets in _variable_groups(recipe):
-        for dataset_path, entry in group_datasets:
-            origin = {
-                **dict.fromkeys(facets, group_path),
-                **dict.fromkeys(entry, dataset_path),
-            }
-            yield dataset_path, {**facets, **entry}, origin
+def _datasets(recipe: object) -> collections.abc.Iterator[_Dataset]:
+    """Find the datasets of each variable group."""
+    for group in _variable_groups(recipe):
+        yield from group.datasets
 
 
 def _find_incomplete_datasets(recipe: object) -> list[RecipeIssue]:
@@ -905,31 +888,26 @@ def _find_incomplete_datasets(recipe: object) -> list[RecipeIssue]:
     These are variable groups without datasets, datasets that occur more than
     once in a variable group, and datasets without a dataset, project, or MIP.
     """
-    issues: list[RecipeIssue] = []
-
-    def add(issue: RecipeIssue) -> None:
-        # Datasets in the `datasets` section belong to every variable group.
-        if issue not in issues:
-            issues.append(issue)
-
-    for group_path, variable, group_datasets in _variable_groups(recipe):
-        if not group_datasets:
-            add(
+    issues = []
+    for group in _variable_groups(recipe):
+        if not group.datasets:
+            issues.append(
                 RecipeIssue(
-                    group_path,
+                    group.path,
                     "no datasets. Add them to the `datasets` section or to "
                     "`additional_datasets`.",
                 ),
             )
         previous = []
-        for path, entry in group_datasets:
-            if entry in previous:
-                add(RecipeIssue(path, "duplicate dataset."))
-            previous.append(entry)
-            facets = {**variable, **entry}
-            for key in ("dataset", "project", "mip"):
-                if key not in facets:
-                    add(RecipeIssue(path, f"missing required key {key!r}."))
+        for dataset in group.datasets:
+            if dataset.entry in previous:
+                issues.append(RecipeIssue(dataset.path, "duplicate dataset."))
+            previous.append(dataset.entry)
+            issues.extend(
+                RecipeIssue(dataset.path, f"missing required key {key!r}.")
+                for key in ("dataset", "project", "mip")
+                if key not in dataset.facets
+            )
     return issues
 
 
@@ -941,24 +919,24 @@ def _find_unknown_reference_datasets(recipe: object) -> list[RecipeIssue]:
     datasets separated by ``|``.
     """
     issues = []
-    for group_path, variable, group_datasets in _variable_groups(recipe):
-        values = [entry.get("dataset") for _, entry in group_datasets]
+    for group in _variable_groups(recipe):
+        values = [d.entry.get("dataset") for d in group.datasets]
         datasets = [v for v in values if isinstance(v, str)]
         if len(datasets) < len(values) or any(
             char in name for name in datasets for char in "*?["
         ):
             # Patterns and lists of datasets may match the dataset.
             continue
-        aliases = [entry.get("alias") for _, entry in group_datasets]
+        aliases = [d.entry.get("alias") for d in group.datasets]
         names = {*datasets, *(a for a in aliases if isinstance(a, str))}
         for key in ("reference_dataset", "alternative_dataset"):
-            value = variable.get(key)
+            value = group.variable.get(key)
             if not isinstance(value, str) or not value:
                 continue
             for name in value.split("|"):
                 if name not in names:
                     issue = RecipeIssue(
-                        (*group_path, key),
+                        (*group.path, key),
                         f"unknown value '{name}'. Not a dataset of this "
                         "variable group." + _suggest(name, datasets),
                         severity="warning",
@@ -978,7 +956,8 @@ def _find_missing_facets(
     project are not required in the recipe.
     """
     issues = []
-    for path, facets, _ in _datasets(recipe):
+    for dataset in _datasets(recipe):
+        facets = dataset.facets
         project = facets.get("project")
         if not isinstance(project, str):
             continue
@@ -991,87 +970,138 @@ def _find_missing_facets(
         if missing:
             keys = "key" if len(missing) == 1 else "keys"
             names = ", ".join(repr(f) for f in missing)
-            issue = RecipeIssue(
-                path,
-                f"missing required {keys} {names}. Needed to find the data "
-                f"of project '{project}'.",
+            issues.append(
+                RecipeIssue(
+                    dataset.path,
+                    f"missing required {keys} {names}. Needed to find the "
+                    f"data of project '{project}'.",
+                ),
             )
-            if issue not in issues:
-                issues.append(issue)
     return issues
+
+
+def _unknown_mip_issue(
+    path: _Path,
+    project: str,
+    mip: str,
+    names: Iterable[str],
+    *,
+    strict: bool,
+    inherited: bool,
+) -> RecipeIssue:
+    """Describe a MIP that is not a CMOR table of the project."""
+    hint = ""
+    if not strict:
+        hint = (
+            " The variable will be looked up in all tables, because the CMOR "
+            "checks of this project are not strict."
+        )
+    problem = (
+        f"MIP {mip!r} of the variable group is not a CMOR table"
+        if inherited
+        else f"unknown value {mip!r}. Not a CMOR table"
+    )
+    return RecipeIssue(
+        path,
+        f"{problem} of project '{project}'."
+        f"{hint}" + _suggest(mip, sorted(n for n in names if n)),
+        severity="error" if strict else "warning",
+    )
+
+
+def _can_check_cmor(facets: dict, config: Config | Session) -> bool:
+    """Check if the CMOR facets of a dataset are known and not patterns."""
+    project = facets.get("project")
+    names = ("short_name", "mip", "branding_suffix")
+    return (
+        isinstance(project, str)
+        and project in config["projects"]
+        and "mip" in facets
+        and all(isinstance(facets.get(f, ""), str) for f in names)
+        and not any(c in str(facets.get(f, "")) for f in names for c in "*?[")
+        and not {"branding_suffix", "derive"}
+        & _extra_facet_names(project, facets, config)
+    )
 
 
 def _find_unavailable_variables(
     recipe: object,
     config: Config | Session,
+    *,
+    check_variables: bool = True,
 ) -> list[RecipeIssue]:
-    """Find variables that are not in the CMOR tables of their project.
+    """Find MIPs and variables that are not in the CMOR tables of a project.
 
     Uses the same rules as :func:`esmvalcore.cmor.table._update_cmor_facets`.
     Datasets with facets that are patterns, that are missing, or that may
-    come from the extra facets are not checked.
+    come from the extra facets are not checked. If ``check_variables`` is
+    false, only the MIPs are checked.
     """
     issues = []
-    for group_path, variable, group_datasets in _variable_groups(recipe):
-        for dataset_path, entry in group_datasets:
-            facets = {"short_name": group_path[-1], **variable, **entry}
-            project = facets.get("project")
-            if (
-                not isinstance(project, str)
-                or project not in config["projects"]
-            ):
-                continue
-            settings = config["projects"][project]
-            required = ["mip", *settings.get("required_facets", [])]
-            names = ("short_name", "mip", "branding_suffix")
-            if (
-                any(f not in facets for f in required)
-                or not all(isinstance(facets.get(f, ""), str) for f in names)
-                or any(
-                    c in str(facets.get(f, "")) for f in names for c in "*?["
-                )
-                or {"branding_suffix", "derive"}
-                & _extra_facet_names(project, facets, config)
-            ):
-                continue
-            tables = get_tables(config, project)
-            mip = facets["mip"]
-            if not getattr(tables, "tables", None) or (
-                # The schema reports unknown MIPs of strict projects.
-                tables.strict and mip not in tables.tables
-            ):
-                continue
-            branding_suffix = facets.get("branding_suffix")
-            if (
-                tables.get_variable(
-                    mip,
-                    facets["short_name"],
-                    branding_suffix=branding_suffix,
-                    derived=bool(facets.get("derive", False)),
-                )
-                is None
-            ):
-                message = _describe_unavailable_variable(
+    datasets = ((g, d) for g in _variable_groups(recipe) for d in g.datasets)
+    for group, dataset in datasets:
+        facets = {"short_name": group.path[-1], **dataset.facets}
+        if not _can_check_cmor(facets, config):
+            continue
+        project, mip = facets["project"], facets["mip"]
+        tables = get_tables(config, project)
+        if not getattr(tables, "tables", None):
+            continue
+        origin = dataset.origin["mip"]
+        # A dataset that changes the project of its variable group but not the
+        # MIP is reported at the dataset, because that is where to fix it.
+        inherited = origin == group.path and project != group.variable.get(
+            "project",
+            project,
+        )
+        if inherited:
+            origin = dataset.path
+        if mip not in tables.tables:
+            issues.append(
+                _unknown_mip_issue(
+                    origin if inherited else (*origin, "mip"),
                     project,
                     mip,
-                    facets["short_name"],
-                    branding_suffix,
-                )
-                if not message.endswith((".", "?")):
-                    message += "."
-                issue = RecipeIssue(
-                    dataset_path if "mip" in entry else group_path,
-                    message[0].lower() + message[1:],
-                )
-                if issue not in issues:
-                    issues.append(issue)
+                    tables.tables,
+                    strict=tables.strict,
+                    inherited=inherited,
+                ),
+            )
+            if tables.strict:
+                continue
+        settings = config["projects"][project]
+        required = ["mip", *settings.get("required_facets", [])]
+        if not check_variables or any(f not in facets for f in required):
+            continue
+        branding_suffix = facets.get("branding_suffix")
+        if (
+            tables.get_variable(
+                mip,
+                facets["short_name"],
+                branding_suffix=branding_suffix,
+                derived=bool(facets.get("derive", False)),
+            )
+            is None
+        ):
+            message = _describe_unavailable_variable(
+                project,
+                mip,
+                facets["short_name"],
+                branding_suffix,
+            )
+            if not message.endswith((".", "?")):
+                message += "."
+            issues.append(
+                RecipeIssue(origin, message[0].lower() + message[1:]),
+            )
     return issues
 
 
 def _find_unknown_types(recipe: object) -> list[RecipeIssue]:
     """Find datasets with a type that their project does not use."""
     issues = []
-    for _, facets, origin in _datasets(recipe):
+    for dataset in _datasets(recipe):
+        facets = dataset.facets
         project = facets.get("project")
         if not isinstance(project, str) or project not in _TYPES:
             continue
@@ -1082,15 +1112,15 @@ def _find_unknown_types(recipe: object) -> list[RecipeIssue]:
         for value in values:
             if not isinstance(value, str) or value in choices:
                 continue
-            issue = RecipeIssue(
-                (*origin["type"], "type"),
-                f"unknown value {value!r}. Not a type of project "
-                f"'{project}', choose from {listed}."
-                + _suggest(value, choices),
-                severity="warning",
+            issues.append(
+                RecipeIssue(
+                    (*dataset.origin["type"], "type"),
+                    f"unknown value {value!r}. Not a type of project "
+                    f"'{project}', choose from {listed}."
+                    + _suggest(value, choices),
+                    severity="warning",
+                ),
             )
-            if issue not in issues:
-                issues.append(issue)
     return issues
 
 
@@ -1101,8 +1131,8 @@ def _find_invalid_timeranges(recipe: object) -> list[RecipeIssue]:
     found, so they are not checked.
     """
     issues = []
-    for _, facets, origin in _datasets(recipe):
-        timerange = facets.get("timerange")
+    for dataset in _datasets(recipe):
+        timerange = dataset.facets.get("timerange")
         if not isinstance(timerange, str) or "*" in timerange:
             continue
         try:
@@ -1111,12 +1141,12 @@ def _find_invalid_timeranges(recipe: object) -> list[RecipeIssue]:
             reason = str(exc).removeprefix(
                 "Invalid value encountered for `timerange`. ",
             )
-            issue = RecipeIssue(
-                (*origin["timerange"], "timerange"),
-                f"invalid value {timerange!r}. {reason}",
+            issues.append(
+                RecipeIssue(
+                    (*dataset.origin["timerange"], "timerange"),
+                    f"invalid value {timerange!r}. {reason}",
+                ),
             )
-            if issue not in issues:
-                issues.append(issue)
     return issues
 
 
@@ -1158,15 +1188,30 @@ def _find_missing_scripts(recipe: object) -> list[RecipeIssue]:
 
 
 def _find_unknown_preprocessors(recipe: object) -> list[RecipeIssue]:
-    """Find datasets that use a preprocessor that is not defined."""
+    """Find datasets that use a preprocessor that is not defined.
+
+    Datasets can override the preprocessor of their variable group.
+    """
     preprocessors = {"default", *map(str, _mapping(recipe, "preprocessors"))}
+    names = []
+    for group in _variable_groups(recipe):
+        # The schema reports preprocessors of variable groups that are not a
+        # string.
+        name = group.variable.get("preprocessor")
+        if isinstance(name, str):
+            names.append(((*group.path, "preprocessor"), name))
+        names.extend(
+            ((*d.path, "preprocessor"), d.entry["preprocessor"])
+            for d in group.datasets
+            if "preprocessor" in d.entry
+        )
     return [
         RecipeIssue(
             path,
             f"unknown value {name!r}. Not defined in the `preprocessors` "
             "section." + _suggest(str(name), preprocessors),
         )
-        for path, name in _preprocessor_facets(recipe)
+        for path, name in names
         # The preprocessor is converted to a string when running the recipe.
         if str(name) not in preprocessors
     ]
@@ -1377,16 +1422,11 @@ def validate_recipe(
 ) -> list[RecipeIssue]:
     """Validate a recipe against the JSON Schema.
 
-    Also checks that every variable group has datasets, that no dataset occurs
-    twice in a variable group, that datasets have a dataset, project, and MIP
-    and the facets that their project requires, that their variables are in the
-    CMOR tables of their project, that the reference and alternative datasets
-    of variable groups are datasets of the group, that the preprocessors of
-    variable groups and datasets and the ancestors of scripts are defined in
-    the recipe, that scripts and variable groups have different names, that
-    time ranges without wildcards are valid, that statistics operators and
-    generic regridding schemes can be loaded, and, if ESMValTool is installed,
-    that the diagnostic scripts exist.
+    Also runs checks that the schema cannot express. Some combine several
+    parts of the recipe, for example to check that the preprocessor of each
+    variable group is defined in the ``preprocessors`` section. Others run
+    code, for example to check that each variable is in the CMOR tables of its
+    project.
 
     Parameters
     ----------
@@ -1444,18 +1484,17 @@ def _validate(
     validator = jsonschema.Draft7Validator(generate_recipe_schema(session))
     for error in validator.iter_errors(_normalize(recipe)):
         for relevant, alternatives in _relevant_errors(error):
-            for issue in _describe(relevant, alternatives):
-                if issue not in issues:
-                    issues.append(issue)
-    # The schema also reports datasets without a dataset.
-    issues.extend(
-        issue
-        for issue in _find_incomplete_datasets(recipe)
-        if issue not in issues
-    )
+            issues.extend(_describe(relevant, alternatives))
+    issues.extend(_find_incomplete_datasets(recipe))
     if required_facets:
         issues.extend(_find_missing_facets(recipe, config))
-        issues.extend(_find_unavailable_variables(recipe, config))
+    issues.extend(
+        _find_unavailable_variables(
+            recipe,
+            config,
+            check_variables=required_facets,
+        ),
+    )
     issues.extend(_find_unknown_types(recipe))
     issues.extend(_find_invalid_timeranges(recipe))
     issues.extend(_find_unknown_reference_datasets(recipe))
@@ -1463,6 +1502,9 @@ def _validate(
     issues.extend(_find_unknown_ancestors(recipe))
     issues.extend(_find_scripts_named_like_variables(recipe))
     issues.extend(_find_missing_scripts(recipe))
+    # Datasets in the `datasets` section belong to every variable group, so
+    # checks of datasets and the schema can report the same issue repeatedly.
+    issues = list(dict.fromkeys(issues))
     # Only report settings that do not work if the schema found no problem
     # with them, to avoid reporting the same problem twice.
     issues.extend(
@@ -1482,15 +1524,15 @@ def _validate(
 def ensure_valid_recipe(
     recipe: dict,
     path: Path,
+    text: str | None,
     session: Session | None = None,
 ) -> None:
-    """Validate a recipe, log the warnings, and raise an error if invalid."""
+    """Validate a recipe, log the warnings, and raise an error if invalid.
+
+    The text of the recipe, if given, is used to find duplicate keys and the
+    line numbers of the issues.
+    """
     logger.debug("Validating recipe %s", path)
-    # The text is used to find duplicate keys and the line numbers of issues.
-    try:
-        text = Path(path).read_text(encoding="utf-8")
-    except OSError:
-        text = None
     issues = validate_recipe(recipe, text, session)
     for issue in issues:
         if issue.severity == "warning":

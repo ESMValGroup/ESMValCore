@@ -32,7 +32,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import esmvalcore.preprocessor
 from esmvalcore import __version__
-from esmvalcore.cmor.table import get_tables
 from esmvalcore.config import CFG
 from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
 from esmvalcore.preprocessor import (
@@ -43,7 +42,7 @@ from esmvalcore.preprocessor import (
 )
 
 if TYPE_CHECKING:
-    from esmvalcore.config import Config, Session
+    from esmvalcore.config import Session
 
 JSONSchema = dict[str, Any]
 
@@ -52,9 +51,6 @@ SCHEMA_DIALECT = "http://json-schema.org/draft-07/schema#"
 # Schema keyword for the severity of a value that is not in an ``enum``, or
 # of a key that is not in the ``properties`` of an object.
 SEVERITY_KEYWORD = "x-severity"
-
-# Facet values can be glob patterns, see :func:`esmvalcore.dataset._isglob`.
-NOT_A_PATTERN = {"not": {"pattern": r"[*?]|\[.*\]"}}
 
 # Preprocessor steps that can be used in a recipe. ESMValCore always applies
 # the initial steps when it loads the data, ignoring the recipe.
@@ -895,191 +891,6 @@ def _facet_value(description: str) -> JSONSchema:
     }
 
 
-class _Tables(typing.NamedTuple):
-    """The CMOR tables of a project."""
-
-    names: tuple[str, ...]
-    strict: bool
-    """Only a strict project fails for a MIP that is not one of its tables.
-
-    Other projects look for the variable in all their tables.
-    """
-    branding_suffixes: tuple[tuple[str, tuple[str, ...]], ...] = ()
-    """The branding suffixes of the variables in each table."""
-
-
-def _branding_suffixes(
-    tables: dict[str, dict[str, typing.Any]],
-) -> tuple[tuple[str, tuple[str, ...]], ...]:
-    """Get the branding suffixes of the variables in each table.
-
-    In a CMOR table with branded variables, the variable name is followed by
-    an underscore and the branding suffix, e.g. ``tas_tavg-h2m-hxy-u``.
-    """
-    suffixes = {
-        mip: tuple(
-            sorted(
-                {
-                    name.removeprefix(f"{vardef.short_name}_")
-                    for name, vardef in table.items()
-                    if name.startswith(f"{vardef.short_name}_")
-                },
-            ),
-        )
-        for mip, table in tables.items()
-    }
-    return tuple((mip, names) for mip, names in suffixes.items() if names)
-
-
-def _known_tables(config: Config | Session) -> dict[str, _Tables | None]:
-    """Get the configured projects and their CMOR tables.
-
-    The tables are ``None`` for a project without CMOR tables, because then
-    any MIP can be used.
-    """
-    tables: dict[str, _Tables | None] = {}
-    for project in config["projects"]:
-        info = get_tables(config, project)
-        names = getattr(info, "tables", None)
-        tables[project] = (
-            _Tables(
-                tuple(sorted(name for name in names if name)),
-                getattr(info, "strict", True),
-                _branding_suffixes(names),
-            )
-            if names
-            else None
-        )
-    return tables
-
-
-def _mip_schema(
-    names: tuple[str, ...],
-    hint: str,
-    *,
-    strict: bool,
-) -> JSONSchema:
-    schema: JSONSchema = {"enum": list(names), "errorMessage": hint}
-    if not strict:
-        # ESMValCore looks for the variable in all tables of the project.
-        schema[SEVERITY_KEYWORD] = "warning"
-    return {"properties": {"mip": schema}}
-
-
-def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
-    """Create rules that check the MIP against the tables of the project.
-
-    The project is often defined at another level of the recipe than the MIP,
-    so a MIP without a project in the same mapping is checked against the
-    tables of all projects.
-
-    Most mappings do not define a project or branding suffix, so the rules for
-    those are only checked if the mapping contains them. This makes
-    validating large recipes several times faster.
-    """
-    project_rules = []
-    for project, project_tables in tables.items():
-        if project_tables is None:
-            continue
-        hint = f"Not a CMOR table of project '{project}'."
-        if not project_tables.strict:
-            hint += (
-                " The variable will be looked up in all tables, because the "
-                "CMOR checks of this project are not strict."
-            )
-        project_rules.append(
-            {
-                "if": {
-                    "properties": {
-                        "project": {"const": project},
-                        "mip": NOT_A_PATTERN,
-                    },
-                    "required": ["project"],
-                },
-                "then": _mip_schema(
-                    project_tables.names,
-                    hint,
-                    strict=project_tables.strict,
-                ),
-            },
-        )
-    rules: list[JSONSchema] = []
-    if project_rules:
-        rules.append(
-            {
-                "if": {"required": ["project", "mip"]},
-                "then": {"allOf": project_rules},
-            },
-        )
-    known = [t for t in tables.values() if t is not None]
-    if known and len(known) == len(tables):
-        rules.append(
-            {
-                "if": {
-                    "properties": {"mip": NOT_A_PATTERN},
-                    "not": {"required": ["project"]},
-                },
-                "then": _mip_schema(
-                    tuple(sorted({name for t in known for name in t.names})),
-                    "Not a CMOR table of any project.",
-                    strict=all(t.strict for t in known),
-                ),
-            },
-        )
-    if suffix_rules := _branding_suffix_rules(tables):
-        rules.append(
-            {
-                "if": {"required": ["branding_suffix"]},
-                "then": {"allOf": suffix_rules},
-            },
-        )
-    return rules
-
-
-def _branding_suffix_rules(
-    tables: dict[str, _Tables | None],
-) -> list[JSONSchema]:
-    """Create rules that check the branding suffix against the MIP table.
-
-    The variable is often defined by the name of the variable group, so the
-    suffixes of all variables in the table are allowed.
-    """
-    suffixes: dict[str, set[str]] = {}
-    strict: dict[str, bool] = {}
-    for project_tables in tables.values():
-        if project_tables is None:
-            continue
-        for mip, names in project_tables.branding_suffixes:
-            suffixes.setdefault(mip, set()).update(names)
-            strict[mip] = strict.get(mip, True) and project_tables.strict
-    rules = []
-    for mip, mip_suffixes in sorted(suffixes.items()):
-        schema: JSONSchema = {
-            "enum": sorted(mip_suffixes),
-            "errorMessage": (
-                f"Not a branding suffix of a variable in CMOR table '{mip}'."
-            ),
-        }
-        if not strict[mip]:
-            schema[SEVERITY_KEYWORD] = "warning"
-        rules.append(
-            {
-                "if": {
-                    "properties": {
-                        "mip": {"const": mip},
-                        "branding_suffix": {
-                            "type": "string",
-                            **NOT_A_PATTERN,
-                        },
-                    },
-                    "required": ["mip"],
-                },
-                "then": {"properties": {"branding_suffix": schema}},
-            },
-        )
-    return rules
-
-
 # Observational datasets are described in the ESMValTool documentation.
 _OBS_URL = "https://docs.esmvaltool.org/en/latest/input.html"
 _OBS_TYPES = ("sat", "reanaly", "ground", "clim", "campaign")
@@ -1117,7 +928,7 @@ def _type_schema() -> JSONSchema:
     return schema
 
 
-def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
+def _facets_schema(projects: list[str]) -> JSONSchema:
     """Create a JSON Schema for the facets of a dataset or variable.
 
     See doc/reference/facets.rst for the facets that ESMValCore uses.
@@ -1127,16 +938,15 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
         "type": "string",
         **_markdown_description("Project, for example `CMIP6`."),
     }
-    if tables:
+    if projects:
         # Without a project in the configuration, ESMValCore cannot find the
         # data.
-        project["enum"] = list(tables)
+        project["enum"] = projects
         project["errorMessage"] = (
             "Not defined in the `projects` section of the configuration."
         )
     return {
         "type": "object",
-        "allOf": _project_rules(tables),
         "properties": {
             "dataset": {
                 "type": "string",
@@ -1435,15 +1245,14 @@ def _documentation_schema(tags: dict[str, _Tags]) -> JSONSchema:
 def generate_recipe_schema(session: Session | None = None) -> JSONSchema:
     """Generate a JSON Schema for recipes.
 
-    The schema only allows the projects in the configuration and the MIPs in
-    their CMOR tables. If ESMValTool is installed, it also lists the authors,
-    projects, realms, and themes defined in its ``config-references.yml`` file
-    and the references that have a bibtex file.
+    The schema only allows the projects in the configuration. If ESMValTool is
+    installed, it also lists the provenance tags and references that it
+    defines, refer to :ref:`config-ref`.
 
     Parameters
     ----------
     session:
-        The session that defines the projects and their CMOR tables. If not
+        The session that defines the projects. If not
         given, the configuration in :obj:`esmvalcore.config.CFG` is used.
 
     Returns
@@ -1452,12 +1261,12 @@ def generate_recipe_schema(session: Session | None = None) -> JSONSchema:
         A JSON Schema (draft-07) that describes a recipe.
     """
     config = CFG if session is None else session
-    return _recipe_schema(_known_tags(), _known_tables(config))
+    return _recipe_schema(_known_tags(), list(config["projects"]))
 
 
 def _recipe_schema(
     tags: dict[str, _Tags],
-    tables: dict[str, _Tables | None],
+    projects: list[str],
 ) -> JSONSchema:
     """Generate a JSON Schema for recipes, given the known tags."""
     return {
@@ -1504,7 +1313,7 @@ def _recipe_schema(
         "required": ["documentation", "diagnostics"],
         "definitions": {
             "documentation": _documentation_schema(tags),
-            "facets": _facets_schema(tables),
+            "facets": _facets_schema(projects),
             "dataset": _dataset_schema(),
             "variable": _variable_schema(),
             "script": _script_schema(),
@@ -1515,9 +1324,6 @@ def _recipe_schema(
             },
         },
     }
-
-
-# Descriptions of JSON Schema types in terms of YAML, for error messages.
 
 
 def _join_or(items: list[str]) -> str:

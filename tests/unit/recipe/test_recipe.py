@@ -1042,7 +1042,8 @@ def test_read_recipe_file(
     mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
     session = mocker.sentinel.session
     recipe_file = tmp_path / "recipe_test.yml"
-    recipe_file.write_text("diagnostics:\n  diag: {}\n", encoding="utf-8")
+    recipe_text = "diagnostics:\n  diag: {}\n"
+    recipe_file.write_text(recipe_text, encoding="utf-8")
 
     result = _recipe.read_recipe_file(recipe_file, session)
 
@@ -1051,6 +1052,7 @@ def test_read_recipe_file(
         raw_recipe,
         session,
         recipe_file=recipe_file,
+        recipe_text=recipe_text,
     )
     assert result == mock_recipe.return_value
 
