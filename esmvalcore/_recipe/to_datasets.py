@@ -20,11 +20,10 @@ from esmvalcore.preprocessor._supplementary_vars import (
 )
 
 from . import check
-from ._io import _load_recipe
+from ._io import _copy
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
-    from pathlib import Path
 
     from esmvalcore.config import Session
     from esmvalcore.typing import Facets, FacetValue
@@ -388,13 +387,13 @@ def _get_datasets_for_variable(
 
 
 def datasets_from_recipe(
-    recipe: Path | str | dict[str, Any],
+    recipe: dict[str, Any],
     session: Session,
 ) -> list[Dataset]:
     """Read datasets from a recipe."""
     datasets = []
 
-    recipe = _load_recipe(recipe)
+    recipe = _copy(recipe)
     diagnostics = recipe.get("diagnostics") or {}
     for name, diagnostic in diagnostics.items():
         diagnostic_datasets = []

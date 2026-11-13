@@ -12,13 +12,10 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import yaml
-
 import esmvalcore.io.esgf
 from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._recipe import check
-from esmvalcore._recipe._io import _parse_yaml
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore._recipe.to_datasets import (
     _derive_needed,
@@ -26,10 +23,7 @@ from esmvalcore._recipe.to_datasets import (
     _representative_datasets,
     datasets_from_recipe,
 )
-from esmvalcore._recipe.validate import (
-    ensure_valid_recipe,
-    yaml_error_issue,
-)
+from esmvalcore._recipe.validate import ensure_valid_recipe
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._dask import validate_dask_config
@@ -93,18 +87,8 @@ USED_DATASETS: list[Dataset] = []
 def read_recipe_file(filename: Path, session: Session) -> Recipe:
     """Read a recipe from file."""
     recipe_text = filename.read_text(encoding="utf-8")
-    try:
-        raw_recipe = _parse_yaml(recipe_text)
-    except yaml.YAMLError as exc:
-        issue = yaml_error_issue(exc)
-        msg = f"Recipe {filename} is invalid:\n- {issue}"
-        raise RecipeError(msg) from exc
-    return Recipe(
-        raw_recipe,
-        session,
-        recipe_file=filename,
-        recipe_text=recipe_text,
-    )
+    raw_recipe = ensure_valid_recipe(recipe_text, filename, session)
+    return Recipe(raw_recipe, session, recipe_file=filename)
 
 
 def _special_name_to_dataset(facets: Facets, special_name: str) -> str:
@@ -902,10 +886,8 @@ class Recipe:
         raw_recipe: dict[str, Any],
         session: Session,
         recipe_file: Path,
-        recipe_text: str | None = None,
     ) -> None:
         """Parse a recipe file into an object."""
-        ensure_valid_recipe(raw_recipe, recipe_file, recipe_text, session)
         validate_dask_config(session["dask"])
 
         # Clear the global variable containing the set of files to download
@@ -921,8 +903,7 @@ class Recipe:
         self._preprocessors = raw_recipe.get("preprocessors", {})
         if "default" not in self._preprocessors:
             self._preprocessors["default"] = {}
-        # The recipe has already been validated above.
-        self.datasets = datasets_from_recipe(recipe_file, session)
+        self.datasets = datasets_from_recipe(raw_recipe, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe["diagnostics"],
         )

@@ -22,7 +22,7 @@ For example, to find the problems in a recipe, with their line numbers:
 ...   pp:
 ...     regird: {}
 ... '''
->>> for issue in validate_recipe(text=text):
+>>> for issue in validate_recipe(text):
 ...     print(issue)
 line 11: preprocessors > pp > regird: unknown preprocessor function. Did you mean 'regrid'?
 """

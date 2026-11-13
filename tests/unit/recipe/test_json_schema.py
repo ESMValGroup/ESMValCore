@@ -16,7 +16,7 @@ from iris.cube import Cube
 
 import esmvalcore.io.esgf.facets
 import esmvalcore.preprocessor
-from esmvalcore._recipe import json_schema
+from esmvalcore._recipe import json_schema, validate
 from esmvalcore._recipe.json_schema import (
     _annotation_to_schema,
     _clean_rst,
@@ -25,7 +25,7 @@ from esmvalcore._recipe.json_schema import (
     _rst_to_text,
     generate_recipe_schema,
 )
-from esmvalcore._recipe.validate import RecipeIssue, validate_recipe
+from esmvalcore._recipe.validate import RecipeIssue
 from esmvalcore.config._diagnostics import Diagnostics, TagsManager
 from tests.unit.recipe.example_recipes import AUTHORS, RECIPE
 
@@ -33,6 +33,14 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 type Scheme = Literal["linear", "nearest"]
+
+
+def _issues(
+    recipe: object,
+    session: Session | None = None,
+) -> list[RecipeIssue]:
+    """Validate a recipe that is already loaded, so without positions."""
+    return validate._validate(recipe, None, session, required_facets=True)
 
 
 class SupportsExample(Protocol):
@@ -312,7 +320,7 @@ def test_validate_recipe_statistics_operators(
         "span": "overlap",
         "statistics": statistics,
     }
-    issues = validate_recipe(recipe)
+    issues = _issues(recipe)
     assert len(issues) == 1
     issue = issues[0]
     prefix = ("preprocessors", "pp", "multi_model_statistics", "statistics")
@@ -336,7 +344,7 @@ def test_validate_recipe_percent(
 ) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["preprocessors"]["pp"]["annual_statistics"] = settings
-    result = validate_recipe(recipe)
+    result = _issues(recipe)
     assert [issue.message for issue in result] == issues
     path = ("preprocessors", "pp", "annual_statistics")
     assert all(issue.path == path for issue in result)
@@ -383,7 +391,7 @@ def test_validate_recipe_percent(
 def test_validate_recipe_arguments(step: str, settings: dict) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["preprocessors"]["test"] = {step: settings}
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 @pytest.mark.parametrize(
@@ -423,7 +431,7 @@ def test_validate_recipe_arguments_invalid(
 ) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["preprocessors"]["test"] = {step: settings}
-    assert message in [str(issue) for issue in validate_recipe(recipe)]
+    assert message in [str(issue) for issue in _issues(recipe)]
 
 
 @pytest.mark.parametrize(
@@ -699,7 +707,7 @@ def test_validate_recipe_initial_step(step: str) -> None:
     """Check that the initial steps cannot be used in a recipe."""
     recipe = yaml.safe_load(RECIPE)
     recipe["preprocessors"]["pp"][step] = False
-    issues = [str(issue) for issue in validate_recipe(recipe)]
+    issues = [str(issue) for issue in _issues(recipe)]
     message = (
         f"preprocessors > pp > {step}: this preprocessor function cannot be "
         "used in a recipe, because it is always applied when the data is "
@@ -787,7 +795,7 @@ def test_validate_recipe_names(
         node = node[key]
     node[path[-1]] = value
     expected = message.format(esmvaltool=esmvaltool.path)
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(path, expected, severity="warning"),
     ]
 
@@ -796,7 +804,7 @@ def test_validate_recipe_names(
 def test_validate_recipe_names_wrong_type() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = [1]
-    issues = validate_recipe(recipe)
+    issues = _issues(recipe)
     assert (
         RecipeIssue(
             ("documentation", "authors", 0),
@@ -810,15 +818,15 @@ def test_validate_recipe_names_wrong_type() -> None:
 def test_validate_recipe_names_updated() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = ["new_author"]
-    assert validate_recipe(recipe)
+    assert _issues(recipe)
     json_schema.TAGS.set_tag_value("authors", "new_author", {})
-    assert not validate_recipe(recipe)
+    assert not _issues(recipe)
 
 
 def test_validate_recipe_unknown_project() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][0]["project"] = "CMIP8"
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("datasets", 0, "project"),
             (

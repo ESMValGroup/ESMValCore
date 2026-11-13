@@ -29,14 +29,14 @@ import re
 import typing
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import jsonschema
 import yaml
 
 import esmvalcore.preprocessor
 from esmvalcore._recipe import check
-from esmvalcore._recipe._io import _parse_yaml
+from esmvalcore._recipe._io import _load_recipe, _parse_yaml, _recipe_text
 from esmvalcore._recipe.json_schema import (
     _TYPES,
     SEVERITY_KEYWORD,
@@ -378,7 +378,14 @@ def _describe(
 
 # Positions of aliases, by the id of the node that contains the alias and
 # the index of the alias in a sequence or the id of its key in a mapping.
-_Aliases = dict[tuple[int, int], yaml.Mark]
+_Aliases = dict[tuple[int, int], "_Mark"]
+
+
+class _Mark(typing.Protocol):
+    """A position in YAML text, from the parser of PyYAML or libyaml."""
+
+    line: int
+    column: int
 
 
 @dataclasses.dataclass
@@ -390,15 +397,24 @@ class _Composed:
     anchors: dict[tuple[int, int], str]
 
 
-class _AliasLoader(yaml.SafeLoader):
+# The C parser of libyaml is much faster than the one of PyYAML.
+if TYPE_CHECKING:
+    _Loader = yaml.CSafeLoader
+else:
+    _Loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+class _AliasLoader(yaml.composer.Composer, _Loader):
     """Loader that records where aliases are used.
 
     An alias composes to the node of its anchor, so the node itself does not
-    tell where the alias is.
+    tell where the alias is. The composer of PyYAML is used, also with the C
+    parser, so this can be recorded.
     """
 
     def __init__(self, stream: str) -> None:
-        super().__init__(stream)
+        _Loader.__init__(self, stream)
+        yaml.composer.Composer.__init__(self)
         self.aliases: _Aliases = {}
         self.anchor_names: dict[tuple[int, int], str] = {}
 
@@ -410,22 +426,18 @@ class _AliasLoader(yaml.SafeLoader):
         # The index is the position in a sequence or, despite the type stubs
         # of PyYAML, the key node in a mapping, or None for a key or the root
         # node.
-        if (
-            parent is not None
-            and index is not None
-            and self.check_event(yaml.AliasEvent)
-        ):
+        event = None if parent is None or index is None else self.peek_event()
+        if isinstance(event, yaml.AliasEvent) and event.start_mark is not None:
             child = index if isinstance(index, int) else id(index)
-            event = self.peek_event()
             self.aliases[id(parent), child] = event.start_mark
-            self.anchor_names[id(parent), child] = event.anchor
+            self.anchor_names[id(parent), child] = event.anchor or ""
         return super().compose_node(parent, index)
 
 
 def _mapping_items(
     node: yaml.MappingNode,
     aliases: _Aliases,
-) -> list[tuple[yaml.Node, yaml.Node, yaml.Mark | None]]:
+) -> list[tuple[yaml.Node, yaml.Node, _Mark | None]]:
     """Get the items of a mapping, including those from merge keys (``<<``).
 
     The items are in the order that PyYAML uses to construct the mapping, so
@@ -433,7 +445,7 @@ def _mapping_items(
     Each item comes with the position of the alias that merged it into the
     mapping, if any.
     """
-    merged: list[tuple[yaml.Node, yaml.Node, yaml.Mark | None]] = []
+    merged: list[tuple[yaml.Node, yaml.Node, _Mark | None]] = []
     items = []
     for key_node, value_node in node.value:
         if key_node.tag == "tag:yaml.org,2002:merge":
@@ -464,7 +476,7 @@ def _find_child(
     node: yaml.Node,
     key: str | int,
     aliases: _Aliases,
-) -> tuple[yaml.Mark, yaml.Node, yaml.Mark | None] | None:
+) -> tuple[_Mark, yaml.Node, _Mark | None] | None:
     """Find an item in a mapping or sequence.
 
     Returns the position of the item, its value node, and the position of
@@ -495,7 +507,7 @@ def _find_position(
     root: yaml.Node,
     aliases: _Aliases,
     path: tuple[str | int, ...],
-) -> yaml.Mark | None:
+) -> _Mark | None:
     """Find the position of a path in a recipe.
 
     For an item of a mapping, this is the position of its key. For an item
@@ -515,21 +527,25 @@ def _find_position(
     return position
 
 
-def _compose(text: str) -> _Composed | None:
-    """Parse YAML text into a tree of nodes and the positions of aliases.
+def _load(text: str) -> tuple[Any, _Composed | None]:
+    """Load a recipe from YAML text, with the tree of nodes it is made of.
 
-    Returns None if that fails or the text is empty.
+    The tree is None if the text is empty.
+
+    Raises
+    ------
+    yaml.YAMLError
+        If the text is not valid YAML.
     """
+    recipe = _parse_yaml(text)
     loader = _AliasLoader(text)
     try:
         root = loader.get_single_node()
-    except yaml.YAMLError:
-        return None
     finally:
         loader.dispose()
     if root is None:
-        return None
-    return _Composed(root, loader.aliases, loader.anchor_names)
+        return recipe, None
+    return recipe, _Composed(root, loader.aliases, loader.anchor_names)
 
 
 _MERGE_TAG = "tag:yaml.org,2002:merge"
@@ -676,7 +692,8 @@ class _YAMLChecker:
         path: tuple[str | int, ...],
     ) -> None:
         """Report values that YAML 1.1 and 1.2 parsers read differently."""
-        if node.style is not None:
+        # Plain scalars have no style, or an empty one with libyaml.
+        if node.style:
             return
         message = _ambiguous_scalar(node.value, node.tag)
         if message is not None:
@@ -686,7 +703,7 @@ class _YAMLChecker:
 def _yaml_issue(
     path: tuple[str | int, ...],
     message: str,
-    mark: yaml.Mark,
+    mark: _Mark,
 ) -> RecipeIssue:
     return RecipeIssue(
         path,
@@ -1152,13 +1169,20 @@ def _find_invalid_timeranges(recipe: object) -> list[RecipeIssue]:
     return issues
 
 
-def _find_missing_scripts(recipe: object) -> list[RecipeIssue]:
+def _find_missing_scripts(
+    recipe: object,
+    config: Config | Session,
+) -> list[RecipeIssue]:
     """Find diagnostic scripts that do not exist.
 
     The same rules as in :class:`esmvalcore._task.DiagnosticTask`: a script
     is a file relative to the working directory or to the diagnostic scripts
-    of ESMValTool. Without ESMValTool, the scripts are not checked.
+    of ESMValTool. Without ESMValTool, the scripts are not checked. If the
+    diagnostics are not run, a missing script is only a warning.
     """
+    severity: Literal["error", "warning"] = (
+        "error" if config.get("run_diagnostic", True) else "warning"
+    )
     if not DIAGNOSTICS.scripts.is_dir():
         return []
     issues = []
@@ -1184,6 +1208,7 @@ def _find_missing_scripts(recipe: object) -> list[RecipeIssue]:
                         f"file not found. {path!r} is not a file in the "
                         "working directory or in the diagnostic scripts of "
                         f"ESMValTool in {DIAGNOSTICS.scripts}.",
+                        severity=severity,
                     ),
                 )
     return issues
@@ -1410,19 +1435,8 @@ def _locate(
     )
 
 
-class _NotGiven:
-    """Marker for an argument that was not given."""
-
-    def __repr__(self) -> str:
-        return "<not given>"
-
-
-_NOT_GIVEN = _NotGiven()
-
-
 def validate_recipe(
-    recipe: object = _NOT_GIVEN,
-    text: str | None = None,
+    text: str,
     session: Session | None = None,
 ) -> list[RecipeIssue]:
     """Validate a recipe against the JSON Schema.
@@ -1431,20 +1445,14 @@ def validate_recipe(
     parts of the recipe, for example to check that the preprocessor of each
     variable group is defined in the ``preprocessors`` section. Others run
     code, for example to check that each variable is in the CMOR tables of its
-    project.
+    project. Keys that are defined more than once, merge keys (``<<``) that
+    are used more than once or merge the mapping that contains them, and
+    values that parsers of YAML 1.2 read differently are reported as warnings.
 
     Parameters
     ----------
-    recipe:
-        The recipe, as loaded from YAML. If not given, it is loaded from
-        ``text``.
     text:
-        The YAML text of the recipe. If given, the issues include line and
-        column numbers and are sorted by their position in the text, and
-        keys that are defined more than once, merge keys (``<<``) that are
-        used more than once or merge the mapping that contains them, and
-        values that parsers of YAML 1.2 read differently are reported as
-        warnings.
+        The YAML text of the recipe.
     session:
         The session that the recipe will be run with. Its configuration
         defines which projects, CMOR tables, required facets, and extra facets
@@ -1454,27 +1462,19 @@ def validate_recipe(
     Returns
     -------
     :
-        The problems found. The list is empty if the recipe is valid.
-
-    Raises
-    ------
-    TypeError
-        If neither ``recipe`` nor ``text`` is given.
+        The problems found, sorted by their position in the text. The list is
+        empty if the recipe is valid.
     """
-    if isinstance(recipe, _NotGiven):
-        if text is None:
-            msg = "Either `recipe` or `text` must be given."
-            raise TypeError(msg)
-        try:
-            recipe = _parse_yaml(text)
-        except yaml.YAMLError as exc:
-            return [yaml_error_issue(exc)]
-    return _validate(recipe, text, session, required_facets=True)
+    try:
+        recipe, composed = _load(text)
+    except yaml.YAMLError as exc:
+        return [yaml_error_issue(exc)]
+    return _validate(recipe, composed, session, required_facets=True)
 
 
 def _validate(
     recipe: object,
-    text: str | None,
+    composed: _Composed | None,
     session: Session | None,
     *,
     required_facets: bool,
@@ -1508,9 +1508,9 @@ def _validate(
                     _find_unknown_preprocessors,
                     _find_unknown_ancestors,
                     _find_scripts_named_like_variables,
-                    _find_missing_scripts,
                 )
             ),
+            functools.partial(_find_missing_scripts, recipe, config),
         ],
     )
     # Datasets in the `datasets` section belong to every variable group, so
@@ -1525,7 +1525,6 @@ def _validate(
         )
         if not any(i.path[: len(issue.path)] == issue.path for i in issues)
     )
-    composed = None if text is None else _compose(text)
     if composed is not None:
         issues.extend(
             _run_checks([functools.partial(_find_yaml_issues, composed)]),
@@ -1582,18 +1581,18 @@ def _run_checks(
 
 
 def ensure_valid_recipe(
-    recipe: dict,
+    text: str,
     path: Path,
-    text: str | None,
     session: Session | None = None,
-) -> None:
-    """Validate a recipe, log the warnings, and raise an error if invalid.
-
-    The text of the recipe, if given, is used to find duplicate keys and the
-    line numbers of the issues.
-    """
+) -> dict:
+    """Load and validate a recipe, log the warnings, and raise if invalid."""
     logger.debug("Validating recipe %s", path)
-    issues = validate_recipe(recipe, text, session)
+    try:
+        recipe, composed = _load(text)
+    except yaml.YAMLError as exc:
+        issues = [yaml_error_issue(exc)]
+    else:
+        issues = _validate(recipe, composed, session, required_facets=True)
     for issue in issues:
         if issue.severity == "warning":
             logger.warning("Recipe %s: %s", path, issue)
@@ -1603,6 +1602,7 @@ def ensure_valid_recipe(
             f"- {issue}" for issue in errors
         )
         raise RecipeError(msg)
+    return recipe
 
 
 def _is_about_datasets(issue: RecipeIssue) -> bool:
@@ -1615,27 +1615,36 @@ def _is_about_datasets(issue: RecipeIssue) -> bool:
 
 
 def ensure_valid_datasets(
-    recipe: dict,
-    text: str | None,
+    recipe: Path | str | dict[str, Any],
     session: Session,
-) -> None:
-    """Validate the datasets and variables in a recipe.
+) -> dict[str, Any]:
+    """Load a recipe and validate its datasets and variables.
 
     The recipe may be incomplete, so problems in other sections and facets
     that are needed to find the data but missing are ignored. Problems that
     prevent reading the datasets raise an error, other problems a deprecation
     warning.
     """
+    text = _recipe_text(recipe)
+    if text is None:
+        loaded, composed = _load_recipe(recipe), None
+    else:
+        loaded, composed = _load(text)
     issues = [
         issue
-        for issue in _validate(recipe, text, session, required_facets=False)
+        for issue in _validate(
+            loaded,
+            composed,
+            session,
+            required_facets=False,
+        )
         if _is_about_datasets(issue)
     ]
     for issue in issues:
         if issue.severity == "warning":
             logger.warning("Recipe: %s", issue)
     errors = [issue for issue in issues if issue.severity == "error"]
-    fatal = {(i.path, i.message) for i in _find_incomplete_datasets(recipe)}
+    fatal = {(i.path, i.message) for i in _find_incomplete_datasets(loaded)}
     if any((i.path, i.message) in fatal for i in errors):
         msg = "The datasets in the recipe are invalid:\n" + "\n".join(
             f"- {issue}" for issue in errors
@@ -1649,3 +1658,4 @@ def ensure_valid_datasets(
             "ESMValCore v2.16.0 and will raise an error in ESMValCore v2.18.0."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=3)
+    return loaded

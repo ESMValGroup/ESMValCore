@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from esmvalcore._recipe import check
-from esmvalcore._recipe._io import _load_recipe, _recipe_text
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore._recipe.validate import ensure_valid_datasets
 from esmvalcore.cmor.table import (
@@ -184,10 +183,10 @@ class Dataset:
             datasets_from_recipe,
         )
 
-        text = _recipe_text(recipe)
-        loaded = _load_recipe(recipe if text is None else text)
-        ensure_valid_datasets(loaded, text, session)
-        return datasets_from_recipe(loaded, session)
+        return datasets_from_recipe(
+            ensure_valid_datasets(recipe, session),
+            session,
+        )
 
     def _file_to_dataset(
         self,

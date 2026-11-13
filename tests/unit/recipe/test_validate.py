@@ -35,6 +35,14 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 
+def _issues(
+    recipe: object,
+    session: Session | None = None,
+) -> list[RecipeIssue]:
+    """Validate a recipe that is already loaded, so without positions."""
+    return validate._validate(recipe, None, session, required_facets=True)
+
+
 SMALL_RECIPE: dict[str, Any] = {
     "documentation": {
         "title": "Example",
@@ -62,12 +70,12 @@ SMALL_RECIPE: dict[str, Any] = {
 
 def _messages(preprocessor: dict[str, Any]) -> list[str]:
     recipe = {**SMALL_RECIPE, "preprocessors": {"pp": preprocessor}}
-    return [str(issue) for issue in validate_recipe(recipe)]
+    return [str(issue) for issue in _issues(recipe)]
 
 
 def test_diagnostics_null() -> None:
     recipe = {**SMALL_RECIPE, "diagnostics": None}
-    assert [str(i) for i in validate_recipe(recipe)] == [
+    assert [str(i) for i in _issues(recipe)] == [
         "diagnostics: expected a mapping, got None.",
     ]
 
@@ -86,7 +94,7 @@ def test_script_named_like_variable_group() -> None:
         "diagnostics > example > scripts > tas: a script cannot have the "
         "same name as a variable group of its diagnostic."
     )
-    assert [str(i) for i in validate_recipe(recipe)] == [message]
+    assert [str(i) for i in _issues(recipe)] == [message]
 
 
 @pytest.mark.parametrize(
@@ -177,7 +185,7 @@ def test_statistics_kwarg_not_a_string() -> None:
 def test_unknown_key_not_a_string() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"][2024] = "text"
-    issues = [i for i in validate_recipe(recipe) if i.path[-1] == 2024]
+    issues = [i for i in _issues(recipe) if i.path[-1] == 2024]
     assert [i.message.split(".")[0] for i in issues] == ["unknown key"]
 
 
@@ -190,7 +198,7 @@ def test_failing_check_is_a_warning(mocker: MockerFixture) -> None:
     )
     recipe = yaml.safe_load(RECIPE)
     recipe["diagnostics"]["example"]["variables"]["ta"]["preprocessor"] = "x"
-    issues = validate_recipe(recipe)
+    issues = _issues(recipe)
     assert (
         RecipeIssue(
             (),
@@ -220,12 +228,12 @@ def test_session_configuration(session: Session) -> None:
         "grid": "gr",
     }
     recipe = {**SMALL_RECIPE, "datasets": [dataset]}
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
     message = (
         "datasets > 0: missing required key 'institute'. Needed to find the "
         "data of project 'CMIP6'."
     )
-    issues = validate_recipe(recipe, session=session)
+    issues = _issues(recipe, session=session)
     assert [str(i) for i in issues] == [message]
 
 
@@ -268,9 +276,7 @@ def test_incomplete_datasets(
             "example": {"variables": {"tas": variable}, "scripts": None},
         },
     }
-    issues = [
-        i for i in validate_recipe(recipe) if "Needed to find" not in i.message
-    ]
+    issues = [i for i in _issues(recipe) if "Needed to find" not in i.message]
     assert [(i.path, i.message) for i in issues] == [(path, message)]
 
 
@@ -279,7 +285,7 @@ def test_missing_project() -> None:
         **SMALL_RECIPE,
         "datasets": [{"dataset": "A"}],
     }
-    assert [str(i) for i in validate_recipe(recipe)] == [
+    assert [str(i) for i in _issues(recipe)] == [
         "datasets > 0: missing required key 'project'.",
     ]
 
@@ -296,7 +302,7 @@ diagnostics:
       - {dataset: A, project: OBS, type: sat, tier: 2, version: 1, mip: Amon}
     scripts: null
 """
-    assert validate_recipe(text=text) == []
+    assert validate_recipe(text) == []
 
 
 def test_null_variable_group_without_mip() -> None:
@@ -314,11 +320,11 @@ diagnostics:
         "line 8: diagnostics > example > additional_datasets > 0: missing "
         "required key 'mip'."
     )
-    assert [str(i) for i in validate_recipe(text=text)] == [message]
+    assert [str(i) for i in validate_recipe(text)] == [message]
 
 
 def test_validate_recipe_valid() -> None:
-    assert validate_recipe(yaml.safe_load(RECIPE)) == []
+    assert _issues(yaml.safe_load(RECIPE)) == []
 
 
 @pytest.mark.parametrize(
@@ -442,7 +448,7 @@ def test_validate_recipe_invalid(
     for key in path[:-1]:
         parent = parent[key]
     parent[path[-1]] = value
-    assert [str(i) for i in validate_recipe(recipe)] == [message]
+    assert [str(i) for i in _issues(recipe)] == [message]
 
 
 @pytest.mark.parametrize(
@@ -468,13 +474,13 @@ def test_validate_recipe_unknown_key_deprecated(
         " Unknown keys are ignored, this is deprecated and will not work in "
         "v2.18.0."
     )
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(tuple(path), message, severity="warning"),
     ]
 
 
 def test_validate_recipe_not_a_mapping() -> None:
-    assert validate_recipe(None) == [
+    assert _issues(None) == [
         RecipeIssue((), "expected a mapping, got None."),
     ]
 
@@ -483,7 +489,7 @@ def test_validate_recipe_multiple_problems() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["preprocessors"]["pp"]["regird"] = {}
     recipe["diagnostics"]["example"].pop("scripts")
-    assert [str(i) for i in validate_recipe(recipe)] == [
+    assert [str(i) for i in _issues(recipe)] == [
         (
             "preprocessors > pp > regird: unknown preprocessor function. "
             "Did you mean 'regrid'?"
@@ -493,8 +499,7 @@ def test_validate_recipe_multiple_problems() -> None:
 
 
 def test_validate_recipe_positions() -> None:
-    recipe = yaml.safe_load(INVALID_RECIPE)
-    issues = validate_recipe(recipe, INVALID_RECIPE)
+    issues = validate_recipe(INVALID_RECIPE)
     assert issues == [
         RecipeIssue(
             ("datasets", 1),
@@ -575,9 +580,15 @@ def test_validate_recipe_positions_merge(
     recipe = yaml.safe_load(MERGE_RECIPE)
     assert recipe["preprocessors"][preprocessor]["regrid"]["scheme"] == scheme
     recipe["preprocessors"][preprocessor]["regrid"]["scheme"] = "invalid"
+    _, composed = validate._load(MERGE_RECIPE)
     issues = [
         issue
-        for issue in validate_recipe(recipe, MERGE_RECIPE)
+        for issue in validate._validate(
+            recipe,
+            composed,
+            None,
+            required_facets=True,
+        )
         if issue.path[:2] == ("preprocessors", preprocessor)
         and issue.severity == "error"
     ]
@@ -590,10 +601,7 @@ def test_validate_recipe_positions_merge(
 def test_validate_recipe_duplicate_merge_keys() -> None:
     issues = [
         issue
-        for issue in validate_recipe(
-            yaml.safe_load(MERGE_RECIPE),
-            MERGE_RECIPE,
-        )
+        for issue in validate_recipe(MERGE_RECIPE)
         if "merge key" in issue.message
     ]
     assert issues == [
@@ -622,10 +630,7 @@ diagnostics:
 
 
 def test_validate_recipe_self_merge() -> None:
-    issues = validate_recipe(
-        yaml.safe_load(SELF_MERGE_RECIPE),
-        SELF_MERGE_RECIPE,
-    )
+    issues = validate_recipe(SELF_MERGE_RECIPE)
     assert [i for i in issues if "alias" in i.message] == [
         RecipeIssue(
             ("diagnostics", "example", "variables", "tas"),
@@ -682,7 +687,7 @@ def test_validate_recipe_ambiguous_value(
     text = f"{RECIPE}\n        threshold: {value}\n"
     issues = [
         issue
-        for issue in validate_recipe(yaml.safe_load(text), text)
+        for issue in validate_recipe(text)
         if "ambiguous" in issue.message
     ]
     assert [(i.path, i.message, i.severity) for i in issues] == [
@@ -715,7 +720,7 @@ def test_validate_recipe_ambiguous_value(
 )
 def test_validate_recipe_unambiguous_value(value: str) -> None:
     text = f"{RECIPE}\n        threshold: {value}\n"
-    issues = validate_recipe(yaml.safe_load(text), text)
+    issues = validate_recipe(text)
     assert not [i for i in issues if "ambiguous" in i.message]
 
 
@@ -735,7 +740,7 @@ preprocessors:
 
 
 def test_validate_recipe_positions_alias() -> None:
-    issues = validate_recipe(yaml.safe_load(ALIAS_RECIPE), ALIAS_RECIPE)
+    issues = validate_recipe(ALIAS_RECIPE)
     positions = {
         issue.path: (issue.line, issue.column)
         for issue in issues
@@ -753,29 +758,15 @@ def test_validate_recipe_positions_alias() -> None:
     }
 
 
-def test_validate_recipe_positions_not_found() -> None:
-    recipe = yaml.safe_load(INVALID_RECIPE)
-    issues = validate_recipe(recipe, "documentation: {}\n")
-    assert issues
-    assert all(i.line is None and i.column is None for i in issues)
-
-
-def test_validate_recipe_positions_invalid_text() -> None:
-    recipe = yaml.safe_load(INVALID_RECIPE)
-    issues = validate_recipe(recipe, "documentation: [\n")
-    assert issues == validate_recipe(recipe)
-
-
-def test_validate_recipe_from_text() -> None:
-    issues = validate_recipe(text=INVALID_RECIPE)
-    assert issues == validate_recipe(
-        yaml.safe_load(INVALID_RECIPE),
-        INVALID_RECIPE,
-    )
+@pytest.mark.parametrize("text", [RECIPE, INVALID_RECIPE, DUPLICATE_RECIPE])
+def test_load(text: str) -> None:
+    recipe, composed = validate._load(text)
+    assert recipe == yaml.safe_load(text)
+    assert composed is not None
 
 
 def test_validate_recipe_from_invalid_text() -> None:
-    issues = validate_recipe(text="documentation:\n  title: [\n")
+    issues = validate_recipe("documentation:\n  title: [\n")
     assert len(issues) == 1
     assert issues[0].path == ()
     assert issues[0].line == 3
@@ -783,24 +774,18 @@ def test_validate_recipe_from_invalid_text() -> None:
 
 
 def test_validate_recipe_from_empty_text() -> None:
-    assert validate_recipe(text="") == validate_recipe(None)
-
-
-def test_validate_recipe_without_recipe_or_text() -> None:
-    with pytest.raises(TypeError, match="Either `recipe` or `text`"):
-        validate_recipe()
+    assert validate_recipe("") == _issues(None)
 
 
 def test_validate_recipe_does_not_modify_recipe() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["preprocessors"]["pp"]["regrid"] = None
-    validate_recipe(recipe)
+    _issues(recipe)
     assert recipe["preprocessors"]["pp"]["regrid"] is None
 
 
 def test_validate_recipe_duplicate_keys() -> None:
-    recipe = yaml.safe_load(DUPLICATE_RECIPE)
-    issues = validate_recipe(recipe, DUPLICATE_RECIPE)
+    issues = validate_recipe(DUPLICATE_RECIPE)
     assert issues == [
         # Problems in an anchored mapping are only reported once.
         RecipeIssue(
@@ -824,14 +809,14 @@ def test_validate_recipe_duplicate_keys() -> None:
 
 def test_validate_recipe_repeated_merge_keys() -> None:
     # MERGE_RECIPE uses the merge key (<<) more than once in a mapping.
-    issues = validate_recipe(yaml.safe_load(MERGE_RECIPE), MERGE_RECIPE)
+    issues = validate_recipe(MERGE_RECIPE)
     assert not [i for i in issues if "duplicate key" in i.message]
 
 
 def test_validate_recipe_unknown_preprocessor() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["diagnostics"]["example"]["variables"]["ta"]["preprocessor"] = "p"
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("diagnostics", "example", "variables", "ta", "preprocessor"),
             "unknown value 'p'. Not defined in the `preprocessors` section. "
@@ -868,7 +853,7 @@ def test_validate_recipe_unknown_dataset_preprocessor(
         node = node[key]
     node["preprocessor"] = value
     suggestion = " Did you mean 'pp'?" if value == "p" else ""
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             (*path, "preprocessor"),
             f"unknown value {value!r}. Not defined in the `preprocessors` "
@@ -882,7 +867,7 @@ def test_validate_recipe_default_preprocessor() -> None:
     del recipe["preprocessors"]["default"]
     variable = recipe["diagnostics"]["example"]["variables"]["ta"]
     variable["preprocessor"] = "default"
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 @pytest.mark.parametrize("project", ["OBS", "OBS6"])
@@ -890,7 +875,7 @@ def test_validate_recipe_missing_facets(project: str) -> None:
     recipe = yaml.safe_load(RECIPE)
     # The dataset is used by both variable groups, but reported once.
     recipe["datasets"][1] = {"dataset": "ERA5", "project": project}
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("datasets", 1),
             "missing required keys 'tier', 'type'. Needed to find the data "
@@ -914,7 +899,7 @@ def test_validate_recipe_facets_of_variable_group() -> None:
             "grid": "gn",
         },
     ]
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             (
                 "diagnostics",
@@ -935,13 +920,13 @@ def test_validate_recipe_facets_of_variable_group() -> None:
 def test_validate_recipe_known_type(project: str, value: object) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][1].update(project=project, type=value)
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 def test_validate_recipe_unknown_type() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][1].update(project="OBS6", type="reanalysis")
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("datasets", 1, "type"),
             "unknown value 'reanalysis'. Not a type of project 'OBS6', "
@@ -962,7 +947,7 @@ def test_validate_recipe_unknown_type_of_variable_group() -> None:
         {"dataset": "GPCP-SG", "type": "sat"},
     ]
     # The type of the variable group is reported once.
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("diagnostics", "example", "variables", "ta", "type"),
             "unknown value 'atmos'. Not a type of project 'OBS', choose "
@@ -975,15 +960,13 @@ def test_validate_recipe_unknown_type_of_variable_group() -> None:
 def test_validate_recipe_missing_facets_unknown_project() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][1]["project"] = ["OBS"]
-    assert not [
-        i for i in validate_recipe(recipe) if "Needed to find" in i.message
-    ]
+    assert not [i for i in _issues(recipe) if "Needed to find" in i.message]
 
 
 def test_validate_recipe_missing_facets_esgf_project() -> None:
     recipe = yaml.safe_load(RECIPE)
     del recipe["datasets"][2]["grid"]
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("datasets", 2),
             "missing required key 'grid'. Needed to find the data of "
@@ -1001,7 +984,7 @@ def test_validate_recipe_required_facets_configured(
         ["institute"],
     )
     recipe = yaml.safe_load(RECIPE)
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             path,
             "missing required key 'institute'. Needed to find the data of "
@@ -1047,9 +1030,7 @@ def test_validate_recipe_required_facets_from_extra_facets(
         "tier": 3,
         "mip": mip,
     }
-    issues = [
-        i for i in validate_recipe(recipe) if "Needed to find" in i.message
-    ]
+    issues = [i for i in _issues(recipe) if "Needed to find" in i.message]
     assert [i.path for i in issues] == [("datasets", 1)] * len(missing)
 
 
@@ -1086,14 +1067,14 @@ def test_validate_recipe_known_reference_dataset(key: str, value: str) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][0]["alias"] = "my-alias"
     recipe["diagnostics"]["example"]["variables"]["ta"][key] = value
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 @pytest.mark.parametrize("key", ["reference_dataset", "alternative_dataset"])
 def test_validate_recipe_unknown_reference_dataset(key: str) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["diagnostics"]["example"]["variables"]["ta"][key] = "ERA5|ERA4"
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("diagnostics", "example", "variables", "ta", key),
             "unknown value 'ERA4'. Not a dataset of this variable group. "
@@ -1107,7 +1088,7 @@ def test_validate_recipe_reference_dataset_of_other_group() -> None:
     recipe = yaml.safe_load(RECIPE)
     variables = recipe["diagnostics"]["example"]["variables"]
     variables["pr"] = {"mip": "Amon", "reference_dataset": "CanESM5"}
-    assert [i.path[-2:] for i in validate_recipe(recipe)] == [
+    assert [i.path[-2:] for i in _issues(recipe)] == [
         ("pr", "reference_dataset"),
     ]
 
@@ -1118,7 +1099,7 @@ def test_validate_recipe_reference_dataset_pattern() -> None:
     recipe["diagnostics"]["example"]["variables"]["ta"][
         "reference_dataset"
     ] = "X"
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 @pytest.mark.parametrize(
@@ -1130,7 +1111,7 @@ def test_validate_recipe_ancestors(ancestors: list[str]) -> None:
     recipe["diagnostics"]["example"]["scripts"]["plot"]["ancestors"] = (
         ancestors
     )
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 @pytest.mark.parametrize(
@@ -1151,7 +1132,7 @@ def test_validate_recipe_unknown_ancestor(
         f"unknown value {ancestor!r}. Does not match any variable group or "
         f"script.{suggestion}"
     )
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("diagnostics", "example", "scripts", "plot", "ancestors", 1),
             message,
@@ -1166,7 +1147,7 @@ def test_validate_recipe_unknown_ancestor(
 def test_validate_recipe_valid_timerange(timerange: str) -> None:
     dataset = {**SMALL_RECIPE["datasets"][0], "timerange": timerange}
     recipe = {**SMALL_RECIPE, "datasets": [dataset]}
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 @pytest.mark.parametrize(
@@ -1188,7 +1169,7 @@ def test_validate_recipe_invalid_timerange(
     recipe["diagnostics"]["example"]["variables"]["ta"]["timerange"] = (
         timerange
     )
-    (issue,) = validate_recipe(recipe)
+    (issue,) = _issues(recipe)
     assert issue.path == (
         "diagnostics",
         "example",
@@ -1262,7 +1243,7 @@ def test_validate_recipe_unavailable_variable(
     if datasets is not None:
         recipe["datasets"] = datasets
     expected = [] if message is None else [message]
-    assert [str(i) for i in validate_recipe(recipe)] == expected
+    assert [str(i) for i in _issues(recipe)] == expected
 
 
 @pytest.mark.parametrize(
@@ -1304,7 +1285,7 @@ def test_validate_recipe_mip_in_dataset(
 ) -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][path[1]]["mip"] = value
-    issues = [i for i in validate_recipe(recipe) if i.path[-1] == "mip"]
+    issues = [i for i in _issues(recipe) if i.path[-1] == "mip"]
     assert issues == [RecipeIssue(path, message, severity=severity)]
 
 
@@ -1313,7 +1294,7 @@ def test_validate_recipe_mip_in_variable_group() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["diagnostics"]["example"]["variables"]["ta"]["mip"] = "Amonn"
     path = ("diagnostics", "example", "variables", "ta", "mip")
-    issues = [i for i in validate_recipe(recipe) if i.path == path]
+    issues = [i for i in _issues(recipe) if i.path == path]
     start = "unknown value 'Amonn'. Not a CMOR table of project "
     assert [(i.message[: len(start) + 6], i.severity) for i in issues] == [
         (f"{start}'CMIP5", "error"),
@@ -1330,7 +1311,7 @@ def test_validate_recipe_mip_reported_once() -> None:
         "pr": {"mip": "Amonn"},
     }
     recipe["datasets"].append({**recipe["datasets"][0], "dataset": "B"})
-    paths = [i.path for i in validate_recipe(recipe)]
+    paths = [i.path for i in _issues(recipe)]
     assert paths == [
         ("diagnostics", "example", "variables", "tas", "mip"),
         ("diagnostics", "example", "variables", "pr", "mip"),
@@ -1341,7 +1322,7 @@ def test_validate_recipe_mip_not_strict_project() -> None:
     recipe = copy.deepcopy(SMALL_RECIPE)
     recipe["datasets"] = [OBS6_DATASET]
     recipe["diagnostics"]["example"]["variables"] = {"tas": {"mip": "Amonn"}}
-    (issue,) = validate_recipe(recipe)
+    (issue,) = _issues(recipe)
     assert issue.severity == "warning"
     assert issue.path == ("diagnostics", "example", "variables", "tas", "mip")
     assert "Not a CMOR table of project 'OBS6'. The variable will be" in (
@@ -1358,7 +1339,7 @@ def test_validate_recipe_mip_of_overridden_project() -> None:
     recipe["diagnostics"]["example"]["additional_datasets"] = [
         {"dataset": "B", "project": "CMIP7"},
     ]
-    issues = [i for i in validate_recipe(recipe) if "CMOR table" in i.message]
+    issues = [i for i in _issues(recipe) if "CMOR table" in i.message]
     assert [(i.path, i.severity) for i in issues] == [
         (("diagnostics", "example", "additional_datasets", 0), "error"),
     ]
@@ -1372,7 +1353,7 @@ def test_validate_recipe_mip_of_overridden_project() -> None:
 def test_validate_recipe_mip_skipped(mip: str | int) -> None:
     recipe = copy.deepcopy(SMALL_RECIPE)
     recipe["diagnostics"]["example"]["variables"] = {"tas": {"mip": mip}}
-    messages = [i.message for i in validate_recipe(recipe)]
+    messages = [i.message for i in _issues(recipe)]
     assert not any("CMOR table" in m for m in messages)
 
 
@@ -1398,12 +1379,12 @@ def _cmip7_recipe(**facets: Any) -> dict[str, Any]:
 
 
 def test_validate_recipe_branding_suffix() -> None:
-    assert validate_recipe(_cmip7_recipe()) == []
+    assert _issues(_cmip7_recipe()) == []
 
 
 def test_validate_recipe_branding_suffix_invalid() -> None:
     recipe = _cmip7_recipe(branding_suffix="tavg-h2m-hxy-uu")
-    (issue,) = validate_recipe(recipe)
+    (issue,) = _issues(recipe)
     assert issue.path == ("diagnostics", "example", "variables", "tas")
     assert issue.message.startswith(
         "variable 'tas' with branding suffix 'tavg-h2m-hxy-uu' not available "
@@ -1415,9 +1396,7 @@ def test_validate_recipe_branding_suffix_invalid() -> None:
 
 @pytest.mark.parametrize("branding_suffix", ["tavg-*", "tavg-h2m-hxy-[ul]"])
 def test_validate_recipe_branding_suffix_pattern(branding_suffix: str) -> None:
-    assert (
-        validate_recipe(_cmip7_recipe(branding_suffix=branding_suffix)) == []
-    )
+    assert _issues(_cmip7_recipe(branding_suffix=branding_suffix)) == []
 
 
 def _recipe_with_script(script: str) -> dict[str, Any]:
@@ -1434,12 +1413,12 @@ def test_validate_recipe_script_in_working_directory(
 ) -> None:
     (tmp_path / "my_diagnostic.py").write_text("")
     monkeypatch.chdir(tmp_path)
-    assert validate_recipe(_recipe_with_script("my_diagnostic.py")) == []
+    assert _issues(_recipe_with_script("my_diagnostic.py")) == []
 
 
 def test_validate_recipe_missing_script(esmvaltool: Diagnostics) -> None:
     recipe = _recipe_with_script("examples/diagnostc.py")
-    assert validate_recipe(recipe) == [
+    assert _issues(recipe) == [
         RecipeIssue(
             ("diagnostics", "example", "scripts", "plot", "script"),
             "file not found. 'examples/diagnostc.py' is not a file in the "
@@ -1449,17 +1428,27 @@ def test_validate_recipe_missing_script(esmvaltool: Diagnostics) -> None:
     ]
 
 
+@pytest.mark.usefixtures("esmvaltool")
+def test_validate_recipe_missing_script_without_diagnostics(
+    session: Session,
+) -> None:
+    session["run_diagnostic"] = False
+    recipe = _recipe_with_script("examples/diagnostc.py")
+    (issue,) = _issues(recipe, session=session)
+    assert issue.message.startswith("file not found.")
+    assert issue.severity == "warning"
+
+
 def test_validate_recipe_script_without_esmvaltool(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(validate, "DIAGNOSTICS", Diagnostics(tmp_path))
     recipe = _recipe_with_script("examples/diagnostc.py")
-    assert validate_recipe(recipe) == []
+    assert _issues(recipe) == []
 
 
 def test_ensure_valid_recipe(tmp_path: Path) -> None:
-    recipe = yaml.safe_load(INVALID_RECIPE)
     path = tmp_path / "recipe_test.yml"
     msg = (
         f"Recipe {path} is invalid:\n"
@@ -1467,19 +1456,14 @@ def test_ensure_valid_recipe(tmp_path: Path) -> None:
         "- line 5: datasets > 1 > tier: expected at most 3, got 7.\n"
     )
     with pytest.raises(RecipeError, match=re.escape(msg)):
-        ensure_valid_recipe(recipe, path, INVALID_RECIPE)
+        ensure_valid_recipe(INVALID_RECIPE, path)
 
 
-def test_ensure_valid_recipe_no_text(tmp_path: Path) -> None:
-    recipe = yaml.safe_load(RECIPE)
-    recipe["diagnostics"]["example"].pop("scripts")
+def test_ensure_valid_recipe_invalid_yaml(tmp_path: Path) -> None:
     path = tmp_path / "recipe_test.yml"
-    msg = (
-        f"Recipe {path} is invalid:\n"
-        "- diagnostics > example: missing required key 'scripts'."
-    )
+    msg = f"Recipe {path} is invalid:\n- line 3: recipe: invalid YAML: "
     with pytest.raises(RecipeError, match=re.escape(msg)):
-        ensure_valid_recipe(recipe, path, None)
+        ensure_valid_recipe("documentation:\n  title: [\n", path)
 
 
 @pytest.mark.usefixtures("esmvaltool")
@@ -1491,7 +1475,7 @@ def test_ensure_valid_recipe_warnings(
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = ["author_100"]
     path = tmp_path / "recipe_test.yml"
-    ensure_valid_recipe(recipe, path, yaml.safe_dump(recipe))
+    assert ensure_valid_recipe(yaml.safe_dump(recipe), path) == recipe
     assert len(caplog.records) == 1
     assert caplog.records[0].levelname == "WARNING"
     message = caplog.records[0].getMessage()
@@ -1509,14 +1493,13 @@ def test_ensure_valid_recipe_unknown_key(
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["domains"] = ["global"]
     path = tmp_path / "recipe_test.yml"
-    ensure_valid_recipe(recipe, path, None)
-    assert [r.getMessage() for r in caplog.records] == [
-        (
-            f"Recipe {path}: documentation > domains: unknown key. Unknown "
-            "keys are ignored, this is deprecated and will not work in "
-            "v2.18.0."
-        ),
-    ]
+    ensure_valid_recipe(yaml.safe_dump(recipe), path)
+    (message,) = [r.getMessage() for r in caplog.records]
+    assert message.startswith(f"Recipe {path}: line ")
+    assert message.endswith(
+        ": documentation > domains: unknown key. Unknown keys are ignored, "
+        "this is deprecated and will not work in v2.18.0.",
+    )
 
 
 def test_ensure_valid_recipe_duplicate_keys(
@@ -1524,9 +1507,8 @@ def test_ensure_valid_recipe_duplicate_keys(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     caplog.set_level(logging.WARNING)
-    recipe = yaml.safe_load(DUPLICATE_RECIPE)
     path = tmp_path / "recipe_test.yml"
-    ensure_valid_recipe(recipe, path, DUPLICATE_RECIPE)
+    ensure_valid_recipe(DUPLICATE_RECIPE, path)
     assert [r.levelname for r in caplog.records] == ["WARNING", "WARNING"]
     assert caplog.records[1].getMessage() == (
         f"Recipe {path}: line 16: diagnostics > example > variables > tas: "
