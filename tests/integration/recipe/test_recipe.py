@@ -2583,14 +2583,14 @@ def test_wrong_branding_suffix(
             scripts: null
         """)
     msg = (
-        "Variable 'tos' with branding suffix 'tavg-ol-hxy-sea' not available "
-        "in table 'ocean' of project 'CMIP7'. Available branding suffixes are: "
-        "tavg-u-hm-sea, tavg-u-hxy-sea, tpt-u-hxy-sea. Did you mean "
-        "'tavg-u-hxy-sea'?"
+        "diagnostics > diagnostic_name > variables > tos: variable 'tos' with "
+        "branding suffix 'tavg-ol-hxy-sea' not available in table 'ocean' of "
+        "project 'CMIP7'. Available branding suffixes are: tavg-u-hm-sea, "
+        "tavg-u-hxy-sea, tpt-u-hxy-sea. Did you mean 'tavg-u-hxy-sea'?"
     )
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
-    assert str(wrong_proj.value) == msg
+    assert msg in str(wrong_proj.value)
 
 
 def test_multimodel_mask(get_recipe, tmp_path, patched_datafinder, session):

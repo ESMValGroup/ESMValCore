@@ -1136,6 +1136,71 @@ def test_validate_recipe_invalid_timerange(
     assert issue.severity == "error"
 
 
+OBS6_DATASET = {
+    "project": "OBS6",
+    "dataset": "X",
+    "tier": 2,
+    "type": "sat",
+    "version": 1,
+}
+
+
+@pytest.mark.parametrize(
+    ("variables", "datasets", "message"),
+    [
+        (
+            {"tass": {"mip": "Amon"}},
+            None,
+            (
+                "diagnostics > example > variables > tass: variable 'tass' not "
+                "available in table 'Amon' of project 'CMIP6'."
+            ),
+        ),
+        (
+            {"tos": {"mip": "Amon"}},
+            None,
+            (
+                "diagnostics > example > variables > tos: variable 'tos' not "
+                "available in table 'Amon' of project 'CMIP6'."
+            ),
+        ),
+        (
+            {"lwp": {"mip": "Amon"}},
+            None,
+            (
+                "diagnostics > example > variables > lwp: variable 'lwp' not "
+                "available in table 'Amon' of project 'CMIP6'."
+            ),
+        ),
+        ({"lwp": {"mip": "Amon", "derive": True}}, None, None),
+        ({"x": {"mip": "Amon", "short_name": "tas"}}, None, None),
+        ({"tas": {"mip": "A*"}}, None, None),
+        # The CMOR checks of OBS6 are not strict, so all tables are used.
+        ({"tos": {"mip": "Amon"}}, [OBS6_DATASET], None),
+        (
+            {"tass": {"mip": "Amon"}},
+            [OBS6_DATASET],
+            (
+                "diagnostics > example > variables > tass: variable 'tass' not "
+                "available in table 'Amon' of project 'OBS6'."
+            ),
+        ),
+    ],
+)
+def test_validate_recipe_unavailable_variable(
+    variables: dict[str, Any],
+    datasets: list[dict[str, Any]] | None,
+    message: str | None,
+) -> None:
+    diagnostic = {**SMALL_RECIPE["diagnostics"]["example"]}
+    diagnostic["variables"] = variables
+    recipe = {**SMALL_RECIPE, "diagnostics": {"example": diagnostic}}
+    if datasets is not None:
+        recipe["datasets"] = datasets
+    expected = [] if message is None else [message]
+    assert [str(i) for i in validate_recipe(recipe)] == expected
+
+
 def _recipe_with_script(script: str) -> dict[str, Any]:
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = AUTHORS[:1]

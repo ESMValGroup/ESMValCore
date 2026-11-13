@@ -44,6 +44,7 @@ from esmvalcore._recipe.json_schema import (
     _join_or,
     generate_recipe_schema,
 )
+from esmvalcore.cmor.table import _describe_unavailable_variable, get_tables
 from esmvalcore.config import CFG
 from esmvalcore.config._diagnostics import DIAGNOSTICS
 from esmvalcore.config._tasksep import TASKSEP
@@ -1000,6 +1001,73 @@ def _find_missing_facets(
     return issues
 
 
+def _find_unavailable_variables(
+    recipe: object,
+    config: Config | Session,
+) -> list[RecipeIssue]:
+    """Find variables that are not in the CMOR tables of their project.
+
+    Uses the same rules as :func:`esmvalcore.cmor.table._update_cmor_facets`.
+    Datasets with facets that are patterns, that are missing, or that may
+    come from the extra facets are not checked.
+    """
+    issues = []
+    for group_path, variable, group_datasets in _variable_groups(recipe):
+        for dataset_path, entry in group_datasets:
+            facets = {"short_name": group_path[-1], **variable, **entry}
+            project = facets.get("project")
+            if (
+                not isinstance(project, str)
+                or project not in config["projects"]
+            ):
+                continue
+            settings = config["projects"][project]
+            required = ["mip", *settings.get("required_facets", [])]
+            names = ("short_name", "mip", "branding_suffix")
+            if (
+                any(f not in facets for f in required)
+                or not all(isinstance(facets.get(f, ""), str) for f in names)
+                or any(
+                    c in str(facets.get(f, "")) for f in names for c in "*?["
+                )
+                or {"branding_suffix", "derive"}
+                & _extra_facet_names(project, facets, config)
+            ):
+                continue
+            tables = get_tables(config, project)
+            mip = facets["mip"]
+            if not getattr(tables, "tables", None) or (
+                # The schema reports unknown MIPs of strict projects.
+                tables.strict and mip not in tables.tables
+            ):
+                continue
+            branding_suffix = facets.get("branding_suffix")
+            if (
+                tables.get_variable(
+                    mip,
+                    facets["short_name"],
+                    branding_suffix=branding_suffix,
+                    derived=bool(facets.get("derive", False)),
+                )
+                is None
+            ):
+                message = _describe_unavailable_variable(
+                    project,
+                    mip,
+                    facets["short_name"],
+                    branding_suffix,
+                )
+                if not message.endswith((".", "?")):
+                    message += "."
+                issue = RecipeIssue(
+                    dataset_path if "mip" in entry else group_path,
+                    message[0].lower() + message[1:],
+                )
+                if issue not in issues:
+                    issues.append(issue)
+    return issues
+
+
 def _find_unknown_types(recipe: object) -> list[RecipeIssue]:
     """Find datasets with a type that their project does not use."""
     issues = []
@@ -1311,13 +1379,14 @@ def validate_recipe(
 
     Also checks that every variable group has datasets, that no dataset occurs
     twice in a variable group, that datasets have a dataset, project, and MIP
-    and the facets that their project requires, that the reference and
-    alternative datasets of variable groups are datasets of the group, that the
-    preprocessors of variable groups and datasets and the ancestors of scripts
-    are defined in the recipe, that scripts and variable groups have different
-    names, that time ranges without wildcards are valid, that statistics
-    operators and generic regridding schemes can be loaded, and, if ESMValTool
-    is installed, that the diagnostic scripts exist.
+    and the facets that their project requires, that their variables are in the
+    CMOR tables of their project, that the reference and alternative datasets
+    of variable groups are datasets of the group, that the preprocessors of
+    variable groups and datasets and the ancestors of scripts are defined in
+    the recipe, that scripts and variable groups have different names, that
+    time ranges without wildcards are valid, that statistics operators and
+    generic regridding schemes can be loaded, and, if ESMValTool is installed,
+    that the diagnostic scripts exist.
 
     Parameters
     ----------
@@ -1386,6 +1455,7 @@ def _validate(
     )
     if required_facets:
         issues.extend(_find_missing_facets(recipe, config))
+        issues.extend(_find_unavailable_variables(recipe, config))
     issues.extend(_find_unknown_types(recipe))
     issues.extend(_find_invalid_timeranges(recipe))
     issues.extend(_find_unknown_reference_datasets(recipe))
