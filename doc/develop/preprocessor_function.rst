@@ -15,10 +15,10 @@ The function should look like this:
 .. code-block:: python
 
     def example_preprocessor_function(
-        cube,
-        example_argument,
-        example_optional_argument=5,
-    ):
+        cube: iris.cube.Cube,
+        example_argument: str,
+        example_optional_argument: int = 5,
+    ) -> iris.cube.Cube:
         """Compute an example quantity.
 
         A more extensive explanation of the computation can be added here. Add
@@ -142,6 +142,55 @@ function from the recipe in
 so it is shown in the :ref:`preprocessor` chapter.
 See the introduction to :ref:`documentation` for more information on how to
 best write documentation.
+
+Recipe schema
+=============
+
+ESMValCore generates the :ref:`recipe JSON Schema <recipe_validation>` from
+the signatures and docstrings of the preprocessor functions, so a new
+preprocessor function is added to it automatically.
+For the schema to describe the arguments of the function correctly:
+
+- Add a type hint to each argument.
+  In a recipe, the schema only accepts values of that type.
+  Types that cannot be written in YAML, such as :class:`iris.cube.Cube`, are
+  ignored, so an argument that only has such types accepts any value.
+- Use :data:`typing.Literal` for an argument that takes one of a few
+  values, so editors can offer them while a recipe is written.
+- Document each argument in the ``Parameters`` section of the docstring.
+  Editors show this description while a recipe is written.
+
+If ESMValCore sets or converts arguments of the function while reading the
+recipe in
+`esmvalcore/_recipe/recipe.py <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/_recipe/recipe.py>`__,
+or the docstring refers to a section of the documentation, update the
+constants at the top of
+`esmvalcore/_recipe/json_schema.py <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/_recipe/json_schema.py>`__:
+
+- ``INTERNAL_ARGUMENTS``: arguments that ESMValCore always sets, so they
+  cannot be used in a recipe.
+- ``AUTOMATIC_ARGUMENTS``: required arguments that ESMValCore fills in if
+  they are missing from the recipe.
+- ``RECIPE_ARGUMENTS``: arguments that ESMValCore converts when it reads the
+  recipe, for example from the name of a dataset to a cube.
+  Their schema describes the value in the recipe and is written by hand.
+- ``REQUIRED_KEYS``: required keys of arguments that are mappings, if the
+  type of the argument does not describe them.
+- ``EXCLUDE_STEPS``: steps that support excluding datasets with ``exclude``.
+  This includes all multi-model preprocessor functions.
+- ``DOCUMENTATION_LABELS``: labels that the docstrings refer to with
+  ``:ref:``.
+- ``STATISTICS_OPERATORS``: the operators in the table of
+  :ref:`supported statistics operators <supported_stat_operator>`.
+
+The tests in ``tests/unit/recipe/test_json_schema.py`` check that each
+argument has a type and description and that the constants refer to existing
+preprocessor functions and arguments.
+They cannot detect an argument that ESMValCore sets or converts while reading
+the recipe but that is missing from the constants.
+To check the schema of the new function, write the schema to a file with
+``esmvaltool recipes schema`` and use it to validate an example recipe as
+described in :ref:`recipe_validation`.
 
 Tests
 =====

@@ -9,6 +9,10 @@ To add support for a new data source, write two classes that implement these
 protocols and configure the tool to use the newly implemented data source as
 described in :mod:`esmvalcore.io`.
 
+.. deprecated:: 2.16.0
+    Data sources without the :attr:`DataSource.searchable_facets` attribute
+    are deprecated and will no longer be supported in ESMValCore v2.18.0.
+
 """
 
 from __future__ import annotations
@@ -70,6 +74,19 @@ class DataSource(Protocol):
 
     debug_info: str
     """A string containing debug information when no data is found."""
+
+    @property
+    def searchable_facets(self) -> frozenset[str]:
+        """Facets that can be used to search for data.
+
+        The values of these facets can be passed to :meth:`find_data` to
+        select data and are available in the
+        :attr:`~esmvalcore.io.protocol.DataElement.facets` of the data
+        elements that are found. For example, these are the facets in the
+        templates of a :class:`esmvalcore.io.local.LocalDataSource`.
+
+        .. versionadded:: 2.16.0
+        """
 
     def find_data(self, **facets: FacetValue) -> Iterable[DataElement]:
         """Find data.

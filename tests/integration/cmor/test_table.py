@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -22,6 +23,10 @@ from esmvalcore.cmor.table import (
     _update_cmor_facets,
     get_var_info,
 )
+from esmvalcore.exceptions import RecipeError
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 def test_update_cmor_facets():
@@ -53,6 +58,36 @@ def test_update_cmor_facets():
         ],
     }
     assert facets == expected
+
+
+@pytest.mark.parametrize(
+    ("facets", "message"),
+    [
+        (
+            {"project": "CMIP6", "mip": "Amon", "short_name": "tass"},
+            "Variable 'tass' not available in table 'Amon' of project 'CMIP6'",
+        ),
+        (
+            {
+                "project": "CMIP7",
+                "mip": "atmoss",
+                "short_name": "tas",
+                "branding_suffix": "tavg-h2m-hxy-u",
+            },
+            (
+                "Variable 'tas' with branding suffix 'tavg-h2m-hxy-u' not "
+                "available in table 'atmoss' of project 'CMIP7'"
+            ),
+        ),
+    ],
+)
+def test_update_cmor_facets_unavailable(
+    facets: Facets,
+    message: str,
+) -> None:
+    with pytest.raises(RecipeError) as exc:
+        _update_cmor_facets(facets)
+    assert str(exc.value) == message
 
 
 def test_update_cmor_facets_facet_not_in_table(mocker):

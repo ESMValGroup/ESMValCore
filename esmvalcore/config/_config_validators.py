@@ -310,6 +310,7 @@ def validate_projects(
         "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
         "preprocessor_filename_template": validate_string,
+        "required_facets": validate_stringlist,
     }
     for project, project_config in mapping.items():
         if "cmor_table" not in project_config:

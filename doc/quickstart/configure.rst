@@ -686,6 +686,10 @@ The following project-specific options are available:
      - A template defining the filenames to use for :ref:`preprocessed data <preprocessed_datasets>` when running a :ref:`recipe <recipe>`. Refer to  :ref:`config-preprocessor-filename-template` for details.
      - :obj:`str`
      - Refer to :ref:`config-preprocessor-filename-template`.
+   * - ``required_facets``
+     - Facets that recipes must specify for datasets of the project, in addition to ``project``, ``dataset``, ``mip``, and ``short_name``. Refer to :ref:`config-required-facets` for details.
+     - :obj:`list` of :obj:`str`
+     - Refer to :ref:`config-required-facets`.
 
 .. _cmor_table_configuration:
 
@@ -1009,6 +1013,31 @@ If no ``preprocessor_filename_template`` is configured for a project, the facets
 describing the dataset in the recipe, as stored in
 :attr:`esmvalcore.dataset.Dataset.minimal_facets`, are used.
 
+.. _config-required-facets:
+
+Required facets
+---------------
+
+The facets that a recipe must specify for each dataset of a project, in
+addition to ``project``, ``dataset``, ``mip``, and ``short_name``, are
+configured using ``required_facets``.
+Recipes are checked for these facets before running, and also while editing
+them if the editor supports this (refer to :ref:`recipe_editor_support`).
+Facets that are automatically added from the :ref:`extra facets <config-extra-facets>`
+of the project do not have to be specified in the recipe.
+
+Default values are provided in ``defaults/required_facets.yml``, for example:
+
+.. literalinclude:: ../configurations/defaults/required_facets.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/required_facets.yml``
+    :end-before: # Observational
+
+For projects hosted on ESGF, these are the facets that are used to search
+ESGF, except those that can be derived from other facets, such as
+``institute`` and ``activity``, or from the CMOR tables, such as
+``frequency``.
+
 .. _config-esgf:
 
 ESGF configuration
@@ -1140,9 +1169,18 @@ References configuration file
 =============================
 
 The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
-references and projects. Each author, project and reference referred to in the
-documentation section of a recipe needs to be in this file in the relevant
-section.
+the research projects that funded the development of the recipes and
+diagnostics, and other tags used to record provenance, such as realms and
+themes.
+These research projects are not related to the projects that provide data,
+which are configured in :ref:`config-projects`.
+Each author, maintainer, and project referred to in the documentation section
+of a recipe should be in the relevant section of this file.
+Each reference should have a bibtex file with the same name in the
+`esmvaltool/references <https://github.com/ESMValGroup/ESMValTool/tree/main/esmvaltool/references>`__
+directory.
+If one is missing, ESMValCore logs a warning and the provenance information
+will be incomplete.
 
 For instance, the recipe ``recipe_ocean_example.yml`` file contains the
 following documentation section:
@@ -1163,5 +1201,6 @@ following documentation section:
       - ukesm
 
 
-These four items here are named people, references and projects listed in the
-``config-references.yml`` file.
+The authors, maintainer, and projects are listed in the
+``config-references.yml`` file and the reference is the file
+``esmvaltool/references/demora2018gmd.bibtex``.

@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
+from esmvalcore._recipe.validate import ensure_valid_datasets
 from esmvalcore.cmor.table import (
     NoInfo,
     _get_branding_suffixes,
@@ -143,6 +144,12 @@ class Dataset:
     ) -> list[Dataset]:
         """Read datasets from a recipe.
 
+        The datasets and variables in the recipe are validated with the
+        configuration of the session.
+        The recipe does not need to be complete: the other sections of the
+        recipe and facets that are only needed to find the data may be
+        missing.
+
         Parameters
         ----------
         recipe
@@ -151,18 +158,35 @@ class Dataset:
             that has been loaded using e.g. :func:`yaml.safe_load`, or an
             :obj:`str` that can be loaded using :func:`yaml.safe_load`.
         session
-            Datasets to use in the recipe.
+            Session to use for the datasets. Its configuration is also used
+            to validate the recipe.
 
         Returns
         -------
         list[Dataset]
             A list of datasets.
+
+        Raises
+        ------
+        RecipeError
+            If the datasets cannot be read from the recipe, for example
+            because a variable group has no datasets or a dataset has no
+            project or MIP.
+
+        Warns
+        -----
+        ESMValCoreDeprecationWarning
+            If the datasets or variables in the recipe are invalid. This will
+            raise an error in ESMValCore v2.18.0.
         """
         from esmvalcore._recipe.to_datasets import (  # noqa: PLC0415
             datasets_from_recipe,
         )
 
-        return datasets_from_recipe(recipe, session)
+        return datasets_from_recipe(
+            ensure_valid_datasets(recipe, session),
+            session,
+        )
 
     def _file_to_dataset(
         self,
