@@ -16,6 +16,7 @@ import iris.util
 import numpy as np
 import yaml
 
+import esmvalcore.config
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
     _get_generic_lev_coord_names,
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     from iris.cube import Cube
 
     from esmvalcore.cmor.table import CoordinateInfo
+    from esmvalcore.config import Session
 
 
 class CheckLevels(IntEnum):
@@ -80,6 +82,9 @@ class CMORCheck:
         all possible errors before stopping.
     check_level: CheckLevels
         Level of strictness of the checks.
+    session:
+        The configuration. If not given, the global configuration
+        :data:`esmvalcore.config.CFG` is used.
 
     Attributes
     ----------
@@ -100,6 +105,8 @@ class CMORCheck:
         frequency=None,
         fail_on_error=False,
         check_level=CheckLevels.DEFAULT,
+        *,
+        session=None,
     ):
         self._cube = cube
         self._failerr = fail_on_error
@@ -110,6 +117,7 @@ class CMORCheck:
         self._debug_messages = []
 
         self._cmor_var = var_info
+        self._session = session
         if not frequency:
             frequency = self._cmor_var.frequency
         self.frequency = frequency
@@ -473,34 +481,23 @@ class CMORCheck:
         alternatives here.  A detailed explanation of this can be found here:
             https://github.com/ESMValGroup/ESMValCore/issues/1029
 
-        Only the projects CMIP3, CMIP5, CMIP6 and obs4MIPs support generic
-        level coordinates. Right now, only alternative level coordinates for
-        the atmosphere ('alevel' or 'zlevel') are supported.
-
-        Note that only the "simplest" CMOR table entry per coordinate is
-        specified (e.g., only 'plev3' for the pressure level coordinate and
-        'alt16' for the altitude coordinate). These different versions (e.g.,
-        'plev3', 'plev19', 'plev39', etc.) only differ in the requested values.
-        We are mainly interested in the metadata of the coordinates (names,
-        units), which is equal for all coordinate versions. In the DEFAULT
-        strictness or lower, differing requested values only produce a warning.
-        A stricter setting (such as STRICT) does not allow this feature (i.e.,
-        the use of alternative level coordinates) in the first place, so we do
-        not need to worry about differing requested values for the levels in
-        this case.
-
-        In the future, this might be extended: For ``cmor_strict=True``
-        projects (like CMIP) the level coordinate's ``len`` might be used to
-        search for the correct coordinate version and then check against this.
-        For ``cmor_strict=False`` project (like OBS) the check for requested
-        values might be disabled.
+        The alternative coordinate is selected from the CMOR tables of the
+        project, see ``_get_alternative_generic_lev_coord`` for details. In
+        the DEFAULT strictness or lower, requested values that are missing
+        from the alternative coordinate only produce a warning.
         """
+        # Without a project, there are no CMOR tables to find alternatives in.
+        if not self._cmor_var.project:
+            self.report_critical(self._does_msg, key, "exist")
+            return
+
         try:
             (alternative_coord, cube_coord) = (
                 _get_alternative_generic_lev_coord(
                     self._cube,
                     key,
-                    self._cmor_var.table_type,
+                    self._cmor_var.project,
+                    self._session or esmvalcore.config.CFG,
                 )
             )
 
@@ -944,7 +941,7 @@ class CMORCheck:
         self.report(CheckLevels.DEBUG, message, *args)
 
 
-def _get_cmor_checker(
+def _get_cmor_checker(  # noqa: PLR0913
     project: str,
     mip: str,
     short_name: str,
@@ -953,6 +950,7 @@ def _get_cmor_checker(
     frequency: str | None = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
+    session: Session | None = None,
 ) -> Callable[[Cube], CMORCheck]:
     """Get a CMOR checker."""
     var_info = get_var_info(
@@ -969,12 +967,13 @@ def _get_cmor_checker(
             frequency=frequency,
             fail_on_error=fail_on_error,
             check_level=check_level,
+            session=session,
         )
 
     return _checker
 
 
-def cmor_check_metadata(
+def cmor_check_metadata(  # noqa: PLR0913
     cube: Cube,
     cmor_table: str,
     mip: str,
@@ -983,6 +982,7 @@ def cmor_check_metadata(
     branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
+    session: Session | None = None,
 ) -> Cube:
     """Check if metadata conforms to variable's CMOR definition.
 
@@ -1006,6 +1006,9 @@ def cmor_check_metadata(
         variable.
     check_level:
         Level of strictness of the checks.
+    session:
+        The configuration. If not given, the global configuration
+        :data:`esmvalcore.config.CFG` is used.
 
     Returns
     -------
@@ -1020,11 +1023,12 @@ def cmor_check_metadata(
         branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
+        session=session,
     )
     return checker(cube).check_metadata()
 
 
-def cmor_check_data(
+def cmor_check_data(  # noqa: PLR0913
     cube: Cube,
     cmor_table: str,
     mip: str,
@@ -1033,6 +1037,7 @@ def cmor_check_data(
     branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
+    session: Session | None = None,
 ) -> Cube:
     """Check if data conforms to variable's CMOR definition.
 
@@ -1054,6 +1059,9 @@ def cmor_check_data(
         variable.
     check_level:
         Level of strictness of the checks.
+    session:
+        The configuration. If not given, the global configuration
+        :data:`esmvalcore.config.CFG` is used.
 
     Returns
     -------
@@ -1068,11 +1076,12 @@ def cmor_check_data(
         branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
+        session=session,
     )
     return checker(cube).check_data()
 
 
-def cmor_check(
+def cmor_check(  # noqa: PLR0913
     cube: Cube,
     cmor_table: str,
     mip: str,
@@ -1081,6 +1090,7 @@ def cmor_check(
     branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
+    session: Session | None = None,
 ) -> Cube:
     """Check if cube conforms to variable's CMOR definition.
 
@@ -1105,6 +1115,9 @@ def cmor_check(
         variable.
     check_level:
         Level of strictness of the checks.
+    session:
+        The configuration. If not given, the global configuration
+        :data:`esmvalcore.config.CFG` is used.
 
     Returns
     -------
@@ -1120,6 +1133,7 @@ def cmor_check(
         branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
+        session=session,
     )
     return cmor_check_data(
         cube,
@@ -1129,4 +1143,5 @@ def cmor_check(
         branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
+        session=session,
     )
