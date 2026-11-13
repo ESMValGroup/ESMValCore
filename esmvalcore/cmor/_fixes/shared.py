@@ -279,10 +279,14 @@ def cube_to_aux_coord(cube):
 def ensure_c_contiguous_input[T](
     func: Callable[[np.ndarray], T],
 ) -> Callable[[ArrayLike], T]:
-    """Ensure that input to a function is C-contiguous (e.g., as expected by interp1d)."""
+    """Ensure that input to a function is C-contiguous and aligned.
+
+    This is required by e.g. :class:`scipy.interpolate.interp1d`. Arrays
+    received from other Dask workers may not be aligned.
+    """
 
     def wrapped_func(x: ArrayLike) -> T:
-        return func(np.ascontiguousarray(x))
+        return func(np.require(x, requirements=["C_CONTIGUOUS", "ALIGNED"]))
 
     return wrapped_func
 
