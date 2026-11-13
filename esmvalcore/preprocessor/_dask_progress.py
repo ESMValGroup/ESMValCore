@@ -247,7 +247,9 @@ def _compute_with_progress(
                 log_level=session["log_level"],
                 log_dir=session.run_dir,
             )
-        dask.compute(futures)
+        # The progress bars stop at the first failed task without raising
+        # its error, so wait for the futures and raise any errors here.
+        distributed.get_client().gather(futures)
     else:
         if log_progress_interval == 0.0:
             ctx: contextlib.AbstractContextManager = RichProgressBar()
