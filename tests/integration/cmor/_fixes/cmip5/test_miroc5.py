@@ -7,21 +7,9 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Pr, Sftof, Tas
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip5.miroc5 import Hur, Pr, Sftof, Tas
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP5", "MIROC5", "Amon", "cl")
-    assert fix == [Cl(None), GenericFix(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
 
 
 def test_get_hur_fix():

@@ -595,6 +595,34 @@ def _get_attribute(
     return attribute
 
 
+def _remove_formula_term_cubes(
+    cubes: iris.cube.CubeList,
+) -> iris.cube.CubeList:
+    """Remove duplicate cubes of derived coordinate reference surfaces.
+
+    Iris loads the reference surface of a derived coordinate (e.g., surface
+    air pressure for hybrid pressure coordinates) both as an auxiliary
+    coordinate of the cube that uses it and as a separate cube, so that it is
+    available for users who want to work with it directly. The derived
+    coordinate is computed from the auxiliary coordinate, so the separate
+    cube is a duplicate that is not used. In CMIP-style data, each file
+    contains a single variable, so a reference surface that is requested as a
+    variable in its own right may be loaded from its own files instead.
+    """
+    formula_terms = {
+        coord.var_name
+        for cube in cubes
+        for factory in cube.aux_factories
+        for coord in factory.dependencies.values()
+        if coord is not None
+    }
+    return iris.cube.CubeList(
+        cube
+        for cube in cubes
+        if cube.aux_factories or cube.var_name not in formula_terms
+    )
+
+
 def dataset_to_iris(
     dataset: xr.Dataset | ncdata.NcData,
     filepath: str | Path | None = None,
@@ -638,6 +666,8 @@ def dataset_to_iris(
         raise TypeError(msg)
     with ignore_warnings_context(ignore_warnings):
         cubes = iris.load_raw(ncdata.dataset_like.Nc4DatasetLike(ds))
+
+    cubes = _remove_formula_term_cubes(cubes)
 
     # Restore the lat/lon coordinate units that iris changes to degrees
     for coord_name in ["latitude", "longitude"]:

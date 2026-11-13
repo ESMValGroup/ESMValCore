@@ -7,8 +7,7 @@ import iris.coords
 import iris.cube
 import numpy as np
 
-from esmvalcore.cmor._fixes.cmip5.hadgem2_es import O2, AllVars, Cl
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.cmip5.hadgem2_es import O2, AllVars
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from tests import assert_array_equal
@@ -61,14 +60,3 @@ class TestO2(unittest.TestCase):
             Fix.get_fixes("CMIP5", "HADGEM2-ES", "Amon", "o2"),
             [O2(None), AllVars(None), GenericFix(None)],
         )
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP5", "HadGEM2-ES", "Amon", "cl")
-    assert fix == [Cl(None), AllVars(None), GenericFix(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridHeightCoord

@@ -3,7 +3,6 @@
 import iris
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -43,13 +42,11 @@ class AllVars(Fix):
         return cubes
 
 
-class Cl(ClFixHybridHeightCoord):
+class Cl(Fix):
     """Fixes for ``cl``."""
 
     def fix_metadata(self, cubes):
         """Remove attributes from ``vertical coordinate formula term: b(k)``.
-
-        Additionally add pressure level coordinate.
 
         Parameters
         ----------
@@ -61,7 +58,6 @@ class Cl(ClFixHybridHeightCoord):
         iris.cube.CubeList
 
         """
-        cubes = super().fix_metadata(cubes)
         cube = self.get_cube_from_list(cubes)
         coord = cube.coord(long_name="vertical coordinate formula term: b(k)")
         coord.attributes = {}

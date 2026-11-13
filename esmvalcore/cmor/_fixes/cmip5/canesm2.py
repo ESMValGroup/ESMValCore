@@ -1,9 +1,6 @@
 """Fixes for CanESM2 model."""
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-
-Cl = ClFixHybridPressureCoord
 
 
 class FgCo2(Fix):

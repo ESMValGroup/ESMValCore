@@ -2,14 +2,7 @@
 
 import numpy as np
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-
-Cl = ClFixHybridPressureCoord
-
-Cli = ClFixHybridPressureCoord
-
-Clw = ClFixHybridPressureCoord
 
 
 class Tos(Fix):
