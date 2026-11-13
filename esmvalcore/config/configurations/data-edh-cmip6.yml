@@ -1,0 +1,48 @@
+# Read CMIP6 data in zarr format from the Earth Data Hub of Destination Earth.
+# Go to https://earthdatahub.destine.eu/collections/cmip6 for further
+# information.
+
+# The Earth Data Hub requires a DestinE account. Add your Earth Data Hub
+# personal access token to your ~/.netrc file:
+#
+#   machine data.earthdatahub.destine.eu
+#     password <your personal access token>
+projects:
+  CMIP6:
+    data:
+      edh-cmip6:
+        type: esmvalcore.io.xarray.XarrayDataSource
+        # Local files and other data sources with the default priority (1) are
+        # used first.
+        priority: 10
+        stores:
+          - https://data.earthdatahub.destine.eu/cmip6/CMCC-CM2-SR5-historical-r1i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/CMCC-CM2-SR5-ScenarioMIP-r1i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/DKRZ-MPI-ESM1-2-HR-historical-r1i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/DKRZ-MPI-ESM1-2-HR-ScenarioMIP-r1i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/EC-Earth3-CC-historical-r1i1p1f1-day-gr-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/EC-Earth3-CC-ScenarioMIP-r1i1p1f1-day-gr-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/IPSL-CM6A-LR-historical-r1i1p1f1-day-gr-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/IPSL-CM6A-LR-ScenarioMIP-r1i1p1f1-day-gr-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/NCAR-CESM2-historical-r1i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/NCAR-CESM2-ScenarioMIP-r10i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/NCC-NorESM2-MM-historical-r1i1p1f1-day-gn-v0.zarr
+          - https://data.earthdatahub.destine.eu/cmip6/NCC-NorESM2-MM-ScenarioMIP-r1i1p1f1-day-gn-v0.zarr
+        options:
+          engine: "zarr"
+          zarr_format: 3
+          storage_options:
+            # Read the access token from ~/.netrc.
+            client_kwargs:
+              trust_env: true
+        # Each store lists the CMIP6 datasets it contains in the global
+        # attribute 'dataset_ids'.
+        facets_from_attribute:
+          attribute: dataset_ids
+          template: "{project}.{activity}.{institute}.{dataset}.{exp}.{ensemble}.{mip}.{short_name}.{grid}.{version}"
+        # The ScenarioMIP stores contain several experiments.
+        select:
+          exp: experiment_id
+        # Use the same names as data from ESGF, so the same data found through
+        # different data sources is only used once.
+        name_template: "{project}.{activity}.{institute}.{dataset}.{exp}.{ensemble}.{mip}.{short_name}.{grid}"

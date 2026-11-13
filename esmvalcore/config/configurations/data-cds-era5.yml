@@ -7,6 +7,9 @@ projects:
     data:
       cds-era5-zarr:
         type: esmvalcore.io.xarray.XarrayDataSource
+        # Local files and other data sources with the default priority (1) are
+        # used first.
+        priority: 10
         # Available stores:
         # - Geo-chunked surface levels data (optimised for time-series at a single location):
         #   https://arco.datastores.ecmwf.int/cadl-arco-geo-002/arco/reanalysis_era5_single_levels/sfc/geoChunked.zarr
@@ -23,9 +26,10 @@ projects:
           engine: "zarr"
           storage_options:
             headers:
-              Authorization: "Bearer <INSERT YOUR CDS API KEY HERE>"
+              # Set the environment variable CDSAPI_KEY to your CDS API key.
+              Authorization: "Bearer ${CDSAPI_KEY}"
         variables:
-          t2m: tas
+          tas: t2m
         facets:
           dataset: "ERA5"
           frequency: "1hr"

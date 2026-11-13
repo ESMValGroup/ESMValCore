@@ -1,0 +1,42 @@
+# Read monthly ERA5 data in zarr format from the Earth Data Hub of Destination
+# Earth. Go to
+# https://earthdatahub.destine.eu/collections/era5/datasets/era5-single-levels-atmosphere-monthly
+# for further information.
+
+# The Earth Data Hub requires a DestinE account. Add your Earth Data Hub
+# personal access token to your ~/.netrc file:
+#
+#   machine data.earthdatahub.destine.eu
+#     password <your personal access token>
+projects:
+  native6:
+    data:
+      edh-era5-monthly:
+        type: esmvalcore.io.xarray.XarrayDataSource
+        # Local files and other data sources with the default priority (1) are
+        # used first.
+        priority: 10
+        store: https://data.earthdatahub.destine.eu/era5/era5-single-levels-atmosphere-monthly-v0.zarr
+        options:
+          engine: "zarr"
+          zarr_format: 3
+          storage_options:
+            # Read the access token from ~/.netrc.
+            client_kwargs:
+              trust_env: true
+        # The store uses the GRIB short names of the variables.
+        variables:
+          clt: tcc
+          pr: tp
+          prw: tcwv
+          ps: sp
+          psl: msl
+          tas: t2m
+          tdps: d2m
+          ts: skt
+          uas: u10
+          vas: v10
+        facets:
+          dataset: "ERA5"
+          mip: "Amon"
+          frequency: "mon"

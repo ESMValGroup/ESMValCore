@@ -317,10 +317,10 @@ def _truncate_dates(date: str, file_date: str) -> tuple[int, int]:
     return int(date), int(file_date)
 
 
-def _select_files(
-    filenames: Iterable[LocalFile],
+def _select_files[T: esmvalcore.io.protocol.DataElement](
+    filenames: Iterable[T],
     timerange: FacetValue,
-) -> list[LocalFile]:
+) -> list[T]:
     """Select files containing data between a given timerange.
 
     If the timerange is given as a period, the file selection occurs
@@ -336,7 +336,7 @@ def _select_files(
         # TODO: support * combined with a period
         return list(filenames)
 
-    selection: list[LocalFile] = []
+    selection: list[T] = []
 
     for filename in filenames:
         if "timerange" not in filename.facets:

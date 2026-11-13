@@ -5,6 +5,9 @@ projects:
     data:
       gcs-era5-zarr:
         type: esmvalcore.io.xarray.XarrayDataSource
+        # Local files and other data sources with the default priority (1) are
+        # used first.
+        priority: 10
         store: "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
         options:
           chunks: "auto"
@@ -12,8 +15,8 @@ projects:
           storage_options:
             token: anon
         variables:
-          2m_temperature: tas
-          total_precipitation: pr
+          tas: 2m_temperature
+          pr: total_precipitation
         facets:
           dataset: "ERA5"
           frequency: "1hr"
