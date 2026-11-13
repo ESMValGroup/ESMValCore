@@ -18,18 +18,20 @@ import esmvalcore.io.esgf
 from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._recipe import check
+from esmvalcore._recipe._io import _parse_yaml
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore._recipe.to_datasets import (
     _derive_needed,
     _get_input_datasets,
     _representative_datasets,
+    datasets_from_recipe,
 )
+from esmvalcore._recipe.validate import yaml_error_issue
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.config._tasksep import TASKSEP
-from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import (
     GRIB_FORMATS,
@@ -65,6 +67,7 @@ if TYPE_CHECKING:
 
     from esmvalcore._task import BaseTask
     from esmvalcore.config import Session
+    from esmvalcore.dataset import Dataset
     from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets
 
@@ -88,12 +91,11 @@ def read_recipe_file(filename: Path, session: Session) -> Recipe:
     """Read a recipe from file."""
     recipe_text = filename.read_text(encoding="utf-8")
     try:
-        # Use CSafeLoader for speed, but fall back to SafeLoader for better
-        # error messages if parsing fails or if CSafeLoader is not available.
-        raw_recipe = yaml.load(recipe_text, Loader=yaml.CSafeLoader)
-    except (yaml.YAMLError, AttributeError):
-        raw_recipe = yaml.safe_load(recipe_text)
-
+        raw_recipe = _parse_yaml(recipe_text)
+    except yaml.YAMLError as exc:
+        issue = yaml_error_issue(exc)
+        msg = f"Recipe {filename} is invalid:\n- {issue}"
+        raise RecipeError(msg) from exc
     return Recipe(raw_recipe, session, recipe_file=filename)
 
 
@@ -818,8 +820,6 @@ def _update_preproc_functions(
     _update_regrid_time(dataset, settings)
     if dataset.facets.get("frequency") == "fx":
         check.check_for_temporal_preprocs(settings)
-    check.statistics_preprocessors(settings)
-    check.regridding_schemes(settings)
 
 
 def _get_preprocessor_task(
@@ -896,7 +896,7 @@ class Recipe:
         recipe_file: Path,
     ) -> None:
         """Parse a recipe file into an object."""
-        check.recipe_with_schema(raw_recipe, path=recipe_file)
+        check.recipe_with_schema(raw_recipe, recipe_file, session)
         validate_dask_config(session["dask"])
 
         # Clear the global variable containing the set of files to download
@@ -912,7 +912,8 @@ class Recipe:
         self._preprocessors = raw_recipe.get("preprocessors", {})
         if "default" not in self._preprocessors:
             self._preprocessors["default"] = {}
-        self.datasets = Dataset.from_recipe(recipe_file, session)
+        # The recipe has already been validated above.
+        self.datasets = datasets_from_recipe(recipe_file, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe["diagnostics"],
         )
@@ -983,8 +984,6 @@ class Recipe:
     ) -> dict[str, Diagnostic]:
         """Define diagnostics in recipe."""
         logger.debug("Retrieving diagnostics from recipe")
-        check.diagnostics(raw_diagnostics)
-
         diagnostics = {}
 
         for name, raw_diagnostic in raw_diagnostics.items():

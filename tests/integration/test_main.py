@@ -96,7 +96,7 @@ def test_empty_run(tmp_path):
     config_file = config_dir / "config.yml"
     config_file.write_text(f"output_dir: {out_dir}")
 
-    msg = "The given recipe does not have any diagnostic."
+    msg = "diagnostics: expected a mapping, got None."
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         with pytest.raises(RecipeError, match=msg):

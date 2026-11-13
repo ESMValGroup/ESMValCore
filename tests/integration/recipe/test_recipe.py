@@ -218,13 +218,12 @@ def test_recipe_duplicate_var_script_name(get_recipe, tmp_path, session):
                 script: tmp_path / 'diagnostic.py'
         """)
     exc_message = (
-        "Invalid script name 'ta' encountered in diagnostic "
-        "'diagnostic_name': scripts cannot have the same "
-        "name as variables."
+        "diagnostics > diagnostic_name > scripts > ta: a script cannot have "
+        "the same name as a variable group of its diagnostic."
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == exc_message
+    assert exc_message in str(exc.value)
 
 
 def test_recipe_no_script(get_recipe, tmp_path, session):
@@ -269,13 +268,12 @@ def test_recipe_no_datasets(get_recipe, tmp_path, session):
             scripts: null
         """)
     exc_message = (
-        "You have not specified any dataset "
-        "or additional_dataset groups for variable "
-        "'ta' in diagnostic 'diagnostic_name'."
+        "diagnostics > diagnostic_name > variables > ta: no datasets. Add "
+        "them to the `datasets` section or to `additional_datasets`."
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == exc_message
+    assert exc_message in str(exc.value)
 
 
 def test_recipe_duplicated_datasets(get_recipe, tmp_path, session):
@@ -295,13 +293,10 @@ def test_recipe_duplicated_datasets(get_recipe, tmp_path, session):
                 timerange: 1999/2002
             scripts: null
         """)
-    exc_message = (
-        "Duplicate dataset\n{'dataset': 'bcc-csm1-1'}\n"
-        "for variable 'ta' in diagnostic 'diagnostic_name'."
-    )
+    exc_message = "datasets > 1: duplicate dataset."
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == exc_message
+    assert exc_message in str(exc.value)
 
 
 def test_recipe_var_missing_args(get_recipe, tmp_path, session):
@@ -319,16 +314,10 @@ def test_recipe_var_missing_args(get_recipe, tmp_path, session):
                 timerange: 1999/2002
             scripts: null
         """)
-    exc_message = (
-        "Missing keys {'mip'} in\n{'dataset': 'bcc-csm1-1',"
-        "\n 'ensemble': 'r1i1p1',\n 'exp': 'historical',\n"
-        " 'project': 'CMIP5',\n 'short_name': 'ta',\n "
-        "'timerange': '1999/2002'}\nfor variable 'ta' "
-        "in diagnostic 'diagnostic_name'."
-    )
+    exc_message = "datasets > 0: missing required key 'mip'."
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == exc_message
+    assert exc_message in str(exc.value)
 
 
 @pytest.mark.parametrize("skip_nonexistent", [True, False])
@@ -3095,13 +3084,12 @@ def test_mm_stats_invalid_stat_kwargs(
             scripts: null
         """)
     msg = (
-        f"Invalid options for {preproc}: Invalid kwargs for operator "
-        f"'wpercentile': "
+        f"preprocessors > test > {preproc} > statistics > 0: Invalid kwargs "
+        "for operator 'wpercentile': "
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+    assert msg in str(rec_err_exp.value)
 
 
 @pytest.mark.parametrize(
@@ -3300,13 +3288,12 @@ def test_statistics_invalid_kwargs(
             scripts: null
         """)
     msg = (
-        f"Invalid options for {preproc}: Invalid kwargs for operator "
-        f"'wpercentile': "
+        f"preprocessors > test > {preproc}: Invalid kwargs for operator "
+        "'wpercentile': "
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+    assert msg in str(rec_err_exp.value)
 
 
 def test_hourly_statistics(get_recipe, tmp_path, patched_datafinder, session):
@@ -3578,13 +3565,13 @@ def test_generic_regridding_scheme_no_ref(
             scripts: null
         """)
     msg = (
-        "Failed to load generic regridding scheme: No reference specified for "
-        "generic regridding. See "
+        "preprocessors > test > regrid > scheme: failed to load generic "
+        "regridding scheme: No reference specified for generic regridding. "
+        "Refer to "
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+    assert msg in str(rec_err_exp.value)
 
 
 def test_invalid_generic_regridding_scheme(
@@ -3613,14 +3600,14 @@ def test_invalid_generic_regridding_scheme(
             scripts: null
         """)
     msg = (
-        "Failed to load generic regridding scheme: Could not import specified "
-        "generic regridding module 'invalid.module'. Please double check "
-        "spelling and that the required module is installed. "
+        "preprocessors > test > regrid > scheme: failed to load generic "
+        "regridding scheme: Could not import specified generic regridding "
+        "module 'invalid.module'. Please double check spelling and that the "
+        "required module is installed. "
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+    assert msg in str(rec_err_exp.value)
 
 
 def test_wildcard_derived_var(

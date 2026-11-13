@@ -273,7 +273,6 @@ def _get_dataset_facets_from_recipe(
     recipe_variable: dict[str, Any],
     recipe_dataset: dict[str, Any],
     profiles: dict[str, Any],
-    diagnostic_name: str,
     session: Session,
 ) -> tuple[Facets, list[Facets]]:
     """Read the facets for a single dataset definition from the recipe."""
@@ -303,18 +302,6 @@ def _get_dataset_facets_from_recipe(
     # Legacy: support start_year and end_year instead of timerange
     _replace_years_with_timerange(facets)
 
-    check.variable(
-        facets,
-        required_keys=(
-            "short_name",
-            "mip",
-            "dataset",
-            "project",
-        ),
-        diagnostic=diagnostic_name,
-        variable_group=variable_group,
-    )
-
     preprocessor = facets.get("preprocessor", "default")
     settings = profiles.get(preprocessor, {})
     _append_missing_supplementaries(supplementaries, facets, settings)
@@ -342,7 +329,6 @@ def _get_facets_from_recipe(
         + diagnostic.get("additional_datasets", [])
         + recipe_variable.get("additional_datasets", [])
     )
-    check.duplicate_datasets(recipe_datasets, diagnostic_name, variable_group)
 
     # The NCL interface requires a distinction between variable and
     # dataset keys as defined in the recipe. `DATASET_KEYS` is used to
@@ -357,7 +343,6 @@ def _get_facets_from_recipe(
             recipe_variable=recipe_variable,
             recipe_dataset=recipe_dataset,
             profiles=profiles,
-            diagnostic_name=diagnostic_name,
             session=session,
         )
 

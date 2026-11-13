@@ -1,11 +1,22 @@
-"""Module with functions to check a recipe."""
+"""Check a recipe while its tasks are created.
+
+These checks find out whether a recipe can run on this machine, so they
+depend on more than the recipe and the configuration: the input data that was
+found, the facets of each dataset after they have been completed, other files
+on disk such as shapefiles, or the installed software. Each check raises a
+:class:`~esmvalcore.exceptions.RecipeError` for the first problem it finds.
+
+Checks of whether the recipe itself is correct belong in
+:mod:`esmvalcore._recipe.validate`, so the problems are found before the data
+is searched, and also by editors.
+"""
 
 from __future__ import annotations
 
-import inspect
 import logging
 import os
 import subprocess
+import warnings
 from functools import partial
 from pathlib import Path
 from pprint import pformat
@@ -14,15 +25,19 @@ from typing import TYPE_CHECKING, Any
 
 import isodate
 
-import esmvalcore.preprocessor
-from esmvalcore._recipe.json_schema import validate_recipe
-from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore._recipe.validate import (
+    _find_incomplete_datasets,
+    _validate,
+    validate_recipe,
+)
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InputFilesNotFound,
+    RecipeError,
+)
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
-from esmvalcore.preprocessor._regrid import _load_generic_scheme
-from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
@@ -30,7 +45,9 @@ from esmvalcore.preprocessor._supplementary_vars import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from esmvalcore._recipe.validate import RecipeIssue
     from esmvalcore._task import TaskSet
+    from esmvalcore.config import Session
     from esmvalcore.dataset import Dataset
     from esmvalcore.typing import Facets
 
@@ -100,7 +117,11 @@ def ncl_version() -> None:
         raise RecipeError(msg)
 
 
-def recipe_with_schema(recipe: dict, path: Path) -> None:
+def recipe_with_schema(
+    recipe: dict,
+    path: Path,
+    session: Session | None = None,
+) -> None:
     """Check if the recipe content matches schema."""
     logger.debug("Checking recipe %s against schema", path)
     # The text is used to find duplicate keys and the line numbers of issues.
@@ -108,7 +129,7 @@ def recipe_with_schema(recipe: dict, path: Path) -> None:
         text = Path(path).read_text(encoding="utf-8")
     except OSError:
         text = None
-    issues = validate_recipe(recipe, text)
+    issues = validate_recipe(recipe, text, session)
     for issue in issues:
         if issue.severity == "warning":
             logger.warning("Recipe %s: %s", path, issue)
@@ -120,71 +141,50 @@ def recipe_with_schema(recipe: dict, path: Path) -> None:
         raise RecipeError(msg)
 
 
-def diagnostics(diags: dict[str, dict[str, Any]] | None) -> None:
-    """Check diagnostics in recipe."""
-    if diags is None:
-        msg = "The given recipe does not have any diagnostic."
-        raise RecipeError(msg)
-    for name, diagnostic in diags.items():
-        variable_names = tuple(diagnostic.get("variables", {}))
-        scripts = diagnostic.get("scripts")
-        if scripts is None:
-            scripts = {}
-        for script_name, script in scripts.items():
-            if script_name in variable_names:
-                msg = (
-                    f"Invalid script name '{script_name}' encountered "
-                    f"in diagnostic '{name}': scripts cannot have the "
-                    "same name as variables."
-                )
-                raise RecipeError(msg)
-            if not script.get("script"):
-                msg = (
-                    f"No script defined for script '{script_name}' in "
-                    f"diagnostic '{name}'."
-                )
-                raise RecipeError(msg)
+def _is_about_datasets(issue: RecipeIssue) -> bool:
+    """Check if a problem is in the datasets or variables of a recipe."""
+    path = issue.path
+    return path[:1] == ("datasets",) or (
+        path[:1] == ("diagnostics",)
+        and path[2:3] in (("additional_datasets",), ("variables",))
+    )
 
 
-def duplicate_datasets(
-    datasets: list[dict[str, Any]],
-    diagnostic: str,
-    variable_group: str,
+def datasets_in_recipe(
+    recipe: dict,
+    text: str | None,
+    session: Session,
 ) -> None:
-    """Check for duplicate datasets."""
-    if not datasets:
-        msg = (
-            "You have not specified any dataset or additional_dataset "
-            f"groups for variable '{variable_group}' in diagnostic "
-            f"'{diagnostic}'."
+    """Check the datasets and variables in a recipe.
+
+    The recipe may be incomplete, so problems in other sections and facets
+    that are needed to find the data but missing are ignored. Problems that
+    prevent reading the datasets raise an error, other problems a deprecation
+    warning.
+    """
+    issues = [
+        issue
+        for issue in _validate(recipe, text, session, required_facets=False)
+        if _is_about_datasets(issue)
+    ]
+    for issue in issues:
+        if issue.severity == "warning":
+            logger.warning("Recipe: %s", issue)
+    errors = [issue for issue in issues if issue.severity == "error"]
+    fatal = {(i.path, i.message) for i in _find_incomplete_datasets(recipe)}
+    if any((i.path, i.message) in fatal for i in errors):
+        msg = "The datasets in the recipe are invalid:\n" + "\n".join(
+            f"- {issue}" for issue in errors
         )
         raise RecipeError(msg)
-    checked_datasets_ = []
-    for dataset in datasets:
-        if dataset in checked_datasets_:
-            msg = (
-                f"Duplicate dataset\n{pformat(dataset)}\nfor variable "
-                f"'{variable_group}' in diagnostic '{diagnostic}'."
-            )
-            raise RecipeError(msg)
-        checked_datasets_.append(dataset)
-
-
-def variable(
-    var: dict[str, Any],
-    required_keys: Iterable[str],
-    diagnostic: str,
-    variable_group: str,
-) -> None:
-    """Check variables as derived from recipe."""
-    required = set(required_keys)
-    missing = required - set(var)
-    if missing:
+    if errors:
         msg = (
-            f"Missing keys {missing} in\n{pformat(var)}\nfor variable "
-            f"'{variable_group}' in diagnostic '{diagnostic}'."
+            "The datasets in the recipe are invalid:\n"
+            + "".join(f"- {issue}\n" for issue in errors)
+            + "Reading datasets from an invalid recipe is deprecated in "
+            "ESMValCore v2.16.0 and will raise an error in ESMValCore v2.18.0."
         )
-        raise RecipeError(msg)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=3)
 
 
 def get_no_data_message(dataset: Dataset) -> str:
@@ -493,91 +493,3 @@ reference_for_distance_metric_preproc = partial(
     step="distance_metric",
     attr_name="reference_for_metric",
 )
-
-
-def statistics_preprocessors(settings: dict) -> None:
-    """Check options of statistics preprocessors."""
-    mm_stats = (
-        "multi_model_statistics",
-        "ensemble_statistics",
-    )
-    for step, step_settings in settings.items():
-        # For multi-model statistics, we need to check each entry of statistics
-        if step in mm_stats:
-            _check_mm_stat(step, step_settings)
-
-        # For other statistics, check optional kwargs for operator
-        elif "_statistics" in step:
-            _check_regular_stat(step, step_settings)
-
-
-def _check_regular_stat(step: str, step_settings: dict[str, Any]) -> None:
-    """Check regular statistics (non-multi-model statistics) step."""
-    step_settings = dict(step_settings)
-
-    # Some preprocessors like climate_statistics use default 'mean' for
-    # operator. A missing 'operator' for those preprocessors with no default
-    # has already been detected by the recipe schema.
-    operator = step_settings.pop("operator", "mean")
-
-    # Unknown preprocessors have already been detected by the recipe schema.
-    try:
-        preproc_func = getattr(esmvalcore.preprocessor, step)
-    except AttributeError:
-        return
-
-    # Ignore other preprocessor arguments, e.g., 'hours' for hourly_statistics
-    other_args = [
-        n
-        for (n, p) in inspect.signature(preproc_func).parameters.items()
-        if p.kind
-        in (
-            inspect.Parameter.POSITIONAL_ONLY,
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-        )
-    ][1:]
-    operator_kwargs = {
-        k: v for (k, v) in step_settings.items() if k not in other_args
-    }
-    try:
-        get_iris_aggregator(operator, **operator_kwargs)
-    except ValueError as exc:
-        msg = f"Invalid options for {step}: {exc}"
-        raise RecipeError(msg) from exc
-
-
-def _check_mm_stat(step: str, step_settings: dict[str, Any]) -> None:
-    """Check multi-model statistic step."""
-    statistics = step_settings.get("statistics", [])
-    for stat in statistics:
-        try:
-            (operator, kwargs) = _get_operator_and_kwargs(stat)
-        except ValueError as exc:
-            raise RecipeError(str(exc)) from exc
-        try:
-            get_iris_aggregator(operator, **kwargs)
-        except ValueError as exc:
-            msg = f"Invalid options for {step}: {exc}"
-            raise RecipeError(msg) from exc
-
-
-def regridding_schemes(settings: dict[str, Any]) -> None:
-    """Check generic regridding schemes."""
-    if "regrid" not in settings:
-        return
-
-    # A missing 'scheme' has already been detected by the recipe schema.
-    scheme = settings["regrid"].get("scheme")
-
-    # Check generic regridding schemes (given as dict)
-    if isinstance(scheme, dict):
-        try:
-            _load_generic_scheme(scheme)
-        except ValueError as exc:
-            msg = (
-                f"Failed to load generic regridding scheme: {exc!s} See "
-                f"https://docs.esmvaltool.org/projects/ESMValCore/en/latest"
-                f"/recipe/preprocessor.html#generic-regridding-schemes for "
-                f"details."
-            )
-            raise RecipeError(msg) from exc

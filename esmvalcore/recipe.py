@@ -9,7 +9,6 @@ refer to :ref:`recipe_validation` for details.
 
 For example, to find the problems in a recipe, with their line numbers:
 
->>> import yaml
 >>> from esmvalcore.recipe import validate_recipe
 >>> text = '''
 ... documentation:
@@ -23,16 +22,13 @@ For example, to find the problems in a recipe, with their line numbers:
 ...   pp:
 ...     regird: {}
 ... '''
->>> for issue in validate_recipe(yaml.safe_load(text), text):
+>>> for issue in validate_recipe(text=text):
 ...     print(issue)
 line 11: preprocessors > pp > regird: unknown preprocessor function. Did you mean 'regrid'?
 """
 
-from esmvalcore._recipe.json_schema import (
-    RecipeIssue,
-    generate_recipe_schema,
-    validate_recipe,
-)
+from esmvalcore._recipe.json_schema import generate_recipe_schema
+from esmvalcore._recipe.validate import RecipeIssue, validate_recipe
 
 __all__ = [
     "RecipeIssue",

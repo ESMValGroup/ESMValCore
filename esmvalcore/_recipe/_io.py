@@ -31,12 +31,29 @@ def _load_recipe(recipe: Path | str | dict[str, Any] | None) -> dict[str, Any]:
             "diagnostics": {},
         }
 
+    text = _recipe_text(recipe)
+    if text is not None:
+        recipe = _parse_yaml(text)
+
+    return _copy(recipe)
+
+
+def _recipe_text(recipe: Path | str | dict[str, Any] | None) -> str | None:
+    """Get the YAML text of a recipe given as a file or a string."""
     if isinstance(recipe, Path) or (
         isinstance(recipe, str) and os.path.exists(recipe)
     ):
-        recipe = Path(recipe).read_text(encoding="utf-8")
-
+        return Path(recipe).read_text(encoding="utf-8")
     if isinstance(recipe, str):
-        recipe = yaml.safe_load(recipe)
+        return recipe
+    return None
 
-    return _copy(recipe)
+
+def _parse_yaml(text: str) -> Any:  # noqa: ANN401
+    """Parse YAML text."""
+    try:
+        # Use CSafeLoader for speed, but fall back to SafeLoader for better
+        # error messages if parsing fails or if CSafeLoader is not available.
+        return yaml.load(text, Loader=yaml.CSafeLoader)
+    except (yaml.YAMLError, AttributeError):
+        return yaml.safe_load(text)

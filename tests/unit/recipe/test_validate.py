@@ -1,0 +1,1067 @@
+"""Tests for :mod:`esmvalcore._recipe.validate`."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+import pytest
+import yaml
+
+import esmvalcore.io.esgf.facets
+import esmvalcore.preprocessor
+from esmvalcore._recipe.validate import RecipeIssue, validate_recipe
+from esmvalcore.config import CFG
+from tests.unit.recipe.example_recipes import (
+    DUPLICATE_RECIPE,
+    INVALID_RECIPE,
+    RECIPE,
+)
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
+
+
+SMALL_RECIPE: dict[str, Any] = {
+    "documentation": {
+        "title": "Example",
+        "description": "Example recipe.",
+        "authors": ["andela_bouwe"],
+    },
+    "datasets": [
+        {
+            "project": "CMIP6",
+            "dataset": "EC-Earth3",
+            "exp": "historical",
+            "ensemble": "r1i1p1f1",
+            "grid": "gr",
+        },
+    ],
+    "preprocessors": {"pp": {}},
+    "diagnostics": {
+        "example": {
+            "variables": {"tas": {"mip": "Amon"}},
+            "scripts": None,
+        },
+    },
+}
+
+
+def _messages(preprocessor: dict[str, Any]) -> list[str]:
+    recipe = {**SMALL_RECIPE, "preprocessors": {"pp": preprocessor}}
+    return [str(issue) for issue in validate_recipe(recipe)]
+
+
+def test_diagnostics_null() -> None:
+    recipe = {**SMALL_RECIPE, "diagnostics": None}
+    assert [str(i) for i in validate_recipe(recipe)] == [
+        "diagnostics: expected a mapping, got None.",
+    ]
+
+
+def test_script_named_like_variable_group() -> None:
+    recipe = {
+        **SMALL_RECIPE,
+        "diagnostics": {
+            "example": {
+                "variables": {"tas": {"mip": "Amon"}},
+                "scripts": {"tas": {"script": "example.py"}},
+            },
+        },
+    }
+    message = (
+        "diagnostics > example > scripts > tas: a script cannot have the "
+        "same name as a variable group of its diagnostic."
+    )
+    assert [str(i) for i in validate_recipe(recipe)] == [message]
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {"operator": "mean"},
+        {"operator": "percentile", "percent": 50},
+        {"hours": 6, "operator": "max"},
+    ],
+)
+def test_statistics_valid(settings: dict[str, Any]) -> None:
+    step = "hourly_statistics" if "hours" in settings else "annual_statistics"
+    assert _messages({step: settings}) == []
+
+
+def test_statistics_invalid_kwargs() -> None:
+    (message,) = _messages(
+        {"annual_statistics": {"operator": "mean", "percent": 50}},
+    )
+    assert message.startswith(
+        "preprocessors > pp > annual_statistics: Invalid kwargs for operator "
+        "'mean': ",
+    )
+
+
+@pytest.mark.parametrize(
+    "step",
+    ["multi_model_statistics", "ensemble_statistics"],
+)
+def test_multi_model_statistics_invalid_kwargs(step: str) -> None:
+    settings = {
+        "span": "overlap",
+        "statistics": ["mean", {"operator": "mean", "percent": 50}],
+    }
+    (message,) = _messages({step: settings})
+    assert message.startswith(
+        f"preprocessors > pp > {step} > statistics > 1: Invalid kwargs for "
+        "operator 'mean': ",
+    )
+
+
+def test_generic_regridding_scheme_valid() -> None:
+    scheme = {"reference": "iris.analysis:Linear"}
+    regrid = {"target_grid": "1x1", "scheme": scheme}
+    assert _messages({"regrid": regrid}) == []
+
+
+def test_generic_regridding_scheme_invalid() -> None:
+    scheme = {"reference": "invalid.module:function"}
+    (message,) = _messages(
+        {"regrid": {"target_grid": "1x1", "scheme": scheme}},
+    )
+    assert message.startswith(
+        "preprocessors > pp > regrid > scheme: failed to load generic "
+        "regridding scheme: Could not import specified generic regridding "
+        "module 'invalid.module'.",
+    )
+
+
+def test_session_configuration(session: Session) -> None:
+    """Test that the configuration of the session is used if given."""
+    projects = dict(session["projects"])
+    projects["CMIP6"] = {**projects["CMIP6"], "required_facets": ["institute"]}
+    session["projects"] = projects
+    dataset = {
+        "project": "CMIP6",
+        "dataset": "EC-Earth3",
+        "exp": "historical",
+        "ensemble": "r1i1p1f1",
+        "grid": "gr",
+    }
+    recipe = {**SMALL_RECIPE, "datasets": [dataset]}
+    assert validate_recipe(recipe) == []
+    message = (
+        "datasets > 0: missing required key 'institute'. Needed to find the "
+        "data of project 'CMIP6'."
+    )
+    issues = validate_recipe(recipe, session=session)
+    assert [str(i) for i in issues] == [message]
+
+
+@pytest.mark.parametrize(
+    ("variable", "datasets", "path", "message"),
+    [
+        (
+            {"mip": "Amon"},
+            [],
+            ("diagnostics", "example", "variables", "tas"),
+            (
+                "no datasets. Add them to the `datasets` section or to "
+                "`additional_datasets`."
+            ),
+        ),
+        (
+            {"mip": "Amon"},
+            [{"dataset": "A"}, {"dataset": "A"}],
+            ("datasets", 1),
+            "duplicate dataset.",
+        ),
+        (
+            {},
+            [{"dataset": "A"}],
+            ("datasets", 0),
+            "missing required key 'mip'.",
+        ),
+    ],
+)
+def test_incomplete_datasets(
+    variable: dict[str, Any],
+    datasets: list[dict[str, Any]],
+    path: tuple[str | int, ...],
+    message: str,
+) -> None:
+    recipe = {
+        **SMALL_RECIPE,
+        "datasets": [{"project": "OBS", "tier": 2, **d} for d in datasets],
+        "diagnostics": {
+            "example": {"variables": {"tas": variable}, "scripts": None},
+        },
+    }
+    issues = [
+        i for i in validate_recipe(recipe) if "Needed to find" not in i.message
+    ]
+    assert [(i.path, i.message) for i in issues] == [(path, message)]
+
+
+def test_missing_project() -> None:
+    recipe = {
+        **SMALL_RECIPE,
+        "datasets": [{"dataset": "A"}],
+    }
+    assert [str(i) for i in validate_recipe(recipe)] == [
+        "datasets > 0: missing required key 'project'.",
+    ]
+
+
+def test_null_variable_group() -> None:
+    """Test a variable group without facets, which its datasets define."""
+    text = """
+documentation: {title: Test, description: Test., authors: [andela_bouwe]}
+diagnostics:
+  example:
+    variables:
+      pr:
+    additional_datasets:
+      - {dataset: A, project: OBS, type: sat, tier: 2, version: 1, mip: Amon}
+    scripts: null
+"""
+    assert validate_recipe(text=text) == []
+
+
+def test_null_variable_group_without_mip() -> None:
+    text = """
+documentation: {title: Test, description: Test., authors: [andela_bouwe]}
+diagnostics:
+  example:
+    variables:
+      pr:
+    additional_datasets:
+      - {dataset: A, project: OBS, type: sat, tier: 2, version: 1}
+    scripts: null
+"""
+    message = (
+        "line 8: diagnostics > example > additional_datasets > 0: missing "
+        "required key 'mip'."
+    )
+    assert [str(i) for i in validate_recipe(text=text)] == [message]
+
+
+def test_validate_recipe_valid() -> None:
+    assert validate_recipe(yaml.safe_load(RECIPE)) == []
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    [
+        (
+            ["preprocessors", "pp", "regrid"],
+            {"scheme": "linear"},
+            (
+                "preprocessors > pp > regrid: missing required argument "
+                "'target_grid'."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "regrid"],
+            None,
+            (
+                "preprocessors > pp > regrid: missing required arguments "
+                "'target_grid', 'scheme'."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "regrid"],
+            True,
+            (
+                "preprocessors > pp > regrid: missing required arguments "
+                "'target_grid', 'scheme'."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "regrid", "target_scheme"],
+            "linear",
+            (
+                "preprocessors > pp > regrid > target_scheme: unknown argument. "
+                "Did you mean 'scheme'? Valid arguments are: cache_weights, "
+                "lat_offset, lon_offset, scheme, target_grid, use_src_coords."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "regird"],
+            {},
+            (
+                "preprocessors > pp > regird: unknown preprocessor function. "
+                "Did you mean 'regrid'?"
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "extract_levels", "scheme"],
+            "cubic",
+            (
+                "preprocessors > pp > extract_levels > scheme: invalid value "
+                "'cubic', choose from 'linear', 'nearest', 'linear_extrapolate', "
+                "'nearest_extrapolate'."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "regrid", "scheme"],
+            "cubic",
+            (
+                "preprocessors > pp > regrid > scheme: invalid value 'cubic', "
+                "choose from 'area_weighted', 'linear', 'nearest', or a "
+                "mapping."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "regrid", "target_grid"],
+            1,
+            (
+                "preprocessors > pp > regrid > target_grid: expected a string or "
+                "a mapping, got 1."
+            ),
+        ),
+        (
+            ["preprocessors", "pp", "extract_levels", "coordinate"],
+            1,
+            (
+                "preprocessors > pp > extract_levels > coordinate: expected a "
+                "string or nothing, got 1."
+            ),
+        ),
+        (
+            ["datasets", 0, "dataset"],
+            None,
+            "datasets > 0 > dataset: expected a string, got None.",
+        ),
+        (
+            ["datasets", 0, "grid"],
+            {"label": "gn"},
+            (
+                "datasets > 0 > grid: expected a string, a number, or a list, got "
+                "{'label': 'gn'}."
+            ),
+        ),
+        (
+            ["documentation", "authors"],
+            [],
+            "documentation > authors: expected at least 1 item, got [].",
+        ),
+        (
+            ["diagnostics", "example", "scripts", "plot", "script"],
+            1,
+            (
+                "diagnostics > example > scripts > plot > script: expected a "
+                "string, got 1."
+            ),
+        ),
+        (
+            ["datasets", 1, "tier"],
+            7,
+            "datasets > 1 > tier: expected at most 3, got 7.",
+        ),
+        (
+            ["documentation", "project"],
+            ["c3s-magic"],
+            "documentation > project: unknown key. Did you mean 'projects'?",
+        ),
+        (
+            ["diagnostics", "example", "plot_types"],
+            ["zonal"],
+            "diagnostics > example > plot_types: unknown key.",
+        ),
+    ],
+)
+def test_validate_recipe_invalid(
+    path: list[str | int],
+    value: object,
+    message: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    parent = recipe
+    for key in path[:-1]:
+        parent = parent[key]
+    parent[path[-1]] = value
+    assert [str(i) for i in validate_recipe(recipe)] == [message]
+
+
+def test_validate_recipe_not_a_mapping() -> None:
+    assert validate_recipe(None) == [
+        RecipeIssue((), "expected a mapping, got None."),
+    ]
+
+
+def test_validate_recipe_multiple_problems() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["pp"]["regird"] = {}
+    recipe["diagnostics"]["example"].pop("scripts")
+    assert [str(i) for i in validate_recipe(recipe)] == [
+        (
+            "preprocessors > pp > regird: unknown preprocessor function. "
+            "Did you mean 'regrid'?"
+        ),
+        "diagnostics > example: missing required key 'scripts'.",
+    ]
+
+
+def test_validate_recipe_positions() -> None:
+    recipe = yaml.safe_load(INVALID_RECIPE)
+    issues = validate_recipe(recipe, INVALID_RECIPE)
+    assert issues == [
+        RecipeIssue(
+            ("datasets", 1),
+            "missing required key 'dataset'.",
+            line=5,
+            column=5,
+        ),
+        RecipeIssue(
+            ("datasets", 1, "tier"),
+            "expected at most 3, got 7.",
+            line=5,
+            column=22,
+        ),
+        # Problems in an anchored mapping are found at the anchor, and where
+        # an alias uses it.
+        RecipeIssue(
+            ("preprocessors", "base", "area_statistics", "operator"),
+            "expected a string, got 1.",
+            line=9,
+            column=7,
+        ),
+        RecipeIssue(
+            ("preprocessors", "derived", "area_statistics", "operator"),
+            "expected a string, got 1.",
+            line=11,
+            column=9,
+        ),
+        RecipeIssue(
+            ("preprocessors", "derived", "convert_units"),
+            "missing required argument 'units'.",
+            line=12,
+            column=5,
+        ),
+        RecipeIssue(
+            ("diagnostics", "example"),
+            "missing required key 'scripts'.",
+            line=14,
+            column=3,
+        ),
+    ]
+    assert str(issues[0]) == (
+        "line 5: datasets > 1: missing required key 'dataset'."
+    )
+
+
+MERGE_RECIPE = """
+a: &a
+  scheme: linear
+b: &b
+  scheme: nearest
+  target_grid: 1x1
+preprocessors:
+  sequence:
+    regrid:
+      <<: [*a, *b]
+  repeated:
+    regrid:
+      <<: *a
+      <<: *b
+"""
+
+
+@pytest.mark.parametrize(
+    ("preprocessor", "scheme", "line", "column"),
+    [
+        # In a sequence of mappings to merge, the first one has priority.
+        ("sequence", "linear", 10, 12),
+        # With repeated merge keys, the last one has priority.
+        ("repeated", "nearest", 14, 11),
+    ],
+)
+def test_validate_recipe_positions_merge(
+    preprocessor: str,
+    scheme: str,
+    line: int,
+    column: int,
+) -> None:
+    recipe = yaml.safe_load(MERGE_RECIPE)
+    assert recipe["preprocessors"][preprocessor]["regrid"]["scheme"] == scheme
+    recipe["preprocessors"][preprocessor]["regrid"]["scheme"] = "invalid"
+    issues = [
+        issue
+        for issue in validate_recipe(recipe, MERGE_RECIPE)
+        if issue.path[:2] == ("preprocessors", preprocessor)
+        and issue.severity == "error"
+    ]
+    assert len(issues) == 1
+    assert issues[0].path[-1] == "scheme"
+    # The problem is found at the alias that merges the anchored mapping.
+    assert (issues[0].line, issues[0].column) == (line, column)
+
+
+def test_validate_recipe_duplicate_merge_keys() -> None:
+    issues = [
+        issue
+        for issue in validate_recipe(
+            yaml.safe_load(MERGE_RECIPE),
+            MERGE_RECIPE,
+        )
+        if "merge key" in issue.message
+    ]
+    assert issues == [
+        RecipeIssue(
+            ("preprocessors", "repeated", "regrid"),
+            "duplicate merge key '<<', which other YAML parsers do not "
+            "accept. This is deprecated and will not work in v2.18.0: use "
+            "one merge key with the mappings in this order: <<: [*b, *a]",
+            line=14,
+            column=7,
+            severity="warning",
+        ),
+    ]
+
+
+SELF_MERGE_RECIPE = """
+defaults: &defaults {mip: Amon}
+diagnostics:
+  example:
+    variables:
+      tas: &tas
+        <<: [*defaults, *tas]
+        short_name: tas
+    scripts: null
+"""
+
+
+def test_validate_recipe_self_merge() -> None:
+    issues = validate_recipe(
+        yaml.safe_load(SELF_MERGE_RECIPE),
+        SELF_MERGE_RECIPE,
+    )
+    assert [i for i in issues if "alias" in i.message] == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "tas"),
+            "alias '*tas' refers to the anchor '&tas' that contains it, "
+            "which other YAML parsers do not accept. This is deprecated and "
+            "will not work in v2.18.0: remove the alias.",
+            line=7,
+            column=25,
+            severity="warning",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("value", "read", "hint"),
+    [
+        (
+            "1e-2",
+            "as text by ESMValCore but as a number",
+            "quote it if it is text, or write 0.01 for the number",
+        ),
+        (
+            "0o12",
+            "as text by ESMValCore but as an integer",
+            "quote it if it is text, or write 10 for the integer",
+        ),
+        (
+            "yes",
+            "as a boolean by ESMValCore but as text",
+            "write true for a boolean, or quote it if it is text",
+        ),
+        (
+            "012",
+            "as 10 by ESMValCore but as 12",
+            "write 10 for an integer, or quote it if it is text",
+        ),
+        (
+            "1_000",
+            "as an integer by ESMValCore but as text",
+            "write 1000 for an integer, or quote it if it is text",
+        ),
+        (
+            "1:30",
+            "as an integer by ESMValCore but as text",
+            "write 90 for an integer, or quote it if it is text",
+        ),
+    ],
+)
+def test_validate_recipe_ambiguous_value(
+    value: str,
+    read: str,
+    hint: str,
+) -> None:
+    text = f"{RECIPE}\n        threshold: {value}\n"
+    issues = [
+        issue
+        for issue in validate_recipe(yaml.safe_load(text), text)
+        if "ambiguous" in issue.message
+    ]
+    assert [(i.path, i.message, i.severity) for i in issues] == [
+        (
+            ("diagnostics", "example", "scripts", "plot", "threshold"),
+            (
+                f"ambiguous value '{value}', read {read} by YAML 1.2 "
+                "parsers, for example in editors. This is deprecated and "
+                f"will not work in v2.18.0: {hint}."
+            ),
+            "warning",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "'1e-2'",
+        "1.0e-2",
+        "1.0e+2",
+        "0.01",
+        "10",
+        "0x1F",
+        "true",
+        "~",
+        "2000-01-01",
+        "text",
+    ],
+)
+def test_validate_recipe_unambiguous_value(value: str) -> None:
+    text = f"{RECIPE}\n        threshold: {value}\n"
+    issues = validate_recipe(yaml.safe_load(text), text)
+    assert not [i for i in issues if "ambiguous" in i.message]
+
+
+ALIAS_RECIPE = """
+datasets:
+  - &dataset {dataset: CanESM2, project: CMIP5, tier: 7}
+  - *dataset
+preprocessors:
+  base: &base
+    regrid: &regrid
+      scheme: invalid
+  derived:
+    <<: *base
+  value:
+    regrid: *regrid
+"""
+
+
+def test_validate_recipe_positions_alias() -> None:
+    issues = validate_recipe(yaml.safe_load(ALIAS_RECIPE), ALIAS_RECIPE)
+    positions = {
+        issue.path: (issue.line, issue.column)
+        for issue in issues
+        if issue.path[-1:] in {("tier",), ("scheme",)}
+    }
+    # The value of the item at the alias in a sequence, of the item merged
+    # in by an alias, and of the item with an alias as value are found at
+    # the alias. Only the outermost alias matters.
+    assert positions == {
+        ("datasets", 0, "tier"): (3, 49),
+        ("datasets", 1, "tier"): (4, 5),
+        ("preprocessors", "base", "regrid", "scheme"): (8, 7),
+        ("preprocessors", "derived", "regrid", "scheme"): (10, 9),
+        ("preprocessors", "value", "regrid", "scheme"): (12, 13),
+    }
+
+
+def test_validate_recipe_positions_not_found() -> None:
+    recipe = yaml.safe_load(INVALID_RECIPE)
+    issues = validate_recipe(recipe, "documentation: {}\n")
+    assert issues
+    assert all(i.line is None and i.column is None for i in issues)
+
+
+def test_validate_recipe_positions_invalid_text() -> None:
+    recipe = yaml.safe_load(INVALID_RECIPE)
+    issues = validate_recipe(recipe, "documentation: [\n")
+    assert issues == validate_recipe(recipe)
+
+
+def test_validate_recipe_from_text() -> None:
+    issues = validate_recipe(text=INVALID_RECIPE)
+    assert issues == validate_recipe(
+        yaml.safe_load(INVALID_RECIPE),
+        INVALID_RECIPE,
+    )
+
+
+def test_validate_recipe_from_invalid_text() -> None:
+    issues = validate_recipe(text="documentation:\n  title: [\n")
+    assert len(issues) == 1
+    assert issues[0].path == ()
+    assert issues[0].line == 3
+    assert issues[0].message.startswith("invalid YAML: ")
+
+
+def test_validate_recipe_from_empty_text() -> None:
+    assert validate_recipe(text="") == validate_recipe(None)
+
+
+def test_validate_recipe_without_recipe_or_text() -> None:
+    with pytest.raises(TypeError, match="Either `recipe` or `text`"):
+        validate_recipe()
+
+
+def test_validate_recipe_does_not_modify_recipe() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["pp"]["regrid"] = None
+    validate_recipe(recipe)
+    assert recipe["preprocessors"]["pp"]["regrid"] is None
+
+
+def test_validate_recipe_duplicate_keys() -> None:
+    recipe = yaml.safe_load(DUPLICATE_RECIPE)
+    issues = validate_recipe(recipe, DUPLICATE_RECIPE)
+    assert issues == [
+        # Problems in an anchored mapping are only reported once.
+        RecipeIssue(
+            ("preprocessors", "base", "area_statistics"),
+            "duplicate key, this definition is ignored because "
+            "'area_statistics' is defined again on line 7.",
+            line=5,
+            column=5,
+            severity="warning",
+        ),
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "tas"),
+            "duplicate key, this definition is ignored because 'tas' is "
+            "defined again on line 18.",
+            line=16,
+            column=7,
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_repeated_merge_keys() -> None:
+    # MERGE_RECIPE uses the merge key (<<) more than once in a mapping.
+    issues = validate_recipe(yaml.safe_load(MERGE_RECIPE), MERGE_RECIPE)
+    assert not [i for i in issues if "duplicate key" in i.message]
+
+
+def test_validate_recipe_unknown_preprocessor() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"]["preprocessor"] = "p"
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "ta", "preprocessor"),
+            "unknown value 'p'. Not defined in the `preprocessors` section. "
+            "Did you mean 'pp'?",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("datasets", 0), "p"),
+        (("datasets", 1), None),
+        (
+            (
+                "diagnostics",
+                "example",
+                "variables",
+                "ta",
+                "additional_datasets",
+                0,
+            ),
+            "p",
+        ),
+    ],
+)
+def test_validate_recipe_unknown_dataset_preprocessor(
+    path: tuple[str | int, ...],
+    value: str | None,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    node = recipe
+    for key in path:
+        node = node[key]
+    node["preprocessor"] = value
+    suggestion = " Did you mean 'pp'?" if value == "p" else ""
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            (*path, "preprocessor"),
+            f"unknown value {value!r}. Not defined in the `preprocessors` "
+            f"section.{suggestion}",
+        ),
+    ]
+
+
+def test_validate_recipe_default_preprocessor() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    del recipe["preprocessors"]["default"]
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable["preprocessor"] = "default"
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize("project", ["OBS", "OBS6"])
+def test_validate_recipe_missing_facets(project: str) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    # The dataset is used by both variable groups, but reported once.
+    recipe["datasets"][1] = {"dataset": "ERA5", "project": project}
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("datasets", 1),
+            "missing required keys 'tier', 'type'. Needed to find the data "
+            f"of project '{project}'.",
+        ),
+    ]
+
+
+def test_validate_recipe_facets_of_variable_group() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable.update(project="OBS", tier=2)
+    variable["additional_datasets"] = [
+        {"dataset": "HadISST", "type": "reanaly"},
+        {"dataset": "CRU"},
+        {
+            "dataset": "CanESM5",
+            "project": "CMIP6",
+            "exp": "historical",
+            "ensemble": "r1i1p1f1",
+            "grid": "gn",
+        },
+    ]
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            (
+                "diagnostics",
+                "example",
+                "variables",
+                "ta",
+                "additional_datasets",
+                1,
+            ),
+            "missing required key 'type'. Needed to find the data of "
+            "project 'OBS'.",
+        ),
+    ]
+
+
+@pytest.mark.parametrize("project", ["OBS", "OBS6"])
+@pytest.mark.parametrize("value", ["sat", ["reanaly", "ground"]])
+def test_validate_recipe_known_type(project: str, value: object) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1].update(project=project, type=value)
+    assert validate_recipe(recipe) == []
+
+
+def test_validate_recipe_unknown_type() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1].update(project="OBS6", type="reanalysis")
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("datasets", 1, "type"),
+            "unknown value 'reanalysis'. Not a type of project 'OBS6', "
+            "choose from 'sat', 'reanaly', 'ground', 'clim', or 'campaign'. "
+            "Did you mean 'reanaly'?",
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_unknown_type_of_variable_group() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable.update(project="OBS", tier=2, type="atmos")
+    variable["additional_datasets"] = [
+        {"dataset": "HadISST"},
+        {"dataset": "CRU"},
+        {"dataset": "GPCP-SG", "type": "sat"},
+    ]
+    # The type of the variable group is reported once.
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "ta", "type"),
+            "unknown value 'atmos'. Not a type of project 'OBS', choose "
+            "from 'sat', 'reanaly', 'ground', 'clim', or 'campaign'.",
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_missing_facets_unknown_project() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1]["project"] = ["OBS"]
+    assert not [
+        i for i in validate_recipe(recipe) if "Needed to find" in i.message
+    ]
+
+
+def test_validate_recipe_missing_facets_esgf_project() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    del recipe["datasets"][2]["grid"]
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("datasets", 2),
+            "missing required key 'grid'. Needed to find the data of "
+            "project 'CMIP6'.",
+        ),
+    ]
+
+
+def test_validate_recipe_required_facets_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(
+        CFG["projects"]["CMIP6"],
+        "required_facets",
+        ["institute"],
+    )
+    recipe = yaml.safe_load(RECIPE)
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            path,
+            "missing required key 'institute'. Needed to find the data of "
+            "project 'CMIP6'.",
+        )
+        for path in [
+            ("datasets", 2),
+            (
+                "diagnostics",
+                "example",
+                "variables",
+                "ta",
+                "additional_datasets",
+                0,
+            ),
+        ]
+    ]
+
+
+@pytest.mark.parametrize(
+    ("dataset", "mip", "missing"),
+    [
+        ("ERA5", "Amon", []),
+        ("ERA5", "Omon", ["type"]),
+        ("ERA-Interim", "Amon", ["type"]),
+    ],
+)
+def test_validate_recipe_required_facets_from_extra_facets(
+    monkeypatch: pytest.MonkeyPatch,
+    dataset: str,
+    mip: str,
+    missing: list[str],
+) -> None:
+    monkeypatch.setitem(
+        CFG["projects"]["OBS6"],
+        "extra_facets",
+        {"ERA5": {"A*": {"*": {"type": "reanaly"}}}},
+    )
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1] = {
+        "dataset": dataset,
+        "project": "OBS6",
+        "tier": 3,
+        "mip": mip,
+    }
+    issues = [
+        i for i in validate_recipe(recipe) if "Needed to find" in i.message
+    ]
+    assert [i.path for i in issues] == [("datasets", 1)] * len(missing)
+
+
+def test_required_facets_of_esgf_projects() -> None:
+    """Check that the required facets are used to search ESGF."""
+    path = (
+        Path(esmvalcore.__file__).parent
+        / "config"
+        / "configurations"
+        / "data-intake-esgf.yml"
+    )
+    config = yaml.safe_load(path.read_text(encoding="utf-8"))["projects"]
+    esgf_facets = {
+        project: set(facets)
+        for project, facets in esmvalcore.io.esgf.facets.FACETS.items()
+    }
+    for project, settings in config.items():
+        esgf_facets[project] = {
+            facet
+            for source in settings["data"].values()
+            for facet in source["facets"]
+        }
+    for project, facets in esgf_facets.items():
+        required = CFG["projects"][project].get("required_facets", [])
+        assert set(required) <= facets, project
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["ERA5", "CanESM5", "ERA5|CanESM5", "my-alias", ""],
+)
+@pytest.mark.parametrize("key", ["reference_dataset", "alternative_dataset"])
+def test_validate_recipe_known_reference_dataset(key: str, value: str) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][0]["alias"] = "my-alias"
+    recipe["diagnostics"]["example"]["variables"]["ta"][key] = value
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize("key", ["reference_dataset", "alternative_dataset"])
+def test_validate_recipe_unknown_reference_dataset(key: str) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"][key] = "ERA5|ERA4"
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "ta", key),
+            "unknown value 'ERA4'. Not a dataset of this variable group. "
+            "Did you mean 'ERA5'?",
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_reference_dataset_of_other_group() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variables = recipe["diagnostics"]["example"]["variables"]
+    variables["pr"] = {"mip": "Amon", "reference_dataset": "CanESM5"}
+    assert [i.path[-2:] for i in validate_recipe(recipe)] == [
+        ("pr", "reference_dataset"),
+    ]
+
+
+def test_validate_recipe_reference_dataset_pattern() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][0]["dataset"] = "*"
+    recipe["diagnostics"]["example"]["variables"]["ta"][
+        "reference_dataset"
+    ] = "X"
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
+    "ancestors",
+    [["ta"], ["example/ta", "example/pr"], ["example/*"], ["*/p?"]],
+)
+def test_validate_recipe_ancestors(ancestors: list[str]) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["scripts"]["plot"]["ancestors"] = (
+        ancestors
+    )
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
+    ("ancestor", "suggestion"),
+    [
+        ("example/tas", " Did you mean 'example/ta'?"),
+        ("other/*", ""),
+    ],
+)
+def test_validate_recipe_unknown_ancestor(
+    ancestor: str,
+    suggestion: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    script = recipe["diagnostics"]["example"]["scripts"]["plot"]
+    script["ancestors"] = ["ta", ancestor]
+    message = (
+        f"unknown value {ancestor!r}. Does not match any variable group or "
+        f"script.{suggestion}"
+    )
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "scripts", "plot", "ancestors", 1),
+            message,
+        ),
+    ]

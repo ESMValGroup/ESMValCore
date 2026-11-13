@@ -20,8 +20,9 @@ cubes and [Dask](https://docs.dask.org) for lazy, out-of-core computation.
 Key locations:
 
 - `esmvalcore/_main.py` – the `esmvaltool` command line interface.
-- `esmvalcore/_recipe/` – recipe parsing, validation (`_recipe/check.py`), and
-  conversion to datasets and tasks.
+- `esmvalcore/_recipe/` – recipe parsing, validation (`_recipe/json_schema.py`,
+  `_recipe/validate.py`, and `_recipe/check.py`), and conversion to datasets
+  and tasks.
 - `esmvalcore/dataset.py` – the public `Dataset` API.
 - `esmvalcore/io/` – data sources (e.g. local files, ESGF).
 - `esmvalcore/cmor/` – CMOR tables, checks, and dataset-specific fixes
@@ -57,9 +58,13 @@ Useful pytest options:
   more than about 100 lines of production code.
 - Keep code and documentation short and simple. Avoid complicated class
   hierarchies and boilerplate code.
-- Check recipe settings that can be checked before loading the data when the
-  tasks are created, so users find mistakes early. Do not process data or write
-  files while creating the tasks.
+- Check recipe settings as early as possible, so users find mistakes early.
+  Check whether the recipe itself is correct in the recipe schema
+  (`_recipe/json_schema.py`) or, if the schema cannot express it, in
+  `_recipe/validate.py`. Check whether the recipe can run on this machine, for
+  example whether its data or other files exist, in `_recipe/check.py` while
+  the tasks are created. Do not process data or write files while creating the
+  tasks.
 - Preprocessor functions are plain functions that preferably just call iris.
   Code that is useful beyond ESMValCore belongs in iris. Do not add CMOR checks
   to preprocessor functions: their input has already been fixed and checked.
@@ -131,7 +136,7 @@ In short:
    from them. If ESMValCore sets or converts any of the arguments, update the
    constants in that module as described in the "Recipe schema" section of the
    guide above. Add any validation of argument values that the schema cannot
-   express to `esmvalcore/_recipe/check.py`.
+   express to `esmvalcore/_recipe/validate.py`.
 4. Preserve laziness: lazy input data must give lazy output, real input data
    must give real output. Prefer calling iris over hand-written NumPy/Dask code.
 5. Document it for recipe users in `doc/recipe/preprocessor.rst`.
@@ -139,9 +144,9 @@ In short:
 ### Changing the recipe format
 
 When changing the structure of a recipe (sections, dataset and variable keys,
-...), update the recipe validation (called from `esmvalcore/_recipe/check.py`)
-together with the code that reads the recipe and the user documentation in
-`doc/recipe/`.
+...), update the recipe validation (`esmvalcore/_recipe/json_schema.py` and
+`esmvalcore/_recipe/validate.py`) together with the code that reads the recipe
+and the user documentation in `doc/recipe/`.
 
 ### Fixing a dataset
 

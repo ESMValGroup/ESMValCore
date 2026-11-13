@@ -1056,17 +1056,20 @@ def test_read_recipe_file(
 
 def test_recipe_is_validated(
     mocker: MockerFixture,
+    session: esmvalcore.config.Session,
     tmp_path: Path,
 ) -> None:
     """Test that the recipe is validated, also when not read from a file."""
+    validate = mocker.spy(_recipe.check, "validate_recipe")
     recipe_file = tmp_path / "recipe_test.yml"
     msg = "recipe: missing required key 'documentation'."
     with pytest.raises(RecipeError, match=re.escape(msg)):
         _recipe.Recipe(
             {"diagnostics": {}},
-            mocker.sentinel.session,
+            session,
             recipe_file=recipe_file,
         )
+    validate.assert_called_once_with({"diagnostics": {}}, None, session)
 
 
 def test_read_recipe_file_invalid_yaml(
@@ -1074,13 +1077,14 @@ def test_read_recipe_file_invalid_yaml(
     tmp_path: Path,
 ) -> None:
     """Test that invalid YAML is re-parsed with ``yaml.safe_load``."""
-    safe_load = mocker.spy(_recipe.yaml, "safe_load")
+    safe_load = mocker.spy(yaml, "safe_load")
     mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
     recipe_file = tmp_path / "recipe_test.yml"
     recipe_text = "diagnostics: [\n"
     recipe_file.write_text(recipe_text, encoding="utf-8")
 
-    with pytest.raises(yaml.YAMLError):
+    msg = f"Recipe {recipe_file} is invalid:\n- line 2: recipe: invalid YAML"
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         _recipe.read_recipe_file(recipe_file, mocker.sentinel.session)
 
     safe_load.assert_called_once_with(recipe_text)
