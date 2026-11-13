@@ -180,6 +180,12 @@ RECIPE_ARGUMENTS: dict[str, dict[str, JSONSchema]] = {
     },
 }
 
+# Required keys of mapping arguments, which their type does not describe.
+# Further keys are allowed.
+REQUIRED_KEYS: dict[str, dict[str, JSONSchema]] = {
+    "regrid": {"scheme": {"reference": {"type": "string"}}},
+}
+
 # Operators of the statistics preprocessors that can be used in a recipe, see
 # the table ``supported_stat_operator`` in ``doc/recipe/preprocessor.rst``. The
 # other aggregators in :mod:`iris.analysis` require a Python function.
@@ -283,12 +289,6 @@ class _UnknownMeta(type):
         return _Unknown
 
     def __getitem__(cls, item: object) -> type[_Unknown]:
-        return _Unknown
-
-    def __or__(cls, other: object) -> type[_Unknown]:
-        return _Unknown
-
-    def __ror__(cls, other: object) -> type[_Unknown]:
         return _Unknown
 
 
@@ -577,6 +577,12 @@ def _parameter_schema(
     function = getattr(esmvalcore.preprocessor, step)
     annotation = _resolve_annotation(param.annotation, function)
     schema = _annotation_to_schema(annotation) or {}
+    keys = REQUIRED_KEYS.get(step, {}).get(param.name)
+    if keys:
+        for option in schema.get("anyOf", [schema]):
+            if option.get("type") == "object":
+                option["properties"] = dict(keys)
+                option["required"] = list(keys)
     if description and _OPERATORS_TEXT in description:
         _add_operators(schema)
     if description:
@@ -643,8 +649,6 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
     for param in parameters:
         if param.kind is inspect.Parameter.VAR_KEYWORD:
             additional_properties = True
-            continue
-        if param.kind is inspect.Parameter.VAR_POSITIONAL:
             continue
         no_default = param.default is inspect.Parameter.empty
         if param.name in internal or (final_step and no_default):

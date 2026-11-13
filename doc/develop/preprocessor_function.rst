@@ -174,6 +174,8 @@ constants at the top of
 - ``RECIPE_ARGUMENTS``: arguments that ESMValCore converts when it reads the
   recipe, for example from the name of a dataset to a cube.
   Their schema describes the value in the recipe and is written by hand.
+- ``REQUIRED_KEYS``: required keys of arguments that are mappings, if the
+  type of the argument does not describe them.
 - ``EXCLUDE_STEPS``: steps that support excluding datasets with ``exclude``.
   This includes all multi-model preprocessor functions.
 - ``DOCUMENTATION_LABELS``: labels that the docstrings refer to with

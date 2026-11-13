@@ -3565,9 +3565,8 @@ def test_generic_regridding_scheme_no_ref(
             scripts: null
         """)
     msg = (
-        "preprocessors > test > regrid > scheme: failed to load generic "
-        "regridding scheme: No reference specified for generic regridding. "
-        "Refer to "
+        "preprocessors > test > regrid > scheme: missing required key "
+        "'reference'."
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)

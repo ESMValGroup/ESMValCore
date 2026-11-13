@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import importlib
 import inspect
+import os
 import re
+import sys
+import types
 import typing
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import jsonschema
+import numpy as np
 import pytest
 import yaml
 from iris.cube import Cube
@@ -110,8 +115,46 @@ def test_resolve_annotation() -> None:
     )
     assert _resolve_annotation("Undefined", function) is unknown
     assert _resolve_annotation("Undefined.attribute", function) is unknown
+    resolved = _resolve_annotation("list[Undefined[int]]", function)
+    assert typing.get_origin(resolved) is list
+    assert typing.get_args(resolved) == (unknown,)
     assert _resolve_annotation("str(", function) is unknown
     assert _resolve_annotation(int, function) is int
+
+
+TYPE_CHECKING_MODULE = """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import os.path
+    import numpy as np
+    import not_installed
+    from collections.abc import Sequence
+    from collections.abc import NotAName
+"""
+
+
+def test_type_checking_imports(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "type_checking_module.py").write_text(TYPE_CHECKING_MODULE)
+    monkeypatch.syspath_prepend(tmp_path)
+    module = importlib.import_module("type_checking_module")
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    assert json_schema._type_checking_imports(module.__name__) == {
+        "os": os,
+        "np": np,
+        "Sequence": Sequence,
+    }
+
+
+def test_type_checking_imports_without_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = types.ModuleType("module_without_source")
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    assert json_schema._type_checking_imports(module.__name__) == {}
 
 
 def test_parse_docstring() -> None:
@@ -646,7 +689,12 @@ def test_untyped_arguments_exist(schema: dict[str, Any]) -> None:
 
 @pytest.mark.parametrize(
     "constant",
-    ["AUTOMATIC_ARGUMENTS", "INTERNAL_ARGUMENTS", "RECIPE_ARGUMENTS"],
+    [
+        "AUTOMATIC_ARGUMENTS",
+        "INTERNAL_ARGUMENTS",
+        "RECIPE_ARGUMENTS",
+        "REQUIRED_KEYS",
+    ],
 )
 def test_argument_constants_match_functions(constant: str) -> None:
     """Check that the constants refer to existing arguments.

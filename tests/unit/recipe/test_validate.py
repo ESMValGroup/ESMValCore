@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+import jsonschema
 import pytest
 import yaml
 
@@ -157,7 +158,6 @@ def test_generic_regridding_scheme_invalid() -> None:
 @pytest.mark.parametrize(
     ("scheme", "error"),
     [
-        ({"reference": {"a": "b"}}, "'dict' object has no attribute"),
         ({"reference": "iris.analysis:Invalid"}, "has no attribute 'Invalid'"),
         ({"reference": "iris.analysis:Linear", "invalid": 1}, "unexpected"),
     ],
@@ -174,6 +174,22 @@ def test_generic_regridding_scheme_cannot_load(
         "regridding scheme: ",
     )
     assert error in message
+
+
+@pytest.mark.parametrize(
+    ("scheme", "message"),
+    [
+        ({}, "scheme: missing required key 'reference'."),
+        ({"reference": 1}, "scheme > reference: expected a string, got 1."),
+    ],
+)
+def test_generic_regridding_scheme_invalid_reference(
+    scheme: dict[str, Any],
+    message: str,
+) -> None:
+    assert _messages({"regrid": {"target_grid": "1x1", "scheme": scheme}}) == [
+        f"preprocessors > pp > regrid > {message}",
+    ]
 
 
 def test_statistics_kwarg_not_a_string() -> None:
@@ -424,6 +440,27 @@ def test_validate_recipe_valid() -> None:
             "documentation > authors: expected at least 1 item, got [].",
         ),
         (
+            ["preprocessors", "pp", "histogram"],
+            {"bin_range": [0, 1, 2]},
+            (
+                "preprocessors > pp > histogram > bin_range: expected at most "
+                "2 items, got [0, 1, 2]."
+            ),
+        ),
+        (
+            ["preprocessors", "pp"],
+            None,
+            "preprocessors > pp: expected a mapping, got None.",
+        ),
+        (
+            ["diagnostics", "example", "scripts", "plot", "ancestors"],
+            [1],
+            (
+                "diagnostics > example > scripts > plot > ancestors > 0: "
+                "expected a string, got 1."
+            ),
+        ),
+        (
             ["diagnostics", "example", "scripts", "plot", "script"],
             1,
             (
@@ -476,6 +513,19 @@ def test_validate_recipe_unknown_key_deprecated(
     )
     assert _issues(recipe) == [
         RecipeIssue(tuple(path), message, severity="warning"),
+    ]
+
+
+def test_describe_ambiguous_type() -> None:
+    # Both options accept any type, so the error cannot be described in
+    # terms of the expected types.
+    schema = {
+        "definitions": {"a": {"type": "string"}, "b": {"type": "object"}},
+        "anyOf": [{"$ref": "#/definitions/a"}, {"$ref": "#/definitions/b"}],
+    }
+    error = next(jsonschema.Draft7Validator(schema).iter_errors(1))
+    assert validate._describe(error, []) == [
+        RecipeIssue((), error.message),
     ]
 
 
@@ -615,6 +665,16 @@ def test_validate_recipe_duplicate_merge_keys() -> None:
             severity="warning",
         ),
     ]
+
+
+def test_validate_recipe_duplicate_merge_keys_sequence() -> None:
+    text = MERGE_RECIPE.replace("<<: *b", "<<: [*b, {method: x}]")
+    messages = [
+        issue.message
+        for issue in validate_recipe(text)
+        if "merge key" in issue.message
+    ]
+    assert messages[0].endswith("<<: [*b, {...}, *a]")
 
 
 SELF_MERGE_RECIPE = """
@@ -773,8 +833,24 @@ def test_validate_recipe_from_invalid_text() -> None:
     assert issues[0].message.startswith("invalid YAML: ")
 
 
+def test_validate_recipe_from_unreadable_text() -> None:
+    (issue,) = validate_recipe("documentation: \x07\n")
+    assert issue.path == ()
+    assert issue.line is None
+    assert issue.message.startswith(
+        "invalid YAML: unacceptable character #x0007",
+    )
+
+
 def test_validate_recipe_from_empty_text() -> None:
     assert validate_recipe("") == _issues(None)
+
+
+def test_validate_recipe_key_without_position() -> None:
+    # The key is read as the number 16, which does not match its text.
+    issues = validate_recipe("documentation:\n  0x10: value\n")
+    assert issues[-1].path == ("documentation", 16)
+    assert issues[-1].line is None
 
 
 def test_validate_recipe_does_not_modify_recipe() -> None:
@@ -1357,6 +1433,15 @@ def test_validate_recipe_mip_skipped(mip: str | int) -> None:
     assert not any("CMOR table" in m for m in messages)
 
 
+def test_validate_recipe_mip_project_without_tables(session: Session) -> None:
+    session["projects"]["CMIP6"]["cmor_table"] = {
+        "type": "esmvalcore.cmor.table.NoInfo",
+    }
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["diagnostics"]["example"]["variables"] = {"tas": {"mip": "Amonn"}}
+    assert _issues(recipe, session) == []
+
+
 def _align_metadata_messages(**settings: Any) -> list[str]:
     recipe = copy.deepcopy(SMALL_RECIPE)
     recipe["preprocessors"] = {"pp": {"align_metadata": settings}}
@@ -1383,6 +1468,12 @@ def _align_metadata_messages(**settings: Any) -> list[str]:
             "strict": False,
         },
         {"target_project": "CMIP6", "target_short_name": "z*"},
+        # The same rule as for datasets: CORDEX tables are named 3h, not 3hr.
+        {
+            "target_project": "CORDEX",
+            "target_mip": "3hr",
+            "target_short_name": "tas",
+        },
     ],
 )
 def test_validate_recipe_align_metadata_valid(
@@ -1484,7 +1575,7 @@ def test_validate_recipe_branding_suffix_pattern(branding_suffix: str) -> None:
     assert _issues(_cmip7_recipe(branding_suffix=branding_suffix)) == []
 
 
-def _recipe_with_script(script: str) -> dict[str, Any]:
+def _recipe_with_script(script: object) -> dict[str, Any]:
     recipe = yaml.safe_load(RECIPE)
     recipe["documentation"]["authors"] = AUTHORS[:1]
     recipe["diagnostics"]["example"]["scripts"]["plot"]["script"] = script
@@ -1531,6 +1622,14 @@ def test_validate_recipe_script_without_esmvaltool(
     monkeypatch.setattr(validate, "DIAGNOSTICS", Diagnostics(tmp_path))
     recipe = _recipe_with_script("examples/diagnostc.py")
     assert _issues(recipe) == []
+
+
+@pytest.mark.usefixtures("esmvaltool")
+def test_validate_recipe_script_not_a_string() -> None:
+    recipe = _recipe_with_script(1)
+    assert [i.message for i in _issues(recipe)] == [
+        "expected a string, got 1.",
+    ]
 
 
 def test_ensure_valid_recipe(tmp_path: Path) -> None:
@@ -1599,4 +1698,18 @@ def test_ensure_valid_recipe_duplicate_keys(
         f"Recipe {path}: line 16: diagnostics > example > variables > tas: "
         "duplicate key, this definition is ignored because 'tas' is defined "
         "again on line 18."
+    )
+
+
+def test_ensure_valid_datasets_warnings(
+    session: Session,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING)
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1]["mip"] = "Lyr"
+    validate.ensure_valid_datasets(recipe, session)
+    (message,) = [r.getMessage() for r in caplog.records]
+    assert message.startswith(
+        "Recipe: datasets > 1 > mip: unknown value 'Lyr'.",
     )

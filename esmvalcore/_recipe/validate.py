@@ -331,12 +331,13 @@ def _describe_wrong_type(
     return [RecipeIssue(tuple(error.absolute_path), message)]
 
 
-def _describe_too_few_items(
+def _describe_number_of_items(
     error: jsonschema.ValidationError,
 ) -> list[RecipeIssue]:
+    bound = "at least" if error.validator == "minItems" else "at most"
     number = error.validator_value
     items = "item" if number == 1 else "items"
-    message = f"expected at least {number} {items}, got {error.instance!r}."
+    message = f"expected {bound} {number} {items}, got {error.instance!r}."
     return [RecipeIssue(tuple(error.absolute_path), message)]
 
 
@@ -367,8 +368,9 @@ def _describe(
     describers = {
         "additionalProperties": _describe_unknown_keys,
         "anyOf": _describe_wrong_type,
+        "maxItems": _describe_number_of_items,
         "maximum": _describe_out_of_range,
-        "minItems": _describe_too_few_items,
+        "minItems": _describe_number_of_items,
         "minimum": _describe_out_of_range,
         "required": _describe_missing_keys,
         "type": _describe_wrong_type,
@@ -1495,11 +1497,16 @@ def _find_invalid_step_settings(recipe: object) -> list[RecipeIssue]:
             if "_statistics" in step:
                 issues.extend(_statistics_issues(path, step, settings))
             scheme = settings.get("scheme")
-            if step == "regrid" and isinstance(scheme, dict):
+            # The schema checks that the reference is a string.
+            if (
+                step == "regrid"
+                and isinstance(scheme, dict)
+                and isinstance(scheme.get("reference"), str)
+            ):
                 try:
                     _load_generic_scheme(scheme)
-                # The reference may not be a string or name an object that
-                # does not exist, or the arguments of the scheme may be wrong.
+                # The reference may name an object that does not exist, or
+                # the arguments of the scheme may be wrong.
                 except (AttributeError, TypeError, ValueError) as exc:
                     url = _documentation_url(
                         "recipe/preprocessor.html#generic-regridding-schemes",
