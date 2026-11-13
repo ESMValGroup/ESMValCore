@@ -30,6 +30,8 @@ from tests.unit.recipe.example_recipes import (
 )
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from esmvalcore.config import Session
 
 
@@ -141,6 +143,67 @@ def test_generic_regridding_scheme_invalid() -> None:
         "preprocessors > pp > regrid > scheme: failed to load generic "
         "regridding scheme: Could not import specified generic regridding "
         "module 'invalid.module'.",
+    )
+
+
+@pytest.mark.parametrize(
+    ("scheme", "error"),
+    [
+        ({"reference": {"a": "b"}}, "'dict' object has no attribute"),
+        ({"reference": "iris.analysis:Invalid"}, "has no attribute 'Invalid'"),
+        ({"reference": "iris.analysis:Linear", "invalid": 1}, "unexpected"),
+    ],
+)
+def test_generic_regridding_scheme_cannot_load(
+    scheme: dict[str, Any],
+    error: str,
+) -> None:
+    (message,) = _messages(
+        {"regrid": {"target_grid": "1x1", "scheme": scheme}},
+    )
+    assert message.startswith(
+        "preprocessors > pp > regrid > scheme: failed to load generic "
+        "regridding scheme: ",
+    )
+    assert error in message
+
+
+def test_statistics_kwarg_not_a_string() -> None:
+    assert _messages({"annual_statistics": {"operator": "mean", 1: 2}}) == [
+        "preprocessors > pp > annual_statistics: keywords must be strings.",
+    ]
+
+
+def test_unknown_key_not_a_string() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["documentation"][2024] = "text"
+    issues = [i for i in validate_recipe(recipe) if i.path[-1] == 2024]
+    assert [i.message.split(".")[0] for i in issues] == ["unknown key"]
+
+
+def test_failing_check_is_a_warning(mocker: MockerFixture) -> None:
+    mocker.patch.object(
+        validate,
+        "_find_unknown_types",
+        autospec=True,
+        side_effect=KeyError("bug"),
+    )
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"]["preprocessor"] = "x"
+    issues = validate_recipe(recipe)
+    assert (
+        RecipeIssue(
+            (),
+            "failed to run check '_find_unknown_types': KeyError('bug'). This is "
+            "a bug, please report it at "
+            "https://github.com/ESMValGroup/ESMValCore/issues.",
+            severity="warning",
+        )
+        in issues
+    )
+    # The other checks still run.
+    assert any(
+        "Not defined in the `preprocessors`" in i.message for i in issues
     )
 
 

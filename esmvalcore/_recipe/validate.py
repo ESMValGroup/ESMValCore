@@ -22,6 +22,7 @@ import collections.abc
 import dataclasses
 import difflib
 import fnmatch
+import functools
 import inspect
 import logging
 import re
@@ -222,8 +223,9 @@ def _relevant_errors(
     return [(error, alternatives or [])]
 
 
-def _suggest(name: str, choices: collections.abc.Iterable[str]) -> str:
-    close = difflib.get_close_matches(name, list(choices), n=1)
+def _suggest(name: object, choices: collections.abc.Iterable[object]) -> str:
+    # Keys in YAML can be numbers, booleans, or null.
+    close = difflib.get_close_matches(str(name), map(str, choices), n=1)
     return f" Did you mean '{close[0]}'?" if close else ""
 
 
@@ -1301,7 +1303,8 @@ def _aggregator_issue(
         return []
     try:
         get_iris_aggregator(str(operator), **kwargs)
-    except ValueError as exc:
+    # A TypeError means that a keyword argument is not a string.
+    except (TypeError, ValueError) as exc:
         return [RecipeIssue(path, f"{exc}.")]
     return []
 
@@ -1358,7 +1361,9 @@ def _find_invalid_step_settings(recipe: object) -> list[RecipeIssue]:
             if step == "regrid" and isinstance(scheme, dict):
                 try:
                     _load_generic_scheme(scheme)
-                except ValueError as exc:
+                # The reference may not be a string or name an object that
+                # does not exist, or the arguments of the scheme may be wrong.
+                except (AttributeError, TypeError, ValueError) as exc:
                     url = _documentation_url(
                         "recipe/preprocessor.html#generic-regridding-schemes",
                     )
@@ -1479,45 +1484,100 @@ def _validate(
     Datasets that do not have all facets needed to find their data are fine
     in the Python API, because the missing facets can be added later.
     """
-    issues: list[RecipeIssue] = []
     config = CFG if session is None else session
-    validator = jsonschema.Draft7Validator(generate_recipe_schema(session))
-    for error in validator.iter_errors(_normalize(recipe)):
-        for relevant, alternatives in _relevant_errors(error):
-            issues.extend(_describe(relevant, alternatives))
-    issues.extend(_find_incomplete_datasets(recipe))
+    checks = [
+        functools.partial(_find_schema_issues, recipe, session),
+        functools.partial(_find_incomplete_datasets, recipe),
+    ]
     if required_facets:
-        issues.extend(_find_missing_facets(recipe, config))
-    issues.extend(
-        _find_unavailable_variables(
-            recipe,
-            config,
-            check_variables=required_facets,
-        ),
+        checks.append(functools.partial(_find_missing_facets, recipe, config))
+    checks.extend(
+        [
+            functools.partial(
+                _find_unavailable_variables,
+                recipe,
+                config,
+                check_variables=required_facets,
+            ),
+            *(
+                functools.partial(find, recipe)
+                for find in (
+                    _find_unknown_types,
+                    _find_invalid_timeranges,
+                    _find_unknown_reference_datasets,
+                    _find_unknown_preprocessors,
+                    _find_unknown_ancestors,
+                    _find_scripts_named_like_variables,
+                    _find_missing_scripts,
+                )
+            ),
+        ],
     )
-    issues.extend(_find_unknown_types(recipe))
-    issues.extend(_find_invalid_timeranges(recipe))
-    issues.extend(_find_unknown_reference_datasets(recipe))
-    issues.extend(_find_unknown_preprocessors(recipe))
-    issues.extend(_find_unknown_ancestors(recipe))
-    issues.extend(_find_scripts_named_like_variables(recipe))
-    issues.extend(_find_missing_scripts(recipe))
     # Datasets in the `datasets` section belong to every variable group, so
     # checks of datasets and the schema can report the same issue repeatedly.
-    issues = list(dict.fromkeys(issues))
+    issues = list(dict.fromkeys(_run_checks(checks)))
     # Only report settings that do not work if the schema found no problem
     # with them, to avoid reporting the same problem twice.
     issues.extend(
         issue
-        for issue in _find_invalid_step_settings(recipe)
+        for issue in _run_checks(
+            [functools.partial(_find_invalid_step_settings, recipe)],
+        )
         if not any(i.path[: len(issue.path)] == issue.path for i in issues)
     )
     composed = None if text is None else _compose(text)
     if composed is not None:
-        checker = _YAMLChecker(composed)
-        checker.check(composed.root, ())
-        issues.extend(checker.issues)
+        issues.extend(
+            _run_checks([functools.partial(_find_yaml_issues, composed)]),
+        )
         issues = _locate(issues, composed.root, composed.aliases)
+    return issues
+
+
+def _find_schema_issues(
+    recipe: object,
+    session: Session | None,
+) -> list[RecipeIssue]:
+    """Find the problems that the JSON Schema reports."""
+    issues = []
+    validator = jsonschema.Draft7Validator(generate_recipe_schema(session))
+    for error in validator.iter_errors(_normalize(recipe)):
+        for relevant, alternatives in _relevant_errors(error):
+            issues.extend(_describe(relevant, alternatives))
+    return issues
+
+
+def _find_yaml_issues(composed: _Composed) -> list[RecipeIssue]:
+    """Find YAML that is ignored, deprecated, or ambiguous."""
+    checker = _YAMLChecker(composed)
+    checker.check(composed.root, ())
+    return checker.issues
+
+
+def _run_checks(
+    checks: list[functools.partial[list[RecipeIssue]]],
+) -> list[RecipeIssue]:
+    """Run checks, reporting a check that fails as a warning.
+
+    A bug in a check should not stop a recipe from running, or hide the
+    problems that the other checks find.
+    """
+    issues = []
+    for find in checks:
+        try:
+            issues.extend(find())
+        except Exception as exc:
+            name = find.func.__name__
+            logger.debug("Check %s failed", name, exc_info=True)
+            issues.append(
+                RecipeIssue(
+                    (),
+                    f"failed to run check '{name}': {exc!r}. This is a bug, "
+                    "please report it at "
+                    "https://github.com/ESMValGroup/ESMValCore/issues.",
+                    severity="warning",
+                ),
+            )
     return issues
 
 
