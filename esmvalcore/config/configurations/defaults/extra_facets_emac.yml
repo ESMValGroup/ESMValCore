@@ -257,9 +257,12 @@ projects:
           ta:
             raw_name: [tm1_cav, tm1_ave, tm1]
             channel: Amon
+          # tro3:
+          #   raw_name: [O3_cav, O3_ave, O3]
+          #   channel: Amon
           tro3:
-            raw_name: [O3_cav, O3_ave, O3]
-            channel: Amon
+            raw_name: [O3_p39_cav, O3_cav, O3_ave, O3]
+            channel: AERmon
           ua:
             raw_name: [um1_cav, um1_ave, um1]
             channel: Amon
