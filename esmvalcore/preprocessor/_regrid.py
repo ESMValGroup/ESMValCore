@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypeGuard
 
 import cordex as cx
 import dask.array as da
+import esmf_regrid.experimental.io as esmf_io
 import iris
 import iris.coords
 import iris.exceptions
@@ -800,6 +801,7 @@ def _get_regridder(
     tgt_cube: Cube,
     scheme: NamedHorizontalScheme | dict,
     cache_weights: bool,
+    file: Path | str | None = None,
 ) -> Regridder:
     """Get regridder to actually perform regridding.
 
@@ -826,13 +828,36 @@ def _get_regridder(
                 if key == coord_key:
                     return regridder
 
-        # Regridder is not in cached -> return a new one and cache it
-        loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
-        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
-        _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
-        _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+        # Regridder is not in cached -> return a new one and cache it.
+        # If a filepath is provided in the recipe, try to load the regridder
+        # or create new one under the provided path.
+        # TODO: Check if weights match resolution defined in recipe.
+        if file:
+            filepath = Path(str(file))
+            if filepath.is_file():
+                regridder = esmf_io.load_regridder(filepath)
+            else:
+                loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
+                regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+                esmf_io.save_regridder(regridder, filepath)
+                _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
+                _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+
+        else:
+            loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
+            regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+            _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
+            _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
 
     # (2) Weights caching disabled
+    elif file:
+        filepath = Path(str(file))
+        if filepath.is_file():
+            regridder = esmf_io.load_regridder(filepath)
+        else:
+            loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
+            regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+            esmf_io.save_regridder(regridder, filepath)
     else:
         loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
         regridder = loaded_scheme.regridder(src_cube, tgt_cube)
@@ -864,7 +889,7 @@ def _get_name_and_shape_key(
 
 
 @preserve_float_dtype
-def regrid(
+def regrid(  # noqa: PLR0913, PLR0917
     cube: Cube,
     target_grid: Cube | Dataset | Path | str | dict,
     scheme: NamedHorizontalScheme | dict,
@@ -872,6 +897,7 @@ def regrid(
     lon_offset: bool = True,
     cache_weights: bool = False,
     use_src_coords: Iterable[str] = ("latitude", "longitude"),
+    file: Path | str | None = None,
 ) -> Cube:
     """Perform horizontal regridding.
 
@@ -1006,7 +1032,13 @@ def regrid(
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
         scheme = scheme.lower()  # type: ignore
-    regridder = _get_regridder(cube, target_grid_cube, scheme, cache_weights)
+    regridder = _get_regridder(
+        cube,
+        target_grid_cube,
+        scheme,
+        cache_weights,
+        file,
+    )
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
