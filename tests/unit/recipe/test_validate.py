@@ -1357,6 +1357,91 @@ def test_validate_recipe_mip_skipped(mip: str | int) -> None:
     assert not any("CMOR table" in m for m in messages)
 
 
+def _align_metadata_messages(**settings: Any) -> list[str]:
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    recipe["preprocessors"] = {"pp": {"align_metadata": settings}}
+    recipe["diagnostics"]["example"]["variables"] = {
+        "tas": {"mip": "Amon", "preprocessor": "pp"},
+    }
+    return [str(issue) for issue in _issues(recipe)]
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {"target_project": "CMIP5"},
+        {"target_project": "CMIP6", "target_short_name": "pr"},
+        {"target_project": "CMIP6", "target_mip": "day"},
+        {
+            "target_project": "CMIP7",
+            "target_mip": "atmos",
+            "target_branding_suffix": "tavg-h2m-hxy-u",
+        },
+        {
+            "target_project": "CMIP6",
+            "target_short_name": "zzz",
+            "strict": False,
+        },
+        {"target_project": "CMIP6", "target_short_name": "z*"},
+    ],
+)
+def test_validate_recipe_align_metadata_valid(
+    settings: dict[str, Any],
+) -> None:
+    assert _align_metadata_messages(**settings) == []
+
+
+@pytest.mark.parametrize("strict", [True, False])
+def test_validate_recipe_align_metadata_unknown_project(strict: bool) -> None:
+    messages = _align_metadata_messages(target_project="CMIP66", strict=strict)
+    message = (
+        "preprocessors > pp > align_metadata > target_project: unknown value "
+        "'CMIP66'. Not a configured project. Did you mean 'CMIP6'?"
+    )
+    assert messages == [message]
+
+
+@pytest.mark.parametrize(
+    ("settings", "message"),
+    [
+        (
+            {"target_short_name": "zzz", "target_mip": "Amon"},
+            (
+                "target variable 'zzz' not available in table 'Amon' of "
+                "project 'CMIP6'."
+            ),
+        ),
+        (
+            {"target_short_name": "zzz"},
+            (
+                "target variable 'zzz' not available in table 'Amon' of "
+                "project 'CMIP6'. The target MIP is taken from diagnostics > "
+                "example > variables > tas."
+            ),
+        ),
+        (
+            {"target_mip": "Omon"},
+            (
+                "target variable 'tas' not available in table 'Omon' of "
+                "project 'CMIP6'. The target short name is taken from "
+                "diagnostics > example > variables > tas."
+            ),
+        ),
+    ],
+)
+def test_validate_recipe_align_metadata_unavailable(
+    settings: dict[str, Any],
+    message: str,
+) -> None:
+    messages = _align_metadata_messages(target_project="CMIP6", **settings)
+    assert messages == [
+        (
+            f"preprocessors > pp > align_metadata: {message} Set `strict: "
+            "false` to ignore this."
+        ),
+    ]
+
+
 def _cmip7_recipe(**facets: Any) -> dict[str, Any]:
     recipe = copy.deepcopy(SMALL_RECIPE)
     recipe["datasets"] = [

@@ -4026,14 +4026,11 @@ def test_align_metadata_invalid_project(
             scripts: null
         """)
     msg = (
-        "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        'The following tables are available: .*."'
+        "preprocessors > test > align_metadata > target_project: unknown "
+        "value 'ZZZ'. Not a configured project."
     )
-    with pytest.raises(RecipeError) as exc:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert re.match(msg, exc.value.failed_tasks[0].message)
-    assert "CMIP7" in exc.value.failed_tasks[0].message
 
 
 def test_align_metadata_invalid_name(
@@ -4066,13 +4063,13 @@ def test_align_metadata_invalid_name(
             scripts: null
         """)
     msg = (
-        "align_metadata failed: Variable 'zzz' not available in table 'Amon' "
-        "of project 'CMIP6'. Set `strict=False` to ignore this."
+        "preprocessors > test > align_metadata: target variable 'zzz' not "
+        "available in table 'Amon' of project 'CMIP6'. The target MIP is "
+        "taken from diagnostics > diagnostic_name > variables > tas. Set "
+        "`strict: false` to ignore this."
     )
-    with pytest.raises(RecipeError) as exc:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
 
 
 def test_align_metadata_invalid_short_name_not_strict(

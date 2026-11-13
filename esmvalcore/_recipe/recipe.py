@@ -597,7 +597,6 @@ def _update_align_metadata(
             "target_short_name",
             dataset.facets["short_name"],
         )
-        check.align_metadata(settings["align_metadata"])
 
 
 def _update_extract_shape(

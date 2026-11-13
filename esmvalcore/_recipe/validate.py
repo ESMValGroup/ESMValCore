@@ -1116,6 +1116,118 @@ def _find_unavailable_variables(
     return issues
 
 
+def _is_name(value: object) -> typing.TypeGuard[str]:
+    """Check if a value is a non-empty string that is not a pattern."""
+    return (
+        isinstance(value, str)
+        and bool(value)
+        and not any(c in value for c in "*?[")
+    )
+
+
+def _align_metadata_issue(
+    path: _Path,
+    settings: dict,
+    dataset: _Dataset,
+    config: Config | Session,
+) -> RecipeIssue | None:
+    """Check that the target variable of ``align_metadata`` is available."""
+    project = settings["target_project"]
+    mip = settings.get("target_mip", dataset.facets.get("mip"))
+    short_name = settings.get(
+        "target_short_name",
+        dataset.facets.get("short_name", dataset.group_path[-1]),
+    )
+    branding_suffix = settings.get("target_branding_suffix")
+    # Unlike for datasets, the extra facets are not used, so the target is
+    # complete if its names are given and not patterns.
+    if not (
+        _is_name(mip)
+        and _is_name(short_name)
+        and (branding_suffix is None or _is_name(branding_suffix))
+    ):
+        return None
+    # The same rule as in esmvalcore.cmor.table.get_var_info.
+    if project == "CORDEX" and mip.endswith("hr"):
+        mip = mip.replace("hr", "h")
+    tables = get_tables(config, project)
+    if (
+        tables.get_variable(mip, short_name, branding_suffix=branding_suffix)
+        is not None
+    ):
+        return None
+    message = _describe_unavailable_variable(
+        project,
+        mip,
+        short_name,
+        branding_suffix,
+    )
+    if not message.endswith((".", "?")):
+        message += "."
+    # Describe where the target MIP and short name come from if they are not
+    # given.
+    origins: dict[str, list[str]] = {}
+    for facet, name in (("mip", "MIP"), ("short_name", "short name")):
+        if f"target_{facet}" not in settings:
+            origin = dataset.origin.get(facet, dataset.group_path)
+            origins.setdefault(_location(origin), []).append(name)
+    for location, names in origins.items():
+        verb = "is" if len(names) == 1 else "are"
+        message += (
+            f" The target {' and '.join(names)} {verb} taken from {location}."
+        )
+    return RecipeIssue(
+        path,
+        f"target {message[0].lower()}{message[1:]} Set `strict: false` to "
+        "ignore this.",
+    )
+
+
+def _find_unavailable_align_metadata_targets(
+    recipe: object,
+    config: Config | Session,
+) -> list[RecipeIssue]:
+    """Find targets of ``align_metadata`` that are not in the CMOR tables.
+
+    The target MIP and short name default to those of each dataset that uses
+    the preprocessor, as in
+    :func:`esmvalcore._recipe.recipe._update_align_metadata`. If ``strict`` is
+    false, only the target project is checked.
+    """
+    preprocessors = _mapping(recipe, "preprocessors")
+    issues = []
+    for dataset in _datasets(recipe):
+        preprocessor = str(dataset.facets.get("preprocessor", "default"))
+        settings = _mapping(
+            _mapping(preprocessors, preprocessor),
+            "align_metadata",
+        )
+        path = ("preprocessors", preprocessor, "align_metadata")
+        project = settings.get("target_project")
+        # The schema reports a missing or invalid target project.
+        if not isinstance(project, str):
+            continue
+        if project not in config["projects"]:
+            issues.append(
+                RecipeIssue(
+                    (*path, "target_project"),
+                    f"unknown value {project!r}. Not a configured "
+                    "project." + _suggest(project, config["projects"]),
+                ),
+            )
+            continue
+        if settings.get("strict", True) is not True:
+            continue
+        if issue := _align_metadata_issue(
+            path,
+            settings,
+            dataset,
+            config,
+        ):
+            issues.append(issue)
+    return issues
+
+
 def _find_unknown_types(recipe: object) -> list[RecipeIssue]:
     """Find datasets with a type that their project does not use."""
     issues = []
@@ -1498,6 +1610,11 @@ def _validate(
                 recipe,
                 config,
                 check_variables=required_facets,
+            ),
+            functools.partial(
+                _find_unavailable_align_metadata_targets,
+                recipe,
+                config,
             ),
             *(
                 functools.partial(find, recipe)
