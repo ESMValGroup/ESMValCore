@@ -21,7 +21,6 @@ import collections.abc
 import dataclasses
 import difflib
 import fnmatch
-import functools
 import inspect
 import logging
 import re
@@ -41,11 +40,7 @@ from esmvalcore._recipe.json_schema import (
     JSONSchema,
     _documentation_url,
     _join_or,
-    _known_tables,
-    _known_tags,
-    _recipe_schema,
-    _Tables,
-    _Tags,
+    generate_recipe_schema,
 )
 from esmvalcore.config import CFG
 from esmvalcore.config._tasksep import TASKSEP
@@ -119,25 +114,6 @@ TYPE_DESCRIPTIONS = {
     "object": "a mapping",
     "string": "a string",
 }
-
-
-def _get_validator(config: Config | Session) -> jsonschema.Draft7Validator:
-    # The known tags are part of the cache key, because they may change,
-    # for example when the tags or the configuration are updated.
-    return _create_validator(
-        tuple(_known_tags().items()),
-        tuple(_known_tables(config).items()),
-    )
-
-
-@functools.cache
-def _create_validator(
-    tags: tuple[tuple[str, _Tags], ...],
-    tables: tuple[tuple[str, _Tables | None], ...],
-) -> jsonschema.Draft7Validator:
-    return jsonschema.Draft7Validator(
-        _recipe_schema(dict(tags), dict(tables)),
-    )
 
 
 def _normalize(recipe: object) -> object:
@@ -263,6 +239,7 @@ def _describe_unknown_keys(
         problem = "unknown argument."
     else:
         problem = "unknown key."
+    severity = error.schema.get(SEVERITY_KEYWORD, "error")
     issues = []
     for key in error.instance:
         if key in known:
@@ -278,7 +255,12 @@ def _describe_unknown_keys(
         if _in_step(path):
             valid = ", ".join(sorted(known)) or "none"
             message += f" Valid arguments are: {valid}."
-        issues.append(RecipeIssue((*path, key), message))
+        if severity == "warning":
+            message += (
+                " Unknown keys are ignored, this is deprecated and will not "
+                "work in v2.18.0."
+            )
+        issues.append(RecipeIssue((*path, key), message, severity=severity))
     return issues
 
 
@@ -1323,7 +1305,8 @@ def _validate(
     """
     issues: list[RecipeIssue] = []
     config = CFG if session is None else session
-    for error in _get_validator(config).iter_errors(_normalize(recipe)):
+    validator = jsonschema.Draft7Validator(generate_recipe_schema(session))
+    for error in validator.iter_errors(_normalize(recipe)):
         for relevant, alternatives in _relevant_errors(error):
             for issue in _describe(relevant, alternatives):
                 if issue not in issues:

@@ -89,7 +89,8 @@ the following:
    Doe would be: ``doe_john``.
    New users can run a recipe before their name is included, ESMValCore then
    logs a warning and the provenance information will be incomplete.
-   Other keys are not allowed in the documentation section.
+   Other keys in the documentation section are deprecated: they are ignored
+   and will not work in ESMValCore v2.18.0.
 
 .. _Datasets:
 
@@ -574,6 +575,9 @@ section will include:
 - an optional ``additional_datasets`` section.
 - an optional ``title`` and ``description``, used to generate the title and description
   in the ``index.html`` output file.
+
+Other keys in a diagnostic are deprecated: they are ignored and will not work
+in ESMValCore v2.18.0.
 
 .. _tasks:
 

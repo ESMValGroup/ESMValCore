@@ -7,7 +7,7 @@ import re
 import typing
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import jsonschema
 import pytest
@@ -28,6 +28,9 @@ from esmvalcore._recipe.json_schema import (
 from esmvalcore._recipe.validate import RecipeIssue, validate_recipe
 from esmvalcore.config._diagnostics import Diagnostics, TagsManager
 from tests.unit.recipe.example_recipes import AUTHORS, RECIPE
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 type Scheme = Literal["linear", "nearest"]
 
@@ -715,6 +718,13 @@ def test_schema_without_esmvaltool(
     documentation = schema["definitions"]["documentation"]["properties"]
     for key in ("authors", "maintainer", "projects", "references"):
         assert documentation[key]["items"] == {"type": "string"}
+
+
+def test_schema_with_session(session: Session) -> None:
+    session["projects"] = {"CMIP6": session["projects"]["CMIP6"]}
+    schema = generate_recipe_schema(session)
+    project = schema["definitions"]["facets"]["properties"]["project"]
+    assert project["enum"] == ["CMIP6"]
 
 
 @pytest.mark.usefixtures("esmvaltool")

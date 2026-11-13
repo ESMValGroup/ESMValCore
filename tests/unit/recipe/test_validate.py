@@ -363,16 +363,6 @@ def test_validate_recipe_valid() -> None:
             7,
             "datasets > 1 > tier: expected at most 3, got 7.",
         ),
-        (
-            ["documentation", "project"],
-            ["c3s-magic"],
-            "documentation > project: unknown key. Did you mean 'projects'?",
-        ),
-        (
-            ["diagnostics", "example", "plot_types"],
-            ["zonal"],
-            "diagnostics > example > plot_types: unknown key.",
-        ),
     ],
 )
 def test_validate_recipe_invalid(
@@ -386,6 +376,34 @@ def test_validate_recipe_invalid(
         parent = parent[key]
     parent[path[-1]] = value
     assert [str(i) for i in validate_recipe(recipe)] == [message]
+
+
+@pytest.mark.parametrize(
+    ("path", "message"),
+    [
+        (
+            ["documentation", "project"],
+            "unknown key. Did you mean 'projects'?",
+        ),
+        (["diagnostics", "example", "plot_types"], "unknown key."),
+    ],
+)
+def test_validate_recipe_unknown_key_deprecated(
+    path: list[str],
+    message: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    parent = recipe
+    for key in path[:-1]:
+        parent = parent[key]
+    parent[path[-1]] = ["value"]
+    message += (
+        " Unknown keys are ignored, this is deprecated and will not work in "
+        "v2.18.0."
+    )
+    assert validate_recipe(recipe) == [
+        RecipeIssue(tuple(path), message, severity="warning"),
+    ]
 
 
 def test_validate_recipe_not_a_mapping() -> None:
@@ -1117,6 +1135,24 @@ def test_ensure_valid_recipe_warnings(
     assert (
         "documentation > authors > 0: unknown value 'author_100'." in message
     )
+
+
+def test_ensure_valid_recipe_unknown_key(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING)
+    recipe = yaml.safe_load(RECIPE)
+    recipe["documentation"]["domains"] = ["global"]
+    path = tmp_path / "recipe_test.yml"
+    ensure_valid_recipe(recipe, path)
+    assert [r.getMessage() for r in caplog.records] == [
+        (
+            f"Recipe {path}: documentation > domains: unknown key. Unknown "
+            "keys are ignored, this is deprecated and will not work in "
+            "v2.18.0."
+        ),
+    ]
 
 
 def test_ensure_valid_recipe_duplicate_keys(

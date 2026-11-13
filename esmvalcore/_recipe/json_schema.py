@@ -49,7 +49,8 @@ JSONSchema = dict[str, Any]
 
 SCHEMA_DIALECT = "http://json-schema.org/draft-07/schema#"
 
-# Schema keyword for the severity of a value that is not in an ``enum``.
+# Schema keyword for the severity of a value that is not in an ``enum``, or
+# of a key that is not in the ``properties`` of an object.
 SEVERITY_KEYWORD = "x-severity"
 
 # Facet values can be glob patterns, see :func:`esmvalcore.dataset._isglob`.
@@ -1368,6 +1369,8 @@ def _diagnostic_schema(tags: dict[str, _Tags]) -> JSONSchema:
         },
         "required": ["scripts"],
         "additionalProperties": False,
+        # Unknown keys are deprecated, so they are only a warning for now.
+        SEVERITY_KEYWORD: "warning",
     }
 
 
@@ -1422,12 +1425,14 @@ def _documentation_schema(tags: dict[str, _Tags]) -> JSONSchema:
             },
             "required": ["title", "description", "authors"],
             "additionalProperties": False,
+            # Unknown keys are deprecated, so they are only a warning for now.
+            SEVERITY_KEYWORD: "warning",
         },
         *_DOCUMENTATION_DOCS,
     )
 
 
-def generate_recipe_schema() -> JSONSchema:
+def generate_recipe_schema(session: Session | None = None) -> JSONSchema:
     """Generate a JSON Schema for recipes.
 
     The schema only allows the projects in the configuration and the MIPs in
@@ -1435,12 +1440,19 @@ def generate_recipe_schema() -> JSONSchema:
     projects, realms, and themes defined in its ``config-references.yml`` file
     and the references that have a bibtex file.
 
+    Parameters
+    ----------
+    session:
+        The session that defines the projects and their CMOR tables. If not
+        given, the configuration in :obj:`esmvalcore.config.CFG` is used.
+
     Returns
     -------
     :
         A JSON Schema (draft-07) that describes a recipe.
     """
-    return _recipe_schema(_known_tags(), _known_tables(CFG))
+    config = CFG if session is None else session
+    return _recipe_schema(_known_tags(), _known_tables(config))
 
 
 def _recipe_schema(
