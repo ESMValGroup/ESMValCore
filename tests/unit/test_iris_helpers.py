@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from cf_units import Unit
+from iris.aux_factory import HybridPressureFactory
 from iris.coords import (
     AncillaryVariable,
     AuxCoord,
@@ -695,6 +696,43 @@ def test_dataset_to_iris(conversion_func, dummy_cubes):
     assert str(cube.coord("latitude").units) == "degrees_north"
     assert str(cube.coord("longitude").units) == "degrees_east"
     assert cube.attributes["source_file"] == "path/to/file.nc"
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_removes_formula_term_cubes(conversion_func):
+    lev = DimCoord(
+        [0.5, 0.9],
+        var_name="lev",
+        standard_name="atmosphere_hybrid_sigma_pressure_coordinate",
+        units="1",
+    )
+    ap = AuxCoord([1.0, 2.0], var_name="ap", units="Pa")
+    b = AuxCoord([0.0, 1.0], var_name="b", units="1")
+    ps = AuxCoord(
+        np.ones((2, 2)),
+        var_name="ps",
+        standard_name="surface_air_pressure",
+        units="Pa",
+    )
+    cube = Cube(
+        np.zeros((2, 2, 2)),
+        var_name="cli",
+        dim_coords_and_dims=[(lev, 0)],
+        aux_coords_and_dims=[(ap, 0), (b, 0), (ps, (1, 2))],
+    )
+    cube.add_aux_factory(
+        HybridPressureFactory(delta=ap, sigma=b, surface_air_pressure=ps),
+    )
+    dataset = conversion_func(CubeList([cube]))
+
+    cubes = dataset_to_iris(dataset)
+
+    assert len(cubes) == 1
+    assert cubes[0].var_name == "cli"
+    assert cubes[0].coords("air_pressure")
 
 
 @pytest.mark.parametrize(

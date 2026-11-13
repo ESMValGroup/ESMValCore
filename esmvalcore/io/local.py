@@ -60,7 +60,10 @@ from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-from esmvalcore.iris_helpers import ignore_warnings_context
+from esmvalcore.iris_helpers import (
+    _remove_formula_term_cubes,
+    ignore_warnings_context,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -978,6 +981,11 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
     def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
+        Cubes that iris loads for the reference surface of a derived
+        coordinate (e.g., surface air pressure for hybrid pressure
+        coordinates) are not returned, because they duplicate the auxiliary
+        coordinate of the cube that uses them.
+
         Returns
         -------
         iris.cube.CubeList
@@ -993,6 +1001,8 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
                 cubes = iris.load(file, callback=_restore_lat_lon_units)
             else:
                 cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
+
+        cubes = _remove_formula_term_cubes(cubes)
 
         for cube in cubes:
             cube.attributes.globals["source_file"] = str(file)
