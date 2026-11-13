@@ -32,6 +32,7 @@ import jsonschema
 import yaml
 
 import esmvalcore.preprocessor
+from esmvalcore._recipe import check
 from esmvalcore._recipe._io import _parse_yaml
 from esmvalcore._recipe.json_schema import (
     _TYPES,
@@ -1023,6 +1024,32 @@ def _find_unknown_types(recipe: object) -> list[RecipeIssue]:
     return issues
 
 
+def _find_invalid_timeranges(recipe: object) -> list[RecipeIssue]:
+    """Find time ranges that are not valid.
+
+    Time ranges with wildcards are only complete once the data has been
+    found, so they are not checked.
+    """
+    issues = []
+    for _, facets, origin in _datasets(recipe):
+        timerange = facets.get("timerange")
+        if not isinstance(timerange, str) or "*" in timerange:
+            continue
+        try:
+            check.valid_time_selection(timerange)
+        except RecipeError as exc:
+            reason = str(exc).removeprefix(
+                "Invalid value encountered for `timerange`. ",
+            )
+            issue = RecipeIssue(
+                (*origin["timerange"], "timerange"),
+                f"invalid value {timerange!r}. {reason}",
+            )
+            if issue not in issues:
+                issues.append(issue)
+    return issues
+
+
 def _find_unknown_preprocessors(recipe: object) -> list[RecipeIssue]:
     """Find datasets that use a preprocessor that is not defined."""
     preprocessors = {"default", *map(str, _mapping(recipe, "preprocessors"))}
@@ -1246,11 +1273,11 @@ def validate_recipe(
     Also checks that every variable group has datasets, that no dataset occurs
     twice in a variable group, that datasets have a dataset, project, and MIP
     and the facets that their project requires, that the reference and
-    alternative datasets of variable groups are datasets of the group, that
-    the preprocessors of variable groups and datasets and the ancestors of
-    scripts are defined in the recipe, that scripts and variable groups have
-    different names, and that statistics operators and generic regridding
-    schemes can be loaded.
+    alternative datasets of variable groups are datasets of the group, that the
+    preprocessors of variable groups and datasets and the ancestors of scripts
+    are defined in the recipe, that scripts and variable groups have different
+    names, that time ranges without wildcards are valid, and that statistics
+    operators and generic regridding schemes can be loaded.
 
     Parameters
     ----------
@@ -1320,6 +1347,7 @@ def _validate(
     if required_facets:
         issues.extend(_find_missing_facets(recipe, config))
     issues.extend(_find_unknown_types(recipe))
+    issues.extend(_find_invalid_timeranges(recipe))
     issues.extend(_find_unknown_reference_datasets(recipe))
     issues.extend(_find_unknown_preprocessors(recipe))
     issues.extend(_find_unknown_ancestors(recipe))

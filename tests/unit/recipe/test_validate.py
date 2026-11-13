@@ -1092,6 +1092,47 @@ def test_validate_recipe_unknown_ancestor(
     ]
 
 
+@pytest.mark.parametrize(
+    "timerange",
+    ["1990/2000", "199001/P5Y", "P2Y/20001231T12", "*", "1990/*", "*/P1Y"],
+)
+def test_validate_recipe_valid_timerange(timerange: str) -> None:
+    dataset = {**SMALL_RECIPE["datasets"][0], "timerange": timerange}
+    recipe = {**SMALL_RECIPE, "datasets": [dataset]}
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
+    ("timerange", "reason"),
+    [
+        ("2000", "Valid values must be separated by `/`."),
+        (
+            "P1Y/P2Y",
+            "Cannot set both the beginning and the end as duration periods.",
+        ),
+        ("2000/20x1", "Valid value must follow ISO 8601 standard"),
+    ],
+)
+def test_validate_recipe_invalid_timerange(
+    timerange: str,
+    reason: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"]["timerange"] = (
+        timerange
+    )
+    (issue,) = validate_recipe(recipe)
+    assert issue.path == (
+        "diagnostics",
+        "example",
+        "variables",
+        "ta",
+        "timerange",
+    )
+    assert issue.message.startswith(f"invalid value {timerange!r}. {reason}")
+    assert issue.severity == "error"
+
+
 def test_ensure_valid_recipe(tmp_path: Path) -> None:
     recipe = yaml.safe_load(INVALID_RECIPE)
     path = tmp_path / "recipe_test.yml"
