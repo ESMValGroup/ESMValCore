@@ -424,6 +424,82 @@ def count_spells(
     return array_module.sum(full_windows, axis=axis, dtype=int)
 
 
+def boolean_above_threshold(cube, threshold):
+    """Return a boolean where the data is above a specific threshold value.
+
+    Takes a value 'threshold' and returns a cube being 1 where the cube data
+    is above the threshold and 0 where the cube data is equal to or below the
+    threshold.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        iris cube to be thresholded.
+
+    threshold: float
+        threshold to be applied on input cube data.
+
+    Returns
+    -------
+    iris.cube.Cube
+        thresholded cube.
+    """
+    cube.data = da.ma.where(
+        cube.core_data() > threshold,
+        da.ones_like(cube.core_data()),
+        da.zeros_like(cube.core_data()),
+    )
+
+    # Adapt cube metadata
+    if cube.var_name is not None:
+        cube.var_name = f"{cube.var_name}_exceeding_above_{threshold}"
+    if cube.long_name is not None:
+        cube.long_name = (
+            f"{cube.long_name} exceeding above {threshold} {cube.units}"
+        )
+
+    cube.units = "days"
+    return cube
+
+
+def boolean_below_threshold(cube, threshold):
+    """Return a boolean where the data is below a specific threshold value.
+
+    Takes a value 'threshold' and returns a cube being 1 where the cube data
+    is below the threshold and 0 where the cube data is equal to or above the
+    threshold.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        iris cube to be thresholded
+    threshold: float
+        threshold to be applied on input cube data.
+
+    Returns
+    -------
+    iris.cube.Cube
+        thresholded cube.
+    """
+    cube.data = da.ma.where(
+        cube.core_data() < threshold,
+        da.ones_like(cube.core_data()),
+        da.zeros_like(cube.core_data()),
+    )
+
+    # Adapt cube metadata
+    if cube.var_name is not None:
+        cube.var_name = f"{cube.var_name}_exceeding_below_{threshold}"
+    if cube.long_name is not None:
+        cube.long_name = (
+            f"{cube.long_name} exceeding below {threshold} {cube.units}"
+        )
+
+    cube.units = "days"
+
+    return cube
+
+
 def mask_above_threshold(cube, threshold):
     """Mask above a specific threshold value.
 
