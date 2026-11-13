@@ -149,7 +149,7 @@ def _describe_unavailable_variable(
         f"not available in table '{mip}' of project '{project}'"
     )
     table = CMOR_TABLES.get(project)
-    if mip not in getattr(table, "tables", {}):
+    if table is None or mip not in table.tables:
         return text
     available = sorted(_get_branding_suffixes(project, mip, short_name))
     if available:
