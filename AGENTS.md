@@ -63,8 +63,10 @@ Useful pytest options:
   (`_recipe/json_schema.py`) or, if the schema cannot express it, in
   `_recipe/validate.py`. Check whether the recipe can run on this machine, for
   example whether its data or other files exist, in `_recipe/check.py` while
-  the tasks are created. Do not process data or write files while creating the
-  tasks.
+  the tasks are created. The installed ESMValTool is an exception: it defines
+  the provenance tags and diagnostic scripts that recipes use, so check those
+  in `_recipe/validate.py`. Do not process data or write files while creating
+  the tasks.
 - Preprocessor functions are plain functions that preferably just call iris.
   Code that is useful beyond ESMValCore belongs in iris. Do not add CMOR checks
   to preprocessor functions: their input has already been fixed and checked.

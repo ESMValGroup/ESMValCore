@@ -12,14 +12,17 @@ import yaml
 
 import esmvalcore.io.esgf.facets
 import esmvalcore.preprocessor
+from esmvalcore._recipe import validate
 from esmvalcore._recipe.validate import (
     RecipeIssue,
     ensure_valid_recipe,
     validate_recipe,
 )
 from esmvalcore.config import CFG
+from esmvalcore.config._diagnostics import Diagnostics
 from esmvalcore.exceptions import RecipeError
 from tests.unit.recipe.example_recipes import (
+    AUTHORS,
     DUPLICATE_RECIPE,
     INVALID_RECIPE,
     RECIPE,
@@ -1131,6 +1134,44 @@ def test_validate_recipe_invalid_timerange(
     )
     assert issue.message.startswith(f"invalid value {timerange!r}. {reason}")
     assert issue.severity == "error"
+
+
+def _recipe_with_script(script: str) -> dict[str, Any]:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["documentation"]["authors"] = AUTHORS[:1]
+    recipe["diagnostics"]["example"]["scripts"]["plot"]["script"] = script
+    return recipe
+
+
+@pytest.mark.usefixtures("esmvaltool")
+def test_validate_recipe_script_in_working_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "my_diagnostic.py").write_text("")
+    monkeypatch.chdir(tmp_path)
+    assert validate_recipe(_recipe_with_script("my_diagnostic.py")) == []
+
+
+def test_validate_recipe_missing_script(esmvaltool: Diagnostics) -> None:
+    recipe = _recipe_with_script("examples/diagnostc.py")
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "scripts", "plot", "script"),
+            "file not found. 'examples/diagnostc.py' is not a file in the "
+            "working directory or in the diagnostic scripts of ESMValTool "
+            f"in {esmvaltool.scripts}.",
+        ),
+    ]
+
+
+def test_validate_recipe_script_without_esmvaltool(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(validate, "DIAGNOSTICS", Diagnostics(tmp_path))
+    recipe = _recipe_with_script("examples/diagnostc.py")
+    assert validate_recipe(recipe) == []
 
 
 def test_ensure_valid_recipe(tmp_path: Path) -> None:

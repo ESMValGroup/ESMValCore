@@ -3,16 +3,17 @@
 :func:`validate_recipe` checks a recipe against the JSON Schema from
 :mod:`esmvalcore._recipe.json_schema` and for problems that the schema cannot
 express, such as preprocessors that are used but not defined, or keys that are
-defined more than once. These checks only need the recipe and the
-configuration, from the session if one is given, including the CMOR tables.
-That makes them fast, and all problems are reported at once, with their
-position in the recipe file.
+defined more than once. These checks only need the recipe, the
+configuration, from the session if one is given, including the CMOR tables,
+and the installed ESMValTool. That makes them fast, and all problems are
+reported at once, with their position in the recipe file.
 
 Add a check here if it finds out whether the recipe itself is correct, unless
 the schema can express it. Checks of whether the recipe can run on this
 machine, for example because they need the input data, other files on disk
 such as shapefiles, or the installed software, belong in
-:mod:`esmvalcore._recipe.check`.
+:mod:`esmvalcore._recipe.check`. ESMValTool is an exception, because it
+defines the provenance tags and diagnostic scripts that recipes use.
 """
 
 from __future__ import annotations
@@ -44,6 +45,7 @@ from esmvalcore._recipe.json_schema import (
     generate_recipe_schema,
 )
 from esmvalcore.config import CFG
+from esmvalcore.config._diagnostics import DIAGNOSTICS
 from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 from esmvalcore.preprocessor import INITIAL_STEPS
@@ -1050,6 +1052,43 @@ def _find_invalid_timeranges(recipe: object) -> list[RecipeIssue]:
     return issues
 
 
+def _find_missing_scripts(recipe: object) -> list[RecipeIssue]:
+    """Find diagnostic scripts that do not exist.
+
+    The same rules as in :class:`esmvalcore._task.DiagnosticTask`: a script
+    is a file relative to the working directory or to the diagnostic scripts
+    of ESMValTool. Without ESMValTool, the scripts are not checked.
+    """
+    if not DIAGNOSTICS.scripts.is_dir():
+        return []
+    issues = []
+    for name, diagnostic in _mapping(recipe, "diagnostics").items():
+        for script_name, script in _mapping(diagnostic, "scripts").items():
+            path = script.get("script") if isinstance(script, dict) else None
+            if not isinstance(path, str):
+                continue
+            file = Path(path).expanduser()
+            if (
+                not file.is_file()
+                and not (DIAGNOSTICS.scripts / file).is_file()
+            ):
+                issues.append(
+                    RecipeIssue(
+                        (
+                            "diagnostics",
+                            name,
+                            "scripts",
+                            script_name,
+                            "script",
+                        ),
+                        f"file not found. {path!r} is not a file in the "
+                        "working directory or in the diagnostic scripts of "
+                        f"ESMValTool in {DIAGNOSTICS.scripts}.",
+                    ),
+                )
+    return issues
+
+
 def _find_unknown_preprocessors(recipe: object) -> list[RecipeIssue]:
     """Find datasets that use a preprocessor that is not defined."""
     preprocessors = {"default", *map(str, _mapping(recipe, "preprocessors"))}
@@ -1276,8 +1315,9 @@ def validate_recipe(
     alternative datasets of variable groups are datasets of the group, that the
     preprocessors of variable groups and datasets and the ancestors of scripts
     are defined in the recipe, that scripts and variable groups have different
-    names, that time ranges without wildcards are valid, and that statistics
-    operators and generic regridding schemes can be loaded.
+    names, that time ranges without wildcards are valid, that statistics
+    operators and generic regridding schemes can be loaded, and, if ESMValTool
+    is installed, that the diagnostic scripts exist.
 
     Parameters
     ----------
@@ -1352,6 +1392,7 @@ def _validate(
     issues.extend(_find_unknown_preprocessors(recipe))
     issues.extend(_find_unknown_ancestors(recipe))
     issues.extend(_find_scripts_named_like_variables(recipe))
+    issues.extend(_find_missing_scripts(recipe))
     # Only report settings that do not work if the schema found no problem
     # with them, to avoid reporting the same problem twice.
     issues.extend(

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
-from esmvalcore._recipe import json_schema
+from esmvalcore._recipe import json_schema, validate
 from esmvalcore.config._diagnostics import Diagnostics
 from tests.unit.recipe.example_recipes import AUTHORS
 
@@ -20,6 +20,8 @@ def esmvaltool(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Diagnostics:
     """Pretend that ESMValTool is installed."""
     diagnostics = Diagnostics(tmp_path / "esmvaltool")
     diagnostics.references.mkdir(parents=True)
+    (diagnostics.scripts / "examples").mkdir(parents=True)
+    (diagnostics.scripts / "examples" / "diagnostic.py").write_text("")
     (diagnostics.references / "eyring16gmd.bibtex").write_text("")
     tags = {
         "authors": {a: {"name": a} for a in AUTHORS},
@@ -32,5 +34,6 @@ def esmvaltool(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Diagnostics:
         encoding="utf-8",
     )
     monkeypatch.setattr(json_schema, "DIAGNOSTICS", diagnostics)
+    monkeypatch.setattr(validate, "DIAGNOSTICS", diagnostics)
     monkeypatch.setattr(json_schema, "TAGS", diagnostics.load_tags())
     return diagnostics
