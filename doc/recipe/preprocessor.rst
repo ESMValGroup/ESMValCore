@@ -823,6 +823,22 @@ Any domain name recognized by the ``cordex`` package can be used, for example
 `cordex introduction <https://py-cordex.readthedocs.io/en/latest/notebooks/introduction.html>`__.
 This creates the target grid from the official CORDEX domain definition.
 
+Regridding on the grid of a file
+--------------------------------
+
+It is also possible to regrid to the grid of a file that can be loaded with
+:func:`iris.load_cube`, for example a NetCDF file containing a single variable.
+The path to the file can be absolute or relative to the
+``auxiliary_data_dir`` (refer to :ref:`config_options`).
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: grids/my_target_grid.nc
+          scheme: linear
+
 Regridding on an ``MxN`` grid specification
 -------------------------------------------
 
