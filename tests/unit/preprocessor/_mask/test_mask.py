@@ -10,6 +10,8 @@ from cf_units import Unit
 import tests
 from esmvalcore.preprocessor._mask import (
     _get_fx_mask,
+    boolean_above_threshold,
+    boolean_below_threshold,
     count_spells,
     mask_above_threshold,
     mask_below_threshold,
@@ -104,6 +106,40 @@ class Test(tests.Test):
             self.data2,
             mask=np.array([[True, True], [False, False]]),
         )
+        self.assert_array_equal(result.data, expected)
+
+    def test_boolean_above_threshold(self):
+        """Test to create boolean above a threshold."""
+        arr = self.arr
+        result = boolean_above_threshold(arr, 1.5)
+        expected_data = np.array([[0, 0], [1, 1]])
+        if np.ma.isMaskedArray(arr.data):
+            expected = np.ma.masked_array(
+                expected_data,
+                mask=arr.data.mask,
+            )
+        else:
+            expected = np.ma.masked_array(
+                expected_data,
+                mask=False,
+            )
+        self.assert_array_equal(result.data, expected)
+
+    def test_boolean_below_threshold(self):
+        """Test to create boolean below a threshold."""
+        arr = self.arr
+        result = boolean_below_threshold(arr, 1.5)
+        expected_data = np.array([[1, 1], [0, 0]])
+        if np.ma.isMaskedArray(arr.data):
+            expected = np.ma.masked_array(
+                expected_data,
+                mask=arr.data.mask,
+            )
+        else:
+            expected = np.ma.masked_array(
+                expected_data,
+                mask=False,
+            )
         self.assert_array_equal(result.data, expected)
 
     def test_mask_above_threshold(self):
