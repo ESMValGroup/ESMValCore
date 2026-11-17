@@ -521,6 +521,19 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
         self._regex_pattern = self._templates_to_regex()
 
+    @property
+    def searchable_facets(self) -> frozenset[str]:
+        """Facets that can be used to search for data.
+
+        These are the facets in :attr:`dirname_template` and
+        :attr:`filename_template`.
+        """
+        templates = f"{self.dirname_template}/{self.filename_template}"
+        return frozenset(
+            _get_caps_options(tag)[0]
+            for tag in re.findall(r"{([^}]*)}", templates)
+        )
+
     def _get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
         """Compose the globs that will be used to look for files."""
         dirname_globs = _replace_tags(self.dirname_template, facets)
