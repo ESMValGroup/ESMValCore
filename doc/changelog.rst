@@ -1080,7 +1080,7 @@ CMOR standard
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Make :ref:`threshold_masking` preprocessors lazy  (:pull:`2169`) by :user:`joergbenke`
+-  Make :ref:`threshold masking <mask_above_threshold>` preprocessors lazy  (:pull:`2169`) by :user:`joergbenke`
 
    -  Restored usage of numpy in `_mask_with_shp` (:pull:`2209`) by :user:`joergbenke`
 -  Do not realize lazy coordinate bounds in CMOR check (:pull:`2146`) by :user:`sloosvel`
@@ -1316,7 +1316,7 @@ Please read the descriptions of the linked pull requests for detailed upgrade in
    `here <https://github.com/ESMValGroup/ESMValCore/pull/1609#Backward-incompatible-changes>`__
    and in the corresponding sections of the
    :ref:`recipe documentation <supplementary_variables>` and the
-   :ref:`preprocessor documentation <preprocessors_using_supplementary_variables>`.
+   :ref:`preprocessor documentation <add_supplementary_variables>`.
 -  Remove deprecated features scheduled for removal in v2.8.0 or earlier
    (:pull:`1826`) by :user:`schlunma`.
    Removed ``esmvalcore.iris_helpers.var_name_constraint`` (has been deprecated
@@ -1705,7 +1705,7 @@ Highlights
 
 -  The new preprocessor :func:`~esmvalcore.preprocessor.extract_location` can extract arbitrary locations on the Earth using the `geopy <https://pypi.org/project/geopy/>`__ package that connects to OpenStreetMap. For details, see :ref:`Extract location <extract_location>`.
 -  Time ranges can now be extracted using the `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_. In addition, wildcards are allowed, which makes the time selection much more flexible. For details, see :ref:`Recipe section: Datasets <Datasets>`.
--  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statistics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
+-  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statistics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble_statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
 
 This release includes
 
