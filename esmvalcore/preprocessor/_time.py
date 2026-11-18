@@ -355,7 +355,7 @@ def extract_season(cube: Cube, season: str) -> Cube:
         Original data
     season:
         Season to extract. Available: DJF, MAM, JJA, SON
-        and all sequentially correct combinations: e.g. JJAS
+        and all sequentially correct combinations: e.g. ``JJAS``
 
     Returns
     -------
@@ -671,8 +671,8 @@ def seasonal_statistics(
     seasons:
         Seasons to build. Available: ('DJF', 'MAM', 'JJA', SON') (default)
         and all sequentially correct combinations holding every month
-        of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
-        extraction.
+        of a year: e.g. ``('JJAS', 'ONDJFMAM')``, or less in case of prior
+        season extraction.
     keep_group_coordinates:
         If ``True``, keep temporal group coordinates (i.e., ``clim_season``,
         ``season_year``) in the result. If ``False``, remove them.
@@ -1384,7 +1384,8 @@ def timeseries_filter(
         The length of the filter window (in units of cube time coordinate).
     span:
         Number of months/days (depending on data frequency) on which
-        weights should be computed e.g. 2-yearly: span = 24 (2 x 12 months).
+        weights should be computed e.g. 2-yearly: ``span = 24`` (2 x 12
+        months).
         Span should have same units as cube time coordinate.
     filter_type: optional
         Type of filter to be applied; default 'lowpass'.
