@@ -83,9 +83,9 @@ The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
 define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
-- project that provides the data (key ``project``, value ``CMIP5`` or
+- project that provides the data (key ``project``, value e.g. ``CMIP7`` or
   ``CMIP6`` for CMIP data,
-  ``OBS`` for observational data, ``ana4MIPs`` for ana4MIPs data,
+  ``OBS`` or ``OBS6`` for observational data, ``ana4MIPs`` for ana4MIPs data,
   ``obs4MIPs`` for obs4MIPs data, ``ICON`` for ICON data).
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``rcp85``).
@@ -397,13 +397,13 @@ By default, ESMValCore creates the alias from the facets that differ between
 the datasets of a diagnostic, such as ``project``, ``exp``, ``dataset``, and
 ``ensemble``.
 Use the ``alias`` key to choose the alias of a dataset yourself.
-For example, the aliases of the following datasets are ``my_model``,
-``MPI-ESM1-2-LR_r1i1p1f1``, and ``MPI-ESM1-2-LR_r2i1p1f1``:
+For example, the aliases of the following datasets are ``example`` (manually set),
+``MPI-ESM1-2-LR_r1i1p1f1``, and ``MPI-ESM1-2-LR_r2i1p1f1`` (automatically generated):
 
 .. code-block:: yaml
 
     datasets:
-      - {dataset: CanESM5, alias: my_model, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: CanESM5, alias: example, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
       - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
       - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r2i1p1f1, grid: gn}
 
