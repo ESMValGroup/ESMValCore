@@ -252,7 +252,7 @@ Checks include, but are not limited to:
 
 The most relevant (i.e. a missing coordinate) will raise an error while others
 (i.e an incorrect long name) will be reported as a warning.
-How strict the check is can be set with the ``check_level``
+``check_level`` determines how strict the check will be
 :ref:`configuration option <config_options>`, as described in
 :ref:`cmor_check_strictness`.
 
@@ -465,7 +465,7 @@ the data vertically. ESMValCore can perform this vertical interpolation via the
 ways.
 
 Level extraction can be done at specific values passed to ``extract_levels`` as
-``levels:`` with its value a list of levels, in the units of the vertical
+``levels:`` with its value a list of levels, with units of the vertical
 coordinate as defined in the CMOR table (e.g., Pa for pressure levels):
 
 .. code-block:: yaml
@@ -667,7 +667,7 @@ vectorized rasters). As mentioned above, the spatial resolution of the the
 Natural Earth masks are much higher than any typical global model (10m for
 land and glaciated areas and 50m for ocean masks).
 The Natural Earth masks can only be used for data on a regular grid; for data
-on other grids, the ancillary variable is required.
+on other grids, an ancillary variable is required.
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
 
@@ -687,8 +687,8 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
       mask_landseaice:
         mask_out: ice
 
-and requires only one argument: ``mask_out``: either ``landsea`` to mask out
-the areas that are not covered by ice, or ``ice`` to mask out the areas
+and requires only one argument: ``mask_out``: either ``landsea``, to mask out
+the areas that are not covered by ice, or ``ice``, to mask out the areas
 covered by ice.
 
 This function requires a land ice area fraction `ancillary variable`_.
@@ -3202,7 +3202,7 @@ The ``save`` preprocessor supports the following arguments in the recipe:
   at a time, or the names of one or more coordinates separated by spaces, e.g.
   ``time latitude``, to read all values along those coordinates at a time.
 * ``alias`` (:obj:`str`; optional): Variable name to use in the file.
-  If not given, use the short name of the variable.
+  If given, the main variable will be renamed to the value provided here before saving.
 * Further arguments are passed to
   :func:`iris.fileformats.netcdf.saver.save`, for example ``complevel``.
 
