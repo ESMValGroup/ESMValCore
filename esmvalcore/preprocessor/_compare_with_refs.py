@@ -654,7 +654,8 @@ def t_test(
         true``. Do not specify this argument in a recipe.
     coords:
         Coordinates over which the t-test is calculated. If ``None``, calculate
-        the t-test over all coordinates, which results in a scalar cube.
+        the t-test over all coordinates, which results in a scalar cube as
+        the p-value.
     **kwargs:
         Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`.
 
