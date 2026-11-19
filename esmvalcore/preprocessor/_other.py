@@ -178,10 +178,11 @@ def clip(
 
 
 @preserve_float_dtype
-def cumulative_sum(
+def cumulative_sum(  # noqa: C901
     cube: Cube,
     coord: Coord | str,
     weights: np.ndarray | da.Array | bool | None = None,
+    reverse: bool = False,
     method: Literal["sequential", "blelloch"] = "sequential",
 ) -> Cube:
     """Calculate cumulative sum of the elements along a given coordinate.
@@ -199,6 +200,9 @@ def cumulative_sum(
         an array of the same shape as the input data, ``False`` or ``None`` (no
         weighting), or ``True`` (calculate the weights from the coordinate
         bounds; only works if each coordinate point has exactly 2 bounds).
+    reverse:
+        Boolean to compute the cumulative sum, from the last point of the
+        coordinate to the first.
     method:
         Method used to perform the cumulative sum. Only relevant if the cube
         has `lazy data
@@ -240,13 +244,21 @@ def cumulative_sum(
     # numpy's/dask's behavior)
     if axes:
         if cube.has_lazy_data():
+            if reverse:
+                cube.data = da.flip(cube.core_data(), axis=axes[0])
             cube.data = da.cumsum(
                 cube.core_data(),
                 axis=axes[0],
                 method=method,
             )
+            if reverse:
+                cube.data = da.flip(cube.core_data(), axis=axes[0])
         else:
+            if reverse:
+                cube.data = np.flip(cube.core_data(), axis=axes[0])
             cube.data = np.cumsum(cube.core_data(), axis=axes[0])
+            if reverse:
+                cube.data = np.flip(cube.core_data(), axis=axes[0])
 
     # Adapt cube metadata
     if cube.var_name is not None:
