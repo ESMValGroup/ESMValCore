@@ -640,7 +640,7 @@ def t_test(
     set needs to have the facet ``reference_for_t_test: true`` defined in the
     recipe. Please do **not** specify the option ``reference`` when using this
     preprocessor function in a recipe.
-
+Aggregate the data to the desired temporal resolution by the preprocessor before applying the t-test. For example, to test inter-annual variability, compute annual means first. If the data is left at monthly resolution, the seasonal cycle inflates the variance, which can mask statistically significant differences. Use the ``custom_order: true`` to ensure the order of preprocessor functions.
     Parameters
     ----------
     products:
