@@ -58,3 +58,30 @@ def test_compute_with_progress(
             assert "####" in progressbar
     if client is not None:
         client.shutdown()
+
+
+@pytest.mark.parametrize("interval", [-1, 0.0, 0.2])
+def test_compute_with_progress_distributed_raises(
+    session: Session,
+    interval: float,
+) -> None:
+    session["max_parallel_tasks"] = 1
+    session["logging"]["log_progress_interval"] = (
+        f"{interval}s" if interval > 0 else interval
+    )
+    session.run_dir.mkdir(parents=True)
+
+    def func() -> None:
+        msg = "failed task"
+        raise ValueError(msg)
+
+    delayeds = [dask.delayed(func)()]
+    with (
+        distributed.Client(n_workers=1, threads_per_worker=1),
+        pytest.raises(ValueError, match="failed task"),
+    ):
+        _dask_progress._compute_with_progress(
+            delayeds,
+            session=session,
+            description="test",
+        )
