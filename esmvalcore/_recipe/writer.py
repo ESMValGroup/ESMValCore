@@ -6,13 +6,11 @@ import bisect
 import io
 import re
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
 
 if TYPE_CHECKING:
-    import os
     from collections.abc import Callable, Hashable
 
 # The document start marker and the comments and empty lines before it.
@@ -672,58 +670,36 @@ def _serialize(
     return add_blank_lines_between_top_level_items(stream.getvalue())
 
 
-def to_yaml(
-    recipe: dict,
-    file: os.PathLike | None = None,
-) -> str:
-    """Convert a recipe to YAML format.
-
-    The sections of the recipe and the facets of the datasets and variables
-    are put in a standard order, the lists of datasets are sorted, and the
-    keys of other mappings are sorted by name, except the preprocessor
-    steps.
-
-    Parameters
-    ----------
-    recipe:
-        The recipe to write.
-    file:
-        If provided, the recipe will be written to this file.
-
-    Returns
-    -------
-    :
-        The YAML representation of the recipe.
-    """
+def _format_recipe_data(recipe: dict) -> str:
+    """Format a recipe that has been loaded from YAML."""
     dumper = RecipeDumper(io.StringIO(), sort_keys=False)
     node = dumper.represent_data(_sort_datasets(recipe))
     _Formatter(sort=True).recipe(node)
-    txt = _serialize(node)
-
-    if file:
-        recipe_file = Path(file)
-        recipe_file.parent.mkdir(parents=True, exist_ok=True)
-        recipe_file.write_text(f"{txt}\n", encoding="utf-8")
-
-    return txt
+    return f"{_serialize(node)}\n"
 
 
-def format_recipe(text: str) -> str:
+def format_recipe(recipe: str | dict) -> str:
     """Format a recipe in a standard way.
 
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, and the style of the YAML is made
-    consistent. Anchors, aliases, comments, and the document start marker
-    ``---`` are kept. Comments move together with the item that they belong
-    to. Comments inside a dataset that is written on one line are put at the
-    end of that line or before the dataset. The order of the datasets,
-    preprocessors, preprocessor steps, diagnostics, variable groups, and
-    scripts is kept.
+    consistent.
+
+    If the recipe is given as YAML text, anchors, aliases, comments, and the
+    document start marker ``---`` are kept. Comments move together with the
+    item that they belong to. Comments inside a dataset that is written on
+    one line are put at the end of that line or before the dataset. The order
+    of the datasets, preprocessors, preprocessor steps, diagnostics, variable
+    groups, and scripts is kept.
+
+    If the recipe is given as a :obj:`dict`, the lists of datasets are
+    sorted and the keys of other mappings are sorted by name, except the
+    preprocessor steps.
 
     Parameters
     ----------
-    text:
-        The YAML text of the recipe.
+    recipe:
+        The YAML text of the recipe or the recipe loaded from YAML.
 
     Returns
     -------
@@ -735,6 +711,9 @@ def format_recipe(text: str) -> str:
     yaml.YAMLError
         If the text is not valid YAML.
     """
+    if isinstance(recipe, dict):
+        return _format_recipe_data(recipe)
+    text = recipe
     match = _HEADER.match(text)
     header = match.group() if match else ""
     loader = _RecipeLoader(text)

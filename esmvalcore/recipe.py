@@ -28,8 +28,7 @@ line 11: preprocessors > pp > regird: unknown preprocessor function. Did you mea
 
 Formatting
 ----------
-Recipes can be written in a standard format with :func:`format_recipe` and
-:func:`to_yaml`.
+Recipes can be written in a standard format with :func:`format_recipe`.
 
 For example, to write a recipe in the standard format, with the facets of the
 datasets in the standard order:
@@ -56,12 +55,11 @@ diagnostics:
 
 from esmvalcore._recipe.json_schema import generate_recipe_schema
 from esmvalcore._recipe.validate import RecipeIssue, validate_recipe
-from esmvalcore._recipe.writer import format_recipe, to_yaml
+from esmvalcore._recipe.writer import format_recipe
 
 __all__ = [
     "RecipeIssue",
     "format_recipe",
     "generate_recipe_schema",
-    "to_yaml",
     "validate_recipe",
 ]

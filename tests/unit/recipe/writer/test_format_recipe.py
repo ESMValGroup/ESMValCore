@@ -7,7 +7,7 @@ import textwrap
 import pytest
 import yaml
 
-from esmvalcore.recipe import format_recipe, to_yaml
+from esmvalcore.recipe import format_recipe
 
 RECIPE = textwrap.dedent("""
     # A comment before the first item stays at the top.
@@ -163,18 +163,20 @@ def test_format_recipe_invalid() -> None:
         format_recipe("a: [")
 
 
-def test_to_yaml_multiline_string() -> None:
+def test_format_recipe_dict_multiline_string() -> None:
     """Test that strings with multiple lines are written as a block."""
     recipe = {"diagnostics": {"d": {"description": "line 1\nline 2\n"}}}
-    assert to_yaml(recipe) == (
-        "diagnostics:\n  d:\n    description: |\n      line 1\n      line 2"
+    assert format_recipe(recipe) == (
+        "diagnostics:\n  d:\n    description: |\n      line 1\n      line 2\n"
     )
 
 
-def test_to_yaml_sorts_numbers() -> None:
+def test_format_recipe_dict_sorts_numbers() -> None:
     """Test that numbers are sorted before names and by their value."""
     recipe = {"settings": {"b": 0, 10: 0, 2: 0, "a": 0}}
-    assert to_yaml(recipe) == "settings:\n  2: 0\n  10: 0\n  a: 0\n  b: 0"
+    assert format_recipe(recipe) == (
+        "settings:\n  2: 0\n  10: 0\n  a: 0\n  b: 0\n"
+    )
 
 
 def test_format_recipe_description_unchanged() -> None:
@@ -320,10 +322,10 @@ def test_format_recipe_datasets_not_a_list(text: str) -> None:
     assert format_recipe(text) == text
 
 
-def test_to_yaml_sorts_infinite_number_last() -> None:
+def test_format_recipe_dict_sorts_infinite_number_last() -> None:
     """Test that a key that cannot be converted to a number sorts last."""
     recipe = {"a": {float("inf"): 1, 2: 3}}
-    assert to_yaml(recipe) == "a:\n  2: 3\n  .inf: 1"
+    assert format_recipe(recipe) == "a:\n  2: 3\n  .inf: 1\n"
 
 
 def test_format_recipe_blank_lines_only_before_sections() -> None:

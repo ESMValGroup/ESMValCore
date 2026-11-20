@@ -24,7 +24,7 @@ from esmvalcore._recipe.to_datasets import (
     datasets_from_recipe,
 )
 from esmvalcore._recipe.validate import ensure_valid_recipe
-from esmvalcore._recipe.writer import to_yaml
+from esmvalcore._recipe.writer import format_recipe
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
@@ -1356,7 +1356,7 @@ class Recipe:
         """Write copy of recipe with filled wildcards."""
         recipe = datasets_to_recipe(USED_DATASETS, self._raw_recipe)
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
-        to_yaml(recipe, filename)
+        filename.write_text(format_recipe(recipe), encoding="utf-8")
         logger.info(
             "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filename,
