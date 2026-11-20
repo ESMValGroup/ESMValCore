@@ -20,6 +20,7 @@ from cftime import DatetimeNoLeap
 from iris.common.metadata import DimCoordMetadata
 from iris.cube import Cube
 from numpy.testing import (
+    assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     assert_raises,
@@ -1934,7 +1935,7 @@ def test_decadal_sum(existing_coord, keep_group_coordinates):
     assert bool(result.coords("decade")) is keep_group_coordinates
 
 
-def make_map_data(number_years=2):
+def make_map_data(number_years=2, lazy=False):
     """Make a cube with time, lat and lon dimensions."""
     times = np.arange(0.5, number_years * 360)
     bounds = np.stack(((times - 0.5), (times + 0.5)), 1)
@@ -1953,9 +1954,11 @@ def make_map_data(number_years=2):
         standard_name="longitude",
     )
     data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
-    chunks = (int(data.shape[0] / 2), 1, 2)
+    if lazy:
+        chunks = (int(data.shape[0] / 2), 1, 2)
+        data = da.asarray(data, chunks=chunks)
     return iris.cube.Cube(
-        da.asarray(data, chunks=chunks),
+        data,
         dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
 
@@ -1993,21 +1996,52 @@ for period in ("full", "day", "month", "season"):
         )
 
 
-@pytest.mark.parametrize("period", ["month"])
-def test_relative_anomalies_valerr(period):
-    """Test ValueError in relative ``anomalies``."""
-    cube = make_map_data(number_years=2)[:37]
+def test_anomalies_reference_missing_period():
+    """Test ``anomalies`` with a reference that does not cover all periods."""
+    cube = make_map_data(number_years=2)
     reference = {
         "start_year": 1950,
         "start_month": 1,
         "start_day": 1,
         "end_year": 1950,
-        "end_month": 12,
-        "end_day": 31,
+        "end_month": 3,
+        "end_day": 1,
     }
+    msg = (
+        r"Unable to compute anomalies: the reference does not contain data "
+        r"for month_number 3, 4, 5, 6, 7, 8, 9, 10, 11, 12"
+    )
+    with pytest.raises(ValueError, match=msg):
+        anomalies(cube, "month", reference)
 
-    with pytest.raises(ValueError):
-        anomalies(cube, period, reference, relative=True)
+
+def _get_period_points(cube, period):
+    """Get the period that each point in time of the cube belongs to."""
+    if period == "full":
+        return np.zeros(cube.shape[0])
+    coord_name = {
+        "day": "day_of_year",
+        "month": "month_number",
+        "season": "season_number",
+    }[period]
+    if not cube.coords(coord_name):
+        add_coord = getattr(iris.coord_categorisation, f"add_{coord_name}")
+        add_coord(cube, "time")
+    return cube.coord(coord_name).points
+
+
+def _fill_invalid(data):
+    """Replace masked and non-finite values by NaN."""
+    return np.ma.filled(np.ma.masked_invalid(data), np.nan)
+
+
+def _apply_per_period(data, points, func):
+    """Apply ``func`` to the data of each period separately."""
+    result = np.empty_like(data, dtype=np.float64)
+    for point in np.unique(points):
+        select = points == point
+        result[select] = func(data[select])
+    return result
 
 
 @pytest.mark.parametrize("period", ["full", "day", "month", "season"])
@@ -2016,57 +2050,12 @@ def test_relative_anomalies(period):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, relative=True)
 
-    reference = climate_statistics(
-        cube,
-        period=period,
-        seasons=("DJF", "MAM", "JJA", "SON"),
-    )
+    points = _get_period_points(cube, period)
+    mean = _apply_per_period(cube.data, points, lambda x: x.mean(axis=0))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        expected = (cube.data - mean) / mean * 100.0
 
-    if period == "full":
-        expected_relanomalies = (cube - reference) / reference * 100.0
-    else:
-        coord_dict = {
-            "day": "day_of_year",
-            "month": "month_number",
-            "season": "season_number",
-        }
-        coord_name = coord_dict[period]
-        func_name = "add_" + coord_name
-        addfunc = getattr(iris.coord_categorisation, func_name)
-        if not cube.coords(coord_name):
-            addfunc(cube, "time")
-        if not reference.coords(coord_name):
-            addfunc(reference, "time")
-        cube_coord = cube.coord(coord_name)
-        ref_coord = reference.coord(coord_name)
-        indices = np.empty_like(cube_coord.points, dtype=np.int32)
-
-        for idx, point in enumerate(ref_coord.points):
-            indices = np.where(cube_coord.points == point, idx, indices)
-
-        ref_data = reference.core_data()
-        (axis,) = cube.coord_dims(cube_coord)
-        ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
-        data = cube.core_data() - ref_data_broadcast
-        expected_relanomalies = cube.copy(data)
-
-        tdim = cube.coord_dims("time")[0]
-        reps = cube.shape[tdim] / reference.shape[tdim]
-
-        expected_relanomalies = (
-            expected_relanomalies
-            / da.concatenate(
-                [reference.core_data() for _ in range(int(reps))],
-                axis=tdim,
-            )
-            * 100.0
-        )
-
-        expected_relanomalies.remove_coord(cube_coord)
-
-    expected = np.ma.masked_invalid(expected_relanomalies.data)
-    resultdata = np.ma.masked_invalid(result.data)
-    assert_array_equal(resultdata, expected)
+    assert_allclose(_fill_invalid(result.data), _fill_invalid(expected))
     assert result.units == "%"
 
 
@@ -2076,80 +2065,93 @@ def test_standardized_anomalies(period):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=True)
 
-    reference = climate_statistics(
-        cube,
-        period=period,
-        seasons=("DJF", "MAM", "JJA", "SON"),
+    points = _get_period_points(cube, period)
+    mean = _apply_per_period(cube.data, points, lambda x: x.mean(axis=0))
+    anomaly = cube.data - mean
+    stddev = _apply_per_period(
+        anomaly,
+        points,
+        lambda x: x.std(axis=0, ddof=1),
     )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        expected = anomaly / stddev
 
-    if period == "full":
-        expected_stdanomalies = (cube - reference) / np.std(
-            cube.data,
-            axis=0,
-            keepdims=True,
-            ddof=1,
-        )
-    else:
-        coord_dict = {
-            "day": "day_of_year",
-            "month": "month_number",
-            "season": "season_number",
-        }
-        coord_name = coord_dict[period]
-        func_name = "add_" + coord_name
-        addfunc = getattr(iris.coord_categorisation, func_name)
-        if not cube.coords(coord_name):
-            addfunc(cube, "time")
-        if not reference.coords(coord_name):
-            addfunc(reference, "time")
-        cube_coord = cube.coord(coord_name)
-        ref_coord = reference.coord(coord_name)
-        indices = np.empty_like(cube_coord.points, dtype=np.int32)
-
-        for idx, point in enumerate(ref_coord.points):
-            indices = np.where(cube_coord.points == point, idx, indices)
-
-        ref_data = reference.core_data()
-        (axis,) = cube.coord_dims(cube_coord)
-        ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
-        data = cube.core_data() - ref_data_broadcast
-        expected_stdanomalies = cube.copy(data)
-
-        cube_std = climate_statistics(
-            cube,
-            operator="std_dev",
-            period=period,
-        )
-
-        tdim = cube.coord_dims("time")[0]
-        reps = cube.shape[tdim] / cube_std.shape[tdim]
-
-        expected_stdanomalies = expected_stdanomalies / da.concatenate(
-            [cube_std.core_data() for _ in range(int(reps))],
-            axis=tdim,
-        )
-
-        expected_stdanomalies.remove_coord(cube_coord)
-
-    expected = np.ma.masked_invalid(expected_stdanomalies.data)
-    resultdata = np.ma.masked_invalid(result.data)
-    assert_array_equal(resultdata, expected)
+    assert_allclose(_fill_invalid(result.data), _fill_invalid(expected))
     assert result.units == "1"
 
 
-def test_standardized_anomalies_invalid_period():
+@pytest.mark.parametrize("relative", [True, False])
+@pytest.mark.parametrize("standardize", [True, False])
+def test_anomalies_seasons_monthly_data(relative, standardize):
+    """Test ``anomalies`` for seasons with more than one point in time."""
+    times = np.arange(24) * 30 + 15.0
+    time = iris.coords.DimCoord(
+        times,
+        bounds=np.stack([times - 15, times + 15], axis=1),
+        standard_name="time",
+        units=Unit("days since 1950-01-01", calendar="360_day"),
+    )
+    data = 1000.0 + np.arange(24) ** 2
+    cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+
+    result = anomalies(
+        cube,
+        "season",
+        relative=relative,
+        standardize=standardize,
+    )
+
+    points = _get_period_points(cube, "season")
+    mean = _apply_per_period(data, points, np.mean)
+    expected = data - mean
+    if standardize:
+        expected /= _apply_per_period(
+            expected,
+            points,
+            lambda x: x.std(ddof=1),
+        )
+    elif relative:
+        expected = expected / mean * 100.0
+    assert_allclose(result.data, expected)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [{}, {"relative": True}, {"standardize": True}],
+)
+def test_anomalies_lazy(kwargs):
+    """Test that ``anomalies`` returns lazy data only for lazy input."""
+    cube = make_map_data(number_years=2, lazy=True)
+    result = anomalies(cube, "month", **kwargs)
+    assert cube.has_lazy_data()
+    assert result.has_lazy_data()
+    expected = anomalies(make_map_data(number_years=2), "month", **kwargs)
+    assert not expected.has_lazy_data()
+    assert_array_equal(result.data, expected.data)
+
+
+def test_anomalies_incomplete_period():
+    """Test ``anomalies`` when not all periods have the same length."""
     time_coord = iris.coords.DimCoord(
         [15, 100, 380],
         standard_name="time",
         units="days since 2000-01-01",
     )
-    cube = iris.cube.Cube([1, 2, 3], dim_coords_and_dims=[(time_coord, 0)])
-    msg = (
-        r"Cannot safely apply preprocessor to this dataset since the full "
-        r"time period of this dataset is not a multiple of the period 'month'"
+    cube = iris.cube.Cube(
+        [1.0, 2.0, 3.0],
+        dim_coords_and_dims=[(time_coord, 0)],
     )
-    with pytest.raises(ValueError, match=msg):
-        anomalies(cube, period="month", standardize=True)
+    result = anomalies(cube, period="month", relative=True)
+    assert_array_equal(result.data, [-50.0, 0.0, 50.0])
+
+
+def test_anomalies_input_unchanged():
+    """Test that ``anomalies`` does not modify the input cube."""
+    cube = make_map_data(number_years=2)
+    iris.coord_categorisation.add_month_number(cube, "time")
+    original = cube.copy()
+    anomalies(cube, "month", standardize=True)
+    assert cube == original
 
 
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)
