@@ -5,7 +5,6 @@ from __future__ import annotations
 import bisect
 import io
 import re
-import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -17,7 +16,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Hashable
 
 # The document start marker and the comments and empty lines before it.
-_HEADER = re.compile(r"(?:[ \t]*(?:#.*)?\r?\n)*---[ \t]*\r?\n")
+_HEADER = re.compile(
+    r"(?:[ \t]*(?:#.*)?\r?\n)*---(?:[ \t]+#.*)?[ \t]*\r?\n",
+)
 _NULL_TAG = "tag:yaml.org,2002:null"
 # The order of the keys in the sections of a recipe. Keys that are not
 # listed get the default order of the section and are sorted by name.
@@ -52,16 +53,6 @@ _DIAGNOSTIC: _Order = (
     6,
 )
 _SCRIPT: _Order = ({"ancestors": 0, "script": 1}, 2)
-
-
-# Width available for the text of the description (79 minus the indentation
-# of the text of a block scalar in the documentation section).
-_DESCRIPTION_WIDTH = 75
-# Descriptions that are a single line of at most this length are not a block.
-_SHORT_DESCRIPTION = 64
-_LIST_ITEM = re.compile(r"[-*+]\s|\d+[.)]\s")
-# The anchor, tag, and header of a folded block scalar.
-_FOLDED_HEADER = re.compile(r"(?:[&!]\S*\s+)*>[^\n]*\n?")
 
 
 class RecipeDumper(yaml.SafeDumper):
@@ -220,7 +211,9 @@ class _RecipeLoader(yaml.SafeLoader):
         super().__init__(stream)
         self.anchor_names: dict[yaml.Node, str] = {}
         self.comments: list[_Comment] = []
+        # Where the sequence items start: at the "-" in block style.
         self.item_marks: dict[tuple[int, int], yaml.Mark] = {}
+        self._entry_mark: yaml.Mark | None = None
 
     def _scan_comment(self) -> None:
         """Scan a comment, if there is one, and remember it."""
@@ -268,6 +261,21 @@ class _RecipeLoader(yaml.SafeLoader):
         self._scan_comment()
         super().scan_block_scalar_ignored_line(start_mark)
 
+    def _remember_entry(self) -> None:
+        """Remember where the "-" of the next block sequence item is."""
+        if self.check_token(yaml.BlockEntryToken):
+            self._entry_mark = self.peek_token().start_mark
+
+    def parse_block_sequence_entry(self) -> yaml.Event:
+        """Parse a block sequence item, remembering where its "-" is."""
+        self._remember_entry()
+        return super().parse_block_sequence_entry()
+
+    def parse_indentless_sequence_entry(self) -> yaml.Event:
+        """Parse a block sequence item, remembering where its "-" is."""
+        self._remember_entry()
+        return super().parse_indentless_sequence_entry()
+
     def compose_node(
         self,
         parent: yaml.Node | None,
@@ -277,7 +285,10 @@ class _RecipeLoader(yaml.SafeLoader):
         event = self.peek_event()
         if isinstance(parent, yaml.SequenceNode):
             # Remember where sequence items start, also if they are aliases.
-            self.item_marks[id(parent), index] = event.start_mark
+            mark = event.start_mark
+            if not parent.flow_style and self._entry_mark is not None:
+                mark = self._entry_mark
+            self.item_marks[id(parent), index] = mark
         node = super().compose_node(parent, index)
         anchor = getattr(event, "anchor", None)
         is_alias = isinstance(event, yaml.AliasEvent)
@@ -288,7 +299,6 @@ class _RecipeLoader(yaml.SafeLoader):
 
 def _find_items(
     root: yaml.Node,
-    text: str,
     item_marks: dict[tuple[int, int], yaml.Mark],
 ) -> list[_Item]:
     """Find the items of the mappings and sequences in document order."""
@@ -315,16 +325,11 @@ def _find_items(
         elif isinstance(node, yaml.SequenceNode):
             for number, value_node in enumerate(node.value):
                 mark = item_marks[id(node), number]
-                column = mark.column
-                if not node.flow_style:
-                    # Use the column of the "-" of the item.
-                    dash = text.rfind("-", 0, mark.index)
-                    column = dash - text.rfind("\n", 0, dash) - 1
                 item = _Item(
                     (id(node), number),
                     mark.index,
                     mark.line,
-                    column,
+                    mark.column,
                     node,
                     parent,
                 )
@@ -426,87 +431,6 @@ def _name_order(item: tuple[yaml.Node, yaml.Node]) -> tuple[float, str]:
     return float("inf"), _key(item)
 
 
-def _normalize_description(text: str, *, join: bool) -> str:
-    """Normalize a description, optionally joining the lines of paragraphs.
-
-    Trailing whitespace, the indentation common to all lines, and blank lines
-    at the start and end are removed, and runs of blank lines become one
-    blank line. If ``join`` is :obj:`True`, the lines of a paragraph are
-    joined with single spaces.
-    List items (starting with ``-``, ``*``, ``+``, ``1.`` or ``1)``) and
-    lines that are more indented than the paragraph text stay on their own
-    lines, keeping their relative indentation. A line that is more indented
-    than the list item above it, and is not a list item itself, is joined
-    to that item.
-    """
-    lines = [line.rstrip() for line in text.expandtabs().splitlines()]
-    indents = [len(line) - len(line.lstrip()) for line in lines if line]
-    base = min(indents, default=0)
-    result: list[str] = []
-    kind = ""  # Kind of the last output line: "", "text", "item" or "other".
-    item_indent = 0
-    for raw in lines:
-        if not raw:
-            if result and result[-1]:
-                result.append("")
-            kind = ""
-            continue
-        line = raw[base:]
-        indent = len(line) - len(line.lstrip())
-        content = line.lstrip()
-        if _LIST_ITEM.match(content + " "):
-            result.append(line)
-            kind, item_indent = "item", indent
-        elif join and (
-            (kind == "item" and indent > item_indent)
-            or (kind == "text" and indent == 0)
-        ):
-            result[-1] += f" {content}"
-        else:
-            result.append(line)
-            kind = "text" if indent == 0 else "other"
-    while result and not result[-1]:
-        result.pop()
-    return "\n".join(result)
-
-
-def _wrap_description(text: str) -> str:
-    """Wrap the lines of a normalized description.
-
-    Paragraphs and list items are wrapped to ``_DESCRIPTION_WIDTH``, and
-    the continuation lines of a list item are indented under its text. Lines
-    that are more indented than the paragraph text and are not list items
-    are not wrapped. A word that would start a continuation line and looks
-    like a list item stays on the previous line, so that the result is
-    normalized again to the same text.
-    """
-    result = []
-    for line in text.split("\n"):
-        content = line.lstrip()
-        indent = line[: len(line) - len(content)]
-        marker = _LIST_ITEM.match(content + " ")
-        if marker:
-            hanging = indent + " " * len(marker.group())
-        elif indent or not content:
-            result.append(line)
-            continue
-        else:
-            hanging = ""
-        wrapped = textwrap.wrap(
-            line,
-            width=_DESCRIPTION_WIDTH,
-            subsequent_indent=hanging,
-            break_long_words=False,
-            break_on_hyphens=False,
-        )
-        for number, part in enumerate(wrapped):
-            if number and _LIST_ITEM.match(part.lstrip() + " "):
-                result[-1] += f" {part}"
-            else:
-                result.append(part)
-    return "\n".join(result)
-
-
 class _Formatter:
     """Put the keys of a recipe in a standard order and set their style.
 
@@ -517,13 +441,10 @@ class _Formatter:
         :obj:`False`, these keys stay in the same order, so that, for
         example, diagnostics and variable groups stay in the order in which
         they were written.
-    text:
-        The text that the nodes were composed from, if any.
     """
 
-    def __init__(self, *, sort: bool, text: str | None = None) -> None:
+    def __init__(self, *, sort: bool) -> None:
         self.sort = sort
-        self.text = text
         self._done: set[int] = set()
 
     def _first_visit(self, node: yaml.Node) -> bool:
@@ -599,7 +520,7 @@ class _Formatter:
 
     def _section(self, key: str, node: yaml.Node) -> None:
         if key == "documentation":
-            self._mapping(node, _DOCUMENTATION, self._documentation)
+            self._mapping(node, _DOCUMENTATION)
         elif key == "datasets":
             self._datasets(node)
         elif key == "preprocessors":
@@ -608,35 +529,6 @@ class _Formatter:
             self._named(node, self._diagnostic)
         else:
             self.generic(node)
-
-    def _description(self, node: yaml.ScalarNode) -> str:
-        """Get the text of a description as it was written in the recipe.
-
-        Folding a block scalar joins the lines of a list and removes the
-        blank lines between paragraphs, so read it from the text instead.
-        """
-        if self.text is None or node.style != ">":
-            return node.value
-        source = self.text[node.start_mark.index : node.end_mark.index]
-        return _FOLDED_HEADER.sub("", source, count=1)
-
-    def _documentation(self, key: str, node: yaml.Node) -> None:
-        if key == "description" and isinstance(node, yaml.ScalarNode):
-            # The line breaks of a loaded folded block scalar are the breaks
-            # between its paragraphs, so they can only be joined in the text.
-            text = _normalize_description(
-                self._description(node),
-                join=self.text is not None,
-            )
-            node.value = _wrap_description(text)
-            node.style = (
-                None
-                if "\n" not in node.value
-                and len(node.value) <= _SHORT_DESCRIPTION
-                else "|"
-            )
-            return
-        self.generic(node)
 
     def _preprocessor(self, node: yaml.Node) -> None:
         # The order of the preprocessor steps may matter, so keep it.
@@ -738,7 +630,7 @@ def add_blank_lines_between_top_level_items(yaml_text: str) -> str:
     formatted_lines = [lines[0]]
 
     for line in lines[1:]:
-        if any(line.startswith(key) for key in top_level_keys):
+        if line.partition(":")[0] in top_level_keys:
             # Put the blank line before the comments above the item.
             start = len(formatted_lines)
             while start > 1 and (
@@ -789,10 +681,7 @@ def to_yaml(
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, the lists of datasets are sorted, and the
     keys of other mappings are sorted by name, except the preprocessor
-    steps. The lines of the description of the recipe are wrapped at 79
-    characters, except indented lines. Unlike :func:`format_recipe`, this does
-    not join lines, because a loaded recipe does not show which line breaks
-    separate paragraphs.
+    steps.
 
     Parameters
     ----------
@@ -829,9 +718,7 @@ def format_recipe(text: str) -> str:
     to. Comments inside a dataset that is written on one line are put at the
     end of that line or before the dataset. The order of the datasets,
     preprocessors, preprocessor steps, diagnostics, variable groups, and
-    scripts is kept. The lines of each
-    paragraph of the description of the recipe are joined and wrapped at 79
-    characters, keeping list items and indented lines on their own lines.
+    scripts is kept.
 
     Parameters
     ----------
@@ -860,8 +747,8 @@ def format_recipe(text: str) -> str:
     if node is None or (node.tag == _NULL_TAG and not node.value):
         lines = _comment_lines(comments)
         return header + "".join(f"{line}\n" for line in [*lines, "{}"])
-    items = _find_items(node, text, loader.item_marks)
-    _Formatter(sort=False, text=text).recipe(node)
+    items = _find_items(node, loader.item_marks)
+    _Formatter(sort=False).recipe(node)
     attached, leading = _attach_comments(items, comments)
     lines = _comment_lines(leading)
     if leading and items and items[0].line > leading[-1].line + 1:

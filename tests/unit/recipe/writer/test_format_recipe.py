@@ -115,15 +115,6 @@ def test_format_recipe_multiline_string() -> None:
     assert format_recipe(text) == "a:\n  b: |-\n    line 1\n    line 2\n"
 
 
-def test_format_recipe_strips_description() -> None:
-    """Test that trailing whitespace is removed from the description."""
-    text = "documentation:\n  description: |\n    Line 1. \n\n    Line 2.\n\n"
-    expected = (
-        "documentation:\n  description: |-\n    Line 1.\n\n    Line 2.\n"
-    )
-    assert format_recipe(text) == expected
-
-
 def test_format_recipe_empty() -> None:
     """Test that an empty recipe can be formatted."""
     assert format_recipe("") == "{}\n"
@@ -137,6 +128,7 @@ def test_format_recipe_empty() -> None:
         "# ESMValTool\n# recipe.yml\n---\n",
         "\n  # Indented\n\n---\n",
         "# Windows\r\n---\r\n",
+        "--- # comment\n",
     ],
 )
 def test_format_recipe_keeps_header(header: str) -> None:
@@ -157,12 +149,6 @@ def test_format_recipe_only_header(body: str) -> None:
     """Test that a recipe with only a header can be formatted."""
     text = f"# comment\n---\n{body}"
     assert format_recipe(text) == f"# comment\n---\n{body}{{}}\n"
-
-
-def test_format_recipe_header_folded_description() -> None:
-    """Test that a folded description is read after a header."""
-    text = f"# comment\n---\ndocumentation:\n  description: >\n{FOLDED}"
-    assert _description(format_recipe(text)) == FOLDED_NORMALIZED
 
 
 def test_format_recipe_invalid_line_number() -> None:
@@ -191,169 +177,10 @@ def test_to_yaml_sorts_numbers() -> None:
     assert to_yaml(recipe) == "settings:\n  2: 0\n  10: 0\n  a: 0\n  b: 0"
 
 
-def _description(text: str) -> str:
-    """Load the description of a formatted recipe."""
-    return yaml.safe_load(text)["documentation"]["description"]
-
-
-DESCRIPTION = (
-    "documentation:\n  description: |\n"
-    "    This sentence is split\n    over two lines.\n\n"
-    "    Second paragraph, which is\n    also split.\n"
-    "    - item one\n      continues here\n"
-    "    - item two\n"
-    "        - nested item\n"
-    "    Text after the list.\n"
-)
-NORMALIZED = (
-    "This sentence is split over two lines.\n\n"
-    "Second paragraph, which is also split.\n"
-    "- item one continues here\n"
-    "- item two\n"
-    "    - nested item\n"
-    "Text after the list."
-)
-
-
-def test_format_recipe_description_joins_lines() -> None:
-    """Test that the lines of a paragraph are joined."""
+def test_format_recipe_description_unchanged() -> None:
+    """Test that the text of the description is not changed."""
     text = "documentation:\n  description: |\n    One\n    sentence.\n"
-    assert _description(format_recipe(text)) == "One sentence."
-
-
-def test_format_recipe_description_keeps_lists_and_paragraphs() -> None:
-    """Test that list items, indented lines and paragraphs are kept."""
-    formatted = format_recipe(DESCRIPTION)
-    assert _description(formatted) == NORMALIZED
-    assert "  description: |-\n" in formatted
-
-
-FOLDED = """\
-    First paragraph,
-    split over two lines.
-
-    Second paragraph.
-
-    Notes:
-
-    - item one
-    - item two
-"""
-FOLDED_NORMALIZED = (
-    "First paragraph, split over two lines.\n\n"
-    "Second paragraph.\n\n"
-    "Notes:\n\n"
-    "- item one\n"
-    "- item two"
-)
-
-
-@pytest.mark.parametrize(
-    "header",
-    [">", ">-", ">+", "> # comment", "&anchor >", "!!str >", "&anchor\n    >"],
-)
-def test_format_recipe_folded_description(header: str) -> None:
-    """Test that the paragraphs and lists of a folded block are kept."""
-    text = (
-        f"documentation:\n  description: {header}\n{FOLDED}  title: Example\n"
-    )
-    formatted = format_recipe(text)
-    assert _description(formatted) == FOLDED_NORMALIZED
-    assert yaml.safe_load(formatted)["documentation"]["title"] == "Example"
-    assert format_recipe(formatted) == formatted
-
-
-def test_format_recipe_folded_description_at_end() -> None:
-    """Test a folded block at the end of a recipe without a final newline."""
-    text = "documentation:\n  description: >\n    One\n    sentence."
-    assert _description(format_recipe(text)) == "One sentence."
-
-
-WORDS = " ".join(["word"] * 30)
-LONG = f"{WORDS}\n\n{WORDS}\n  indented {WORDS}\n- item {WORDS}\n1. {WORDS}"
-
-
-def _wrap(text: str, indent: str = "") -> str:
-    """Wrap text at 75 characters."""
-    return textwrap.fill(text, 75, subsequent_indent=indent)
-
-
-@pytest.mark.parametrize("use_to_yaml", [True, False])
-def test_description_idempotent_and_wrapped(*, use_to_yaml: bool) -> None:
-    """Test that formatting twice gives the same text, wrapped at 79."""
-    if use_to_yaml:
-        formatted = to_yaml({"documentation": {"description": LONG}})
-        again = to_yaml(yaml.safe_load(formatted))
-    else:
-        indented = textwrap.indent(LONG, "    ")
-        formatted = format_recipe(
-            f"documentation:\n  description: |\n{indented}\n",
-        )
-        again = format_recipe(formatted)
-    assert again == formatted
-    lines = formatted.splitlines()
-    assert lines[1] == "  description: |-"
-    assert max(len(line) for line in lines if "indented" not in line) <= 79
-    description = _description(formatted)
-    assert description == "\n".join(
-        [
-            _wrap(WORDS),
-            "",
-            _wrap(WORDS),
-            f"  indented {WORDS}",
-            _wrap(f"- item {WORDS}", "  "),
-            _wrap(f"1. {WORDS}", "   "),
-        ],
-    )
-    assert "\n  indented word word" in description
-
-
-def test_description_list_item_is_wrapped_with_hanging_indent() -> None:
-    """Test that continuation lines of a list item are indented."""
-    recipe = {"documentation": {"description": f"- {WORDS}"}}
-    lines = _description(to_yaml(recipe)).splitlines()
-    assert len(lines) > 1
-    assert lines[1].startswith("  word")
-
-
-def test_description_wrapping_does_not_create_list_items() -> None:
-    """Test that a wrapped line does not start with a list marker."""
-    # The first 15 words fill a line, so the "-" would start the next line.
-    text = " ".join(["word"] * 15) + " - " + "word " * 5
-    recipe = {"documentation": {"description": text.strip()}}
-    formatted = to_yaml(recipe)
-    assert to_yaml(yaml.safe_load(formatted)) == formatted
-    assert not any(
-        line.lstrip().startswith("- ") for line in formatted.splitlines()[2:]
-    )
-    assert " word - word" in formatted
-
-
-def test_description_trailing_blank_lines_removed() -> None:
-    """Test that blank lines at the end of the description are removed."""
-    recipe = {"documentation": {"description": "Some text.\n\n"}}
-    assert to_yaml(recipe) == "documentation:\n  description: Some text."
-
-
-def test_to_yaml_description_normalized() -> None:
-    """Test that to_yaml normalizes the description without joining lines."""
-    recipe = {
-        "documentation": {"description": " a \n b\n\n\n   - c\n     d\n"},
-    }
-    assert _description(to_yaml(recipe)) == "a\nb\n\n  - c\n    d"
-
-
-def test_to_yaml_loaded_folded_description() -> None:
-    """Test that the paragraphs of a loaded folded block are kept."""
-    text = f"documentation:\n  description: >\n{FOLDED}"
-    formatted = to_yaml(yaml.safe_load(text))
-    assert _description(formatted) == (
-        "First paragraph, split over two lines.\n"
-        "Second paragraph.\n"
-        "Notes:\n"
-        "- item one - item two"
-    )
-    assert to_yaml(yaml.safe_load(formatted)) == formatted
+    assert format_recipe(text) == text
 
 
 def test_description_short_stays_plain() -> None:
@@ -460,7 +287,8 @@ def test_format_recipe_keeps_comments(text: str, expected: str) -> None:
 
 def test_format_recipe_comment_after_wrapped_scalar() -> None:
     """Test that a comment is written after a scalar that is wrapped."""
-    text = f"a: {WORDS} {WORDS}  # comment\nb: 1\n"
+    words = " ".join(["word"] * 60)
+    text = f"a: {words}  # comment\nb: 1\n"
     formatted = format_recipe(text)
     assert yaml.safe_load(formatted) == yaml.safe_load(text)
     lines = formatted.splitlines()
@@ -472,7 +300,7 @@ def test_format_recipe_comment_after_description_header() -> None:
     """Test that a comment after the header of the description is kept."""
     text = "documentation:\n  description: |  # one\n    Some\n    text.\n"
     formatted = format_recipe(text)
-    assert formatted == "documentation:\n  description: Some text.  # one\n"
+    assert formatted == text
 
 
 def test_format_recipe_byte_order_mark() -> None:
@@ -496,3 +324,18 @@ def test_to_yaml_sorts_infinite_number_last() -> None:
     """Test that a key that cannot be converted to a number sorts last."""
     recipe = {"a": {float("inf"): 1, 2: 3}}
     assert to_yaml(recipe) == "a:\n  2: 3\n  .inf: 1"
+
+
+def test_format_recipe_blank_lines_only_before_sections() -> None:
+    """Test that keys that start like a section get no blank line."""
+    text = "a: 1\ndatasets_extra: 1\ndiagnostics: {}\n"
+    assert (
+        format_recipe(text) == "a: 1\ndatasets_extra: 1\n\ndiagnostics: {}\n"
+    )
+
+
+def test_format_recipe_comment_with_dash_after_item_dash() -> None:
+    """Test a comment with a "-" between the "-" of an item and its value."""
+    text = "a:\n  - # note-x\n    b: 1\n  - c\n  # after c\nd: 1\n"
+    expected = "a:\n  - b: 1  # note-x\n  - c\n  # after c\nd: 1\n"
+    assert format_recipe(text) == expected

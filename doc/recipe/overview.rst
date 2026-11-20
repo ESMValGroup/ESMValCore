@@ -926,13 +926,6 @@ same line, the next item if the comment is not indented more than that item,
 or otherwise the item above it.
 Comments inside a dataset that is written on one line are put on that line, or
 on their own line before the dataset.
-The lines of each paragraph of the ``description`` in the documentation
-section are joined and wrapped at 79 characters.
-List items and lines that are more indented than the paragraph text stay on
-their own lines, and blank lines between paragraphs are kept.
-The continuation lines of a list item are indented under its text.
-The description is written as a literal block scalar (``|-``), so the loaded
-text contains the line breaks added by wrapping.
 For example, to format the recipe ``recipe_example.yml``, run
 
 .. code-block:: python
