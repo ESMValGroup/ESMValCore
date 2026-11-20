@@ -138,6 +138,17 @@ def test_to_iris_online():
     assert dataset.attributes["source_file"].endswith(".nc")
 
 
+def test_searchable_facets() -> None:
+    """Test that the facets in the mapping can be searched for."""
+    data_source = IntakeESGFDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        facets={"dataset": "source_id", "short_name": "variable_id"},
+    )
+    assert data_source.searchable_facets == {"dataset", "short_name"}
+
+
 def test_find_data_no_results_sets_debug_info(mocker: MockerFixture) -> None:
     """When catalog.search raises NoSearchResults, find_data should return empty list and set debug_info."""
     data_source = IntakeESGFDataSource(
