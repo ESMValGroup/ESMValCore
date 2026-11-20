@@ -1171,7 +1171,11 @@ def test_t_test_cubes_2d(
 @pytest.mark.parametrize(
     ("coords", "p_value", "out_dims"),
     [
-        (("time", "latitude"), [0.4950256049633026, 0.34128352999687195], (2,)),
+        (
+            ("time", "latitude"),
+            [0.4950256049633026, 0.34128352999687195],
+            (2,),
+        ),
         (
             ("time", "longitude"),
             [0.7026968598365784, 0.1957930326461792],
