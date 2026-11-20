@@ -667,7 +667,7 @@ def _serialize(
     dumper = RecipeDumper(
         stream,
         allow_unicode=True,
-        width=200,
+        width=160,
         default_flow_style=False,
     )
     dumper.anchor_names = anchor_names or {}
