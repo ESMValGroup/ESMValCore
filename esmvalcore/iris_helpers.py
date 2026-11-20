@@ -437,7 +437,10 @@ _SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
 ]
 
 
-def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
+def _try_special_unit_conversions(
+    cube: Cube,
+    units: str | float | Unit,
+) -> bool:
     """Try special unit conversion (in-place).
 
     Parameters
@@ -491,7 +494,7 @@ def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
     return False
 
 
-def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
+def safe_convert_units(cube: Cube, units: str | float | Unit) -> Cube:
     """Safe unit conversion (change of `standard_name` not allowed; in-place).
 
     This is a safe version of :func:`esmvalcore.preprocessor.convert_units`
