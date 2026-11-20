@@ -189,11 +189,30 @@ def _update_target_grid(
     elif is_cordex_domain(grid):
         pass
     elif isinstance(grid, str):
-        # Check that MxN grid spec is correct
-        parse_cell_spec(grid)
+        # Absolute paths are kept, relative paths are relative to the
+        # auxiliary_data_dir.
+        path = dataset.session["auxiliary_data_dir"] / Path(grid).expanduser()
+        if path.is_file():
+            settings["regrid"]["target_grid"] = path
+        else:
+            # Check that MxN grid spec is correct
+            try:
+                parse_cell_spec(grid)
+            except ValueError as exc:
+                msg = (
+                    f"{exc} If 'target_grid: {grid}' is meant to be a file, "
+                    f"note that no file was found at {path}."
+                )
+                raise RecipeError(msg) from exc
     elif isinstance(grid, dict):
         # Check that cdo spec is correct
-        _spec_to_latlonvals(**grid)
+        try:
+            _spec_to_latlonvals(**grid)
+        except ValueError as exc:
+            msg = (
+                f"Invalid regional grid specification in 'target_grid': {exc}"
+            )
+            raise RecipeError(msg) from exc
 
 
 def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
