@@ -399,7 +399,7 @@ def count_spells(
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     array_module = da if isinstance(data, da.Array) else np
-    if not threshold:
+    if threshold is None:
         # Keeps the mask of the input data.
         data_hits = array_module.ma.ones_like(data, dtype=bool)
     else:

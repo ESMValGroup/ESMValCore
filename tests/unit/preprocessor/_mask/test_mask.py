@@ -68,6 +68,11 @@ class Test(tests.Test):
         ref_spells = count_spells(self.time_cube.data, -1000.0, 0, 2)
         np.testing.assert_equal(12, ref_spells)
 
+    def test_count_spells_zero_threshold(self):
+        """Test that a threshold of zero is applied."""
+        data = np.array([-1.0, 0.0, 1.0, 2.0])
+        np.testing.assert_equal(2, count_spells(data, 0.0, 0, 1))
+
     def test_get_fx_mask(self):
         """Test _get_fx_mask func."""
         # Test getting land and sea mask from sftlf
