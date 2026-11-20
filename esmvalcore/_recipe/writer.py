@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import bisect
 import io
 import re
 import textwrap
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -12,7 +14,7 @@ import yaml
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Callable
+    from collections.abc import Callable, Hashable
 
 # The document start marker and the comments and empty lines before it.
 _HEADER = re.compile(r"(?:[ \t]*(?:#.*)?\r?\n)*---[ \t]*\r?\n")
@@ -63,11 +65,100 @@ _FOLDED_HEADER = re.compile(r"(?:[&!]\S*\s+)*>[^\n]*\n?")
 
 
 class RecipeDumper(yaml.SafeDumper):
-    """YAML dumper for recipes that keeps the names of anchors."""
+    """YAML dumper for recipes that keeps the names of anchors and comments."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.anchor_names: dict[yaml.Node, str] = {}
+        # The comments of the items, see _attach_comments.
+        self.comments: dict[Hashable, _Comments] = {}
+        self._item_comments: _Comments | None = None
+        self._event_comments: dict[yaml.Event, _Comments] = {}
+        # The comments to write after the current item at each depth.
+        self._after: dict[int, list[_Comment]] = {}
+        # The comments to write at the end of the current line.
+        self._trailing: list[_Comment] = []
+
+    def serialize_node(
+        self,
+        node: yaml.Node,
+        parent: yaml.Node | None,
+        index: int | yaml.Node | None,
+    ) -> None:
+        """Serialize a node and remember the comments of its item."""
+        if isinstance(parent, yaml.SequenceNode):
+            self._item_comments = self.comments.get((id(parent), index))
+        elif isinstance(parent, yaml.MappingNode) and index is None:
+            self._item_comments = self.comments.get(id(node))
+        super().serialize_node(node, parent, index)
+
+    def emit(self, event: yaml.Event) -> None:
+        """Emit an event, with the comments of the item that it starts."""
+        if self._item_comments is not None:
+            self._event_comments[event] = self._item_comments
+            self._item_comments = None
+        super().emit(event)
+
+    def _write_comment_lines(self, comments: list[_Comment]) -> None:
+        for line in _comment_lines(comments):
+            if line:
+                self.write_indent()
+                self.stream.write(line)
+                self.column += len(line)
+            else:
+                self.write_line_break()
+                self.write_line_break()
+
+    def _write_comments(self) -> None:
+        """Write the comments of the item that starts with this event."""
+        depth = len(self.indents)
+        self._write_comment_lines(self._after.pop(depth, []))
+        comments = (
+            None
+            if self.event is None
+            else self._event_comments.get(self.event)
+        )
+        if comments is None:
+            return
+        self._write_comment_lines(comments.before)
+        if comments.after:
+            self._after[depth] = comments.after
+        if comments.trailing:
+            self.write_indent()
+            self._trailing = comments.trailing
+
+    def expect_block_mapping_key(self, first: bool = False) -> None:
+        """Write the comments of a mapping item and then the item."""
+        self._write_comments()
+        super().expect_block_mapping_key(first)
+
+    def expect_block_sequence_item(self, first: bool = False) -> None:
+        """Write the comments of a sequence item and then the item."""
+        self._write_comments()
+        super().expect_block_sequence_item(first)
+
+    def process_scalar(self) -> None:
+        """Write a scalar, without comments between its lines."""
+        if self.analysis is None and isinstance(self.event, yaml.ScalarEvent):
+            self.analysis = self.analyze_scalar(self.event.value)
+        if self.style is None:
+            self.style = self.choose_scalar_style()
+        if self.style in ("|", ">"):
+            # A comment can follow the header of a block scalar.
+            super().process_scalar()
+        else:
+            trailing, self._trailing = self._trailing, []
+            super().process_scalar()
+            self._trailing = trailing
+
+    def write_line_break(self, data: str | None = None) -> None:
+        """Write the comments at the end of the line and a line break."""
+        if self._trailing:
+            text = "".join(f"  {c.text}" for c in self._trailing)
+            self._trailing = []
+            self.stream.write(text)
+            self.column += len(text)
+        super().write_line_break(data)
 
     def increase_indent(
         self,
@@ -89,12 +180,96 @@ class RecipeDumper(yaml.SafeDumper):
         return self.anchor_names.get(node) or super().generate_anchor(node)
 
 
-class _AnchorLoader(yaml.SafeLoader):
-    """YAML loader that remembers the names of anchors."""
+_BREAKS = "\0\r\n\x85\u2028\u2029"
+
+
+@dataclass
+class _Comment:
+    """A comment in the text of a recipe."""
+
+    index: int
+    line: int
+    column: int
+    text: str
+    own_line: bool  # There is nothing but whitespace before it on its line.
+    blank_before: bool  # The line before it is empty.
+
+
+@dataclass
+class _Comments:
+    """The comments that belong to an item of a mapping or sequence."""
+
+    before: list[_Comment] = field(default_factory=list)
+    trailing: list[_Comment] = field(default_factory=list)
+    after: list[_Comment] = field(default_factory=list)
+
+
+@dataclass
+class _Item:
+    """An item of a mapping or sequence and where it starts in the text."""
+
+    key: Hashable
+    index: int
+    line: int
+    column: int
+    container: yaml.MappingNode | yaml.SequenceNode
+    parent: _Item | None
+
+
+class _RecipeLoader(yaml.SafeLoader):
+    """YAML loader that remembers the names of anchors and the comments."""
 
     def __init__(self, stream: str) -> None:
         super().__init__(stream)
         self.anchor_names: dict[yaml.Node, str] = {}
+        self.comments: list[_Comment] = []
+        self.item_marks: dict[tuple[int, int], yaml.Mark] = {}
+
+    def _scan_comment(self) -> None:
+        """Scan a comment, if there is one, and remember it."""
+        if self.peek() != "#":
+            return
+        mark = self.get_mark()
+        length = 0
+        while self.peek(length) not in _BREAKS:
+            length += 1
+        start = self.pointer - mark.column
+        before = self.buffer[start : self.pointer]
+        previous = self.buffer[
+            self.buffer.rfind("\n", 0, start - 1) + 1 : start
+        ]
+        self.comments.append(
+            _Comment(
+                index=mark.index,
+                line=mark.line,
+                column=mark.column,
+                text=self.prefix(length).rstrip(),
+                own_line=not before.strip(),
+                blank_before=start > 0 and not previous.strip(),
+            ),
+        )
+        self.forward(length)
+
+    def scan_to_next_token(self) -> None:
+        """Skip spaces, line breaks and comments, remembering the comments."""
+        # Adapted from yaml.scanner.Scanner.scan_to_next_token.
+        if self.index == 0 and self.peek() == "\ufeff":
+            self.forward()
+        while True:
+            while self.peek() == " ":
+                self.forward()
+            self._scan_comment()
+            if not self.scan_line_break():
+                return
+            if not self.flow_level:
+                self.allow_simple_key = True
+
+    def scan_block_scalar_ignored_line(self, start_mark: yaml.Mark) -> None:
+        """Scan the rest of the header of a block scalar."""
+        while self.peek() == " ":
+            self.forward()
+        self._scan_comment()
+        super().scan_block_scalar_ignored_line(start_mark)
 
     def compose_node(
         self,
@@ -103,12 +278,139 @@ class _AnchorLoader(yaml.SafeLoader):
     ) -> yaml.Node | None:
         """Compose a node and remember the name of its anchor."""
         event = self.peek_event()
+        if isinstance(parent, yaml.SequenceNode):
+            # Remember where sequence items start, also if they are aliases.
+            self.item_marks[id(parent), index] = event.start_mark
         node = super().compose_node(parent, index)
         anchor = getattr(event, "anchor", None)
         is_alias = isinstance(event, yaml.AliasEvent)
         if node is not None and anchor is not None and not is_alias:
             self.anchor_names[node] = anchor
         return node
+
+
+def _find_items(
+    root: yaml.Node,
+    text: str,
+    item_marks: dict[tuple[int, int], yaml.Mark],
+) -> list[_Item]:
+    """Find the items of the mappings and sequences in document order."""
+    items: list[_Item] = []
+    seen: set[int] = set()
+
+    def find(node: yaml.Node, parent: _Item | None) -> None:
+        if id(node) in seen:
+            return
+        seen.add(id(node))
+        if isinstance(node, yaml.MappingNode):
+            for key_node, value_node in node.value:
+                mark = key_node.start_mark
+                item = _Item(
+                    id(key_node),
+                    mark.index,
+                    mark.line,
+                    mark.column,
+                    node,
+                    parent,
+                )
+                items.append(item)
+                find(value_node, item)
+        elif isinstance(node, yaml.SequenceNode):
+            for number, value_node in enumerate(node.value):
+                mark = item_marks[id(node), number]
+                column = mark.column
+                if not node.flow_style:
+                    # Use the column of the "-" of the item.
+                    dash = text.rfind("-", 0, mark.index)
+                    column = dash - text.rfind("\n", 0, dash) - 1
+                item = _Item(
+                    (id(node), number),
+                    mark.index,
+                    mark.line,
+                    column,
+                    node,
+                    parent,
+                )
+                items.append(item)
+                find(value_node, item)
+
+    find(root, None)
+    return items
+
+
+def _attach_comments(
+    items: list[_Item],
+    comments: list[_Comment],
+) -> tuple[dict[Hashable, _Comments], list[_Comment]]:
+    """Find the item that each comment belongs to.
+
+    A comment at the end of a line belongs to the last item that starts
+    before it on that line. A comment on its own line belongs before the next
+    item if it is not indented more than that item, otherwise after the item
+    before it at the same indentation. Items in a collection that
+    is written in flow style cannot have comments, so their comments belong
+    to the closest item that is not in such a collection.
+
+    Returns
+    -------
+    :
+        The comments of each item and the comments before the first item.
+    """
+    starts = [item.index for item in items]
+    result: dict[Hashable, _Comments] = {}
+    leading = []
+    for comment in comments:
+        position = bisect.bisect_left(starts, comment.index)
+        if position == 0:
+            leading.append(comment)
+            continue
+        # The last (and deepest) item that starts before the comment and the
+        # first (and outermost) item that starts after it.
+        target = items[position - 1]
+        following = items[position] if position < len(items) else None
+        if not comment.own_line and target.line == comment.line:
+            kind = "trailing"
+        elif (
+            comment.own_line
+            and following is not None
+            and comment.column <= following.column
+        ):
+            kind = "before"
+            target = following
+        else:
+            kind = "after"
+            while target.parent is not None and target.column > comment.column:
+                target = target.parent
+        # Everything inside a collection in flow style is in flow style.
+        in_flow = None
+        ancestor: _Item | None = target
+        while ancestor is not None:
+            if ancestor.container.flow_style:
+                in_flow = ancestor
+            ancestor = ancestor.parent
+        moved = False
+        if in_flow is not None and in_flow.parent is not None:
+            target = in_flow.parent
+            moved = True
+        comments_of_target = result.setdefault(target.key, _Comments())
+        if (
+            kind == "trailing"
+            and moved
+            and (comments_of_target.trailing or comment.line != target.line)
+        ):
+            kind = "before"
+        getattr(comments_of_target, kind).append(comment)
+    return result, leading
+
+
+def _comment_lines(comments: list[_Comment]) -> list[str]:
+    """Get the lines of comments, with an empty line where there was one."""
+    lines: list[str] = []
+    for number, comment in enumerate(comments):
+        if number and comment.blank_before:
+            lines.append("")
+        lines.append(comment.text)
+    return lines
 
 
 def _key(item: tuple[yaml.Node, yaml.Node]) -> str:
@@ -439,10 +741,19 @@ def add_blank_lines_between_top_level_items(yaml_text: str) -> str:
     formatted_lines = [lines[0]]
 
     for line in lines[1:]:
-        for key in top_level_keys:
-            if line and line.startswith(key):
-                formatted_lines.append("")
-                break
+        if any(line.startswith(key) for key in top_level_keys):
+            # Put the blank line before the comments above the item.
+            start = len(formatted_lines)
+            while start > 1 and (
+                formatted_lines[start - 1].startswith("#")
+                or (
+                    not formatted_lines[start - 1]
+                    and formatted_lines[start - 2].startswith("#")
+                )
+            ):
+                start -= 1
+            if formatted_lines[start - 1]:
+                formatted_lines.insert(start, "")
         formatted_lines.append(line)
 
     return "\n".join(formatted_lines)
@@ -451,6 +762,7 @@ def add_blank_lines_between_top_level_items(yaml_text: str) -> str:
 def _serialize(
     node: yaml.Node,
     anchor_names: dict[yaml.Node, str] | None = None,
+    comments: dict[Hashable, _Comments] | None = None,
 ) -> str:
     """Write a formatted recipe node as YAML."""
     stream = io.StringIO()
@@ -461,6 +773,7 @@ def _serialize(
         default_flow_style=False,
     )
     dumper.anchor_names = anchor_names or {}
+    dumper.comments = comments or {}
     try:
         dumper.open()
         dumper.serialize(node)
@@ -514,9 +827,10 @@ def format_recipe(text: str) -> str:
 
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, and the style of the YAML is made
-    consistent. Anchors and aliases are kept, and so are the document start
-    marker ``---`` and the comments before it, but other comments are removed.
-    The order of the datasets, preprocessors, preprocessor steps,
+    consistent. Anchors, aliases, comments, and the document start marker
+    ``---`` are kept. Comments move together with the item that they belong
+    to. Comments inside a dataset that is written on one line are put at the
+    end of that line or before the dataset. The order of the datasets, preprocessors, preprocessor steps,
     diagnostics, variable groups, and scripts is kept. The lines of each
     paragraph of the description of the recipe are joined and wrapped at 79
     characters, keeping list items and indented lines on their own lines.
@@ -538,13 +852,21 @@ def format_recipe(text: str) -> str:
     """
     match = _HEADER.match(text)
     header = match.group() if match else ""
-    loader = _AnchorLoader(text)
+    loader = _RecipeLoader(text)
     try:
         node = loader.get_single_node()
     finally:
         loader.dispose()
+    comments = [c for c in loader.comments if c.index >= len(header)]
     # A document with only a document start marker contains an empty null.
     if node is None or (node.tag == _NULL_TAG and not node.value):
-        return f"{header}{{}}\n"
+        lines = _comment_lines(comments)
+        return header + "".join(f"{line}\n" for line in [*lines, "{}"])
+    items = _find_items(node, text, loader.item_marks)
     _Formatter(sort=False, text=text).recipe(node)
-    return f"{header}{_serialize(node, loader.anchor_names)}\n"
+    attached, leading = _attach_comments(items, comments)
+    lines = _comment_lines(leading)
+    if leading and items and items[0].line > leading[-1].line + 1:
+        lines.append("")
+    body = _serialize(node, loader.anchor_names, attached)
+    return header + "".join(f"{line}\n" for line in [*lines, body])

@@ -10,7 +10,7 @@ import yaml
 from esmvalcore.recipe import format_recipe, to_yaml
 
 RECIPE = textwrap.dedent("""
-    # A comment that is removed.
+    # A comment before the first item stays at the top.
     # Quotes are only kept where they are needed.
     diagnostics:
       diag1:
@@ -45,6 +45,8 @@ RECIPE = textwrap.dedent("""
 def test_format_recipe() -> None:
     """Test that sections and facets are put in the standard order."""
     expected = textwrap.dedent("""\
+        # A comment before the first item stays at the top.
+        # Quotes are only kept where they are needed.
         documentation:
           title: Example
           description: &description Example.
@@ -139,21 +141,22 @@ def test_format_recipe_empty() -> None:
 )
 def test_format_recipe_keeps_header(header: str) -> None:
     """Test that the document start and the comments before it are kept."""
-    formatted = format_recipe(f"{header}a: 1  # comment\n# comment\nb: 2\n")
-    assert formatted == f"{header}a: 1\nb: 2\n"
+    body = "a: 1  # comment\n# comment\nb: 2\n"
+    formatted = format_recipe(f"{header}{body}")
+    assert formatted == f"{header}{body}"
     assert format_recipe(formatted) == formatted
 
 
-def test_format_recipe_removes_comments_without_document_start() -> None:
-    """Test that comments are removed if there is no document start."""
-    assert format_recipe("# comment\na: 1\n") == "a: 1\n"
+def test_format_recipe_keeps_comments_without_document_start() -> None:
+    """Test that comments are kept if there is no document start."""
+    assert format_recipe("# comment\na: 1\n") == "# comment\na: 1\n"
 
 
 @pytest.mark.parametrize("body", ["", "# comment\n"])
 def test_format_recipe_only_header(body: str) -> None:
     """Test that a recipe with only a header can be formatted."""
     text = f"# comment\n---\n{body}"
-    assert format_recipe(text) == "# comment\n---\n{}\n"
+    assert format_recipe(text) == f"# comment\n---\n{body}{{}}\n"
 
 
 def test_format_recipe_header_folded_description() -> None:
@@ -349,3 +352,116 @@ def test_description_short_stays_plain() -> None:
     """Test that a short description without line breaks is not a block."""
     text = "documentation:\n  description: Short.\n"
     assert format_recipe(text) == text
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        pytest.param(
+            "a:  # one\n  b: 1  # two\n",
+            "a:  # one\n  b: 1  # two\n",
+            id="trailing",
+        ),
+        pytest.param(
+            "documentation:\n  authors: [a]\n  # The title.\n  title: T\n",
+            "documentation:\n  # The title.\n  title: T\n  authors:\n"
+            "    - a\n",
+            id="moves-with-item",
+        ),
+        pytest.param(
+            "datasets:\n  - {dataset: A}\n  # - {dataset: B}\n"
+            "  - {dataset: C}\n  # - {dataset: D}\n",
+            "datasets:\n  - {dataset: A}\n  # - {dataset: B}\n"
+            "  - {dataset: C}\n  # - {dataset: D}\n",
+            id="commented-out-datasets",
+        ),
+        pytest.param(
+            "a:\n  b:\n    c: 1\n    # d: 2\n  e: 3\n",
+            "a:\n  b:\n    c: 1\n    # d: 2\n  e: 3\n",
+            id="end-of-block",
+        ),
+        pytest.param(
+            "datasets:\n  - dataset: A  # one\n    # exp: x\n"
+            "    project: P  # two\n",
+            "datasets:\n  # exp: x\n  # two\n  - {dataset: A, project: P}  # one\n",
+            id="in-dataset",
+        ),
+        pytest.param(
+            "datasets:\n  - {dataset: A,  # one\n     exp: x}\n",
+            "datasets:\n  - {dataset: A, exp: x}  # one\n",
+            id="in-flow-mapping",
+        ),
+        pytest.param(
+            "datasets:\n  - {dataset: A, supplementary_variables: [\n"
+            "      {short_name: sftlf}]}  # one\n",
+            "datasets:\n  # one\n  - {dataset: A, supplementary_variables: "
+            "[{short_name: sftlf}]}\n",
+            id="in-nested-flow",
+        ),
+        pytest.param(
+            "a: [1,  # one\n  2]\n",
+            "a:\n  - 1  # one\n  - 2\n",
+            id="flow-list-becomes-block",
+        ),
+        pytest.param(
+            "a: |  # one\n  x\n  y\n",
+            "a: |  # one\n  x\n  y\n",
+            id="block-scalar-header",
+        ),
+        pytest.param(
+            "# schema\n\na: 1\n",
+            "# schema\n\na: 1\n",
+            id="blank-line-after-leading",
+        ),
+        pytest.param(
+            "a:\n  # one\n\n  # two\n  b: 1\n",
+            "a:\n  # one\n\n  # two\n  b: 1\n",
+            id="blank-line-between-comments",
+        ),
+        pytest.param(
+            "documentation:\n  title: T\n# Datasets\ndatasets: []\n",
+            "documentation:\n  title: T\n\n# Datasets\ndatasets: []\n",
+            id="top-level-blank-line",
+        ),
+        pytest.param(
+            "a: &a  # one\n  x: 1\nb:\n  <<: *a  # two\n  y: 2\n"
+            "c:\n  - &c 1\n  # three\n  - *c\n",
+            "a: &a  # one\n  x: 1\nb:\n  <<: *a  # two\n  y: 2\n"
+            "c:\n  - &c 1\n  # three\n  - *c\n",
+            id="anchors-and-aliases",
+        ),
+        pytest.param(
+            "a: 'x # y'\nb: |\n  # not a comment\n",
+            "a: 'x # y'\nb: |\n  # not a comment\n",
+            id="not-comments",
+        ),
+        pytest.param(
+            "a: 1\n# end\n",
+            "a: 1\n# end\n",
+            id="end-of-document",
+        ),
+    ],
+)
+def test_format_recipe_keeps_comments(text: str, expected: str) -> None:
+    """Test that comments are kept with the item they belong to."""
+    formatted = format_recipe(text)
+    assert formatted == expected
+    assert yaml.safe_load(formatted) == yaml.safe_load(text)
+    assert format_recipe(formatted) == formatted
+
+
+def test_format_recipe_comment_after_wrapped_scalar() -> None:
+    """Test that a comment is written after a scalar that is wrapped."""
+    text = f"a: {WORDS} {WORDS}  # comment\nb: 1\n"
+    formatted = format_recipe(text)
+    assert yaml.safe_load(formatted) == yaml.safe_load(text)
+    lines = formatted.splitlines()
+    assert len(lines) > 2
+    assert lines[-2].endswith(" word  # comment")
+
+
+def test_format_recipe_comment_after_description_header() -> None:
+    """Test that a comment after the header of the description is kept."""
+    text = "documentation:\n  description: |  # one\n    Some\n    text.\n"
+    formatted = format_recipe(text)
+    assert formatted == "documentation:\n  description: Some text.  # one\n"

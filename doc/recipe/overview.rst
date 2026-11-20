@@ -920,8 +920,12 @@ It puts the sections of the recipe and the facets of the datasets and variables
 in a standard order and makes the style of the YAML consistent, while keeping
 the order of the datasets, preprocessor steps, diagnostics, variable groups,
 and scripts.
-Anchors and aliases are kept, and so are the document start marker ``---`` and
-the comments before it, but other comments are removed.
+Anchors, aliases, comments, and the document start marker ``---`` are kept.
+A comment moves together with the item that it belongs to: the item on the
+same line, the next item if the comment is not indented more than that item,
+or otherwise the item above it.
+Comments inside a dataset that is written on one line are put on that line, or
+on their own line before the dataset.
 The lines of each paragraph of the ``description`` in the documentation
 section are joined and wrapped at 79 characters.
 List items and lines that are more indented than the paragraph text stay on
