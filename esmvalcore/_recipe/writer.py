@@ -139,10 +139,7 @@ class RecipeDumper(yaml.SafeDumper):
 
     def process_scalar(self) -> None:
         """Write a scalar, without comments between its lines."""
-        if self.analysis is None and isinstance(self.event, yaml.ScalarEvent):
-            self.analysis = self.analyze_scalar(self.event.value)
-        if self.style is None:
-            self.style = self.choose_scalar_style()
+        # The style has already been chosen in process_tag.
         if self.style in ("|", ">"):
             # A comment can follow the header of a block scalar.
             super().process_scalar()
@@ -830,8 +827,9 @@ def format_recipe(text: str) -> str:
     consistent. Anchors, aliases, comments, and the document start marker
     ``---`` are kept. Comments move together with the item that they belong
     to. Comments inside a dataset that is written on one line are put at the
-    end of that line or before the dataset. The order of the datasets, preprocessors, preprocessor steps,
-    diagnostics, variable groups, and scripts is kept. The lines of each
+    end of that line or before the dataset. The order of the datasets,
+    preprocessors, preprocessor steps, diagnostics, variable groups, and
+    scripts is kept. The lines of each
     paragraph of the description of the recipe are joined and wrapped at 79
     characters, keeping list items and indented lines on their own lines.
 

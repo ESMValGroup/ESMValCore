@@ -318,13 +318,21 @@ def test_description_list_item_is_wrapped_with_hanging_indent() -> None:
 
 def test_description_wrapping_does_not_create_list_items() -> None:
     """Test that a wrapped line does not start with a list marker."""
-    text = " ".join(["word"] * 18) + " - " + "word " * 5
+    # The first 15 words fill a line, so the "-" would start the next line.
+    text = " ".join(["word"] * 15) + " - " + "word " * 5
     recipe = {"documentation": {"description": text.strip()}}
     formatted = to_yaml(recipe)
     assert to_yaml(yaml.safe_load(formatted)) == formatted
     assert not any(
         line.lstrip().startswith("- ") for line in formatted.splitlines()[2:]
     )
+    assert " word - word" in formatted
+
+
+def test_description_trailing_blank_lines_removed() -> None:
+    """Test that blank lines at the end of the description are removed."""
+    recipe = {"documentation": {"description": "Some text.\n\n"}}
+    assert to_yaml(recipe) == "documentation:\n  description: Some text."
 
 
 def test_to_yaml_description_normalized() -> None:
@@ -465,3 +473,26 @@ def test_format_recipe_comment_after_description_header() -> None:
     text = "documentation:\n  description: |  # one\n    Some\n    text.\n"
     formatted = format_recipe(text)
     assert formatted == "documentation:\n  description: Some text.  # one\n"
+
+
+def test_format_recipe_byte_order_mark() -> None:
+    """Test that a byte order mark at the start of a recipe is skipped."""
+    assert format_recipe("\ufeffa: 1\n") == "a: 1\n"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "datasets: abc\n",
+        "diagnostics:\n  d:\n    additional_datasets: abc\n",
+    ],
+)
+def test_format_recipe_datasets_not_a_list(text: str) -> None:
+    """Test that invalid lists of datasets are formatted as other values."""
+    assert format_recipe(text) == text
+
+
+def test_to_yaml_sorts_infinite_number_last() -> None:
+    """Test that a key that cannot be converted to a number sorts last."""
+    recipe = {"a": {float("inf"): 1, 2: 3}}
+    assert to_yaml(recipe) == "a:\n  2: 3\n  .inf: 1"
