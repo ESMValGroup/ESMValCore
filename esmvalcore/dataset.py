@@ -833,6 +833,7 @@ class Dataset:
         if cmor_tables_available:
             settings["cmor_check_metadata"] = {
                 "check_level": self.session["check_level"],
+                "session": self.session,
                 "cmor_table": self.facets["project"],
                 "mip": self.facets["mip"],
                 "frequency": self.facets["frequency"],
@@ -850,6 +851,7 @@ class Dataset:
         if cmor_tables_available:
             settings["cmor_check_data"] = {
                 "check_level": self.session["check_level"],
+                "session": self.session,
                 "cmor_table": self.facets["project"],
                 "mip": self.facets["mip"],
                 "frequency": self.facets["frequency"],

@@ -1970,6 +1970,7 @@ def test_load(mocker, session):
         },
         "cmor_check_metadata": {
             "check_level": CheckLevels.DEFAULT,
+            "session": session,
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
@@ -1992,6 +1993,7 @@ def test_load(mocker, session):
         },
         "cmor_check_data": {
             "check_level": CheckLevels.DEFAULT,
+            "session": session,
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",

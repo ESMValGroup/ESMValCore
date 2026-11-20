@@ -30,6 +30,7 @@ def test_cmor_check_metadata(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
 
     mock_get_cmor_checker.assert_called_once_with(
@@ -39,6 +40,7 @@ def test_cmor_check_metadata(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
     (
@@ -66,6 +68,7 @@ def test_cmor_check_data(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
 
     mock_get_cmor_checker.assert_called_once_with(
@@ -75,6 +78,7 @@ def test_cmor_check_data(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
     (
@@ -106,6 +110,7 @@ def test_cmor_check(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
 
     mock_cmor_check_metadata.assert_called_once_with(
@@ -116,6 +121,7 @@ def test_cmor_check(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
     mock_cmor_check_data.assert_called_once_with(
         sentinel.cube_after_check_metadata,
@@ -125,5 +131,6 @@ def test_cmor_check(mocker):
         branding_suffix=sentinel.branding_suffix,
         frequency=sentinel.frequency,
         check_level=sentinel.check_level,
+        session=sentinel.session,
     )
     assert cube == sentinel.cube_after_check_data
