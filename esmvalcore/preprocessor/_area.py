@@ -10,6 +10,8 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+import cartopy.crs as ccrs
+import cordex as cx
 import fiona
 import fiona.collection
 import iris
@@ -21,7 +23,10 @@ from iris.coords import AuxCoord
 from iris.cube import CubeList
 from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.iris_helpers import (
+    has_regular_grid,
+    ignore_iris_vague_metadata_warnings,
+)
 from esmvalcore.preprocessor._shared import (
     apply_mask,
     get_dims_along_axes,
@@ -438,9 +443,9 @@ def _crop_cube(
     cmor_coords: bool = True,
 ) -> Cube:
     """Crop cubes on a regular grid."""
-    lon_coord = cube.coord(axis="X")
-    lat_coord = cube.coord(axis="Y")
-    if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+    if has_regular_grid(cube):
+        lon_coord = cube.coord(axis="X")
+        lat_coord = cube.coord(axis="Y")
         # add a padding of one cell around the cropped cube
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
@@ -486,6 +491,15 @@ def _select_representative_point(
     return (lon == nearest_lon) & (lat == nearest_lat)
 
 
+def _get_lon_lat(cube: Cube) -> tuple[np.ndarray, np.ndarray]:
+    """Get longitude and latitude with the shape of the horizontal dimensions."""
+    lon = cube.coord("longitude").points
+    lat = cube.coord("latitude").points
+    if has_regular_grid(cube):
+        lon, lat = np.meshgrid(lon, lat, copy=False)
+    return lon, lat
+
+
 def _correct_coords_from_shapefile(
     cube: Cube,
     cmor_coords: bool,
@@ -493,10 +507,7 @@ def _correct_coords_from_shapefile(
     pad_hawaii: bool,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Get correct lat and lon from shapefile."""
-    lon = cube.coord(axis="X").points
-    lat = cube.coord(axis="Y").points
-    if cube.coord(axis="X").ndim < 2:
-        lon, lat = np.meshgrid(lon, lat, copy=False)
+    lon, lat = _get_lon_lat(cube)
 
     if not cmor_coords:
         # Wrap around longitude coordinate to match data
@@ -747,6 +758,217 @@ def _update_shapefile_path(
     return Path(shapefile)
 
 
+def _is_cordex_shapefile(shapefile: str | Path) -> bool:
+    """Check if the shapefile refers to the built-in CORDEX domains."""
+    return str(shapefile).lower() == "cordex"
+
+
+def _get_cordex_domains(ids: list | dict | None) -> dict[str, dict]:
+    """Get the information describing the requested CORDEX domains."""
+    if not ids or not isinstance(ids, list):
+        msg = (
+            "When using `shapefile='cordex'`, `ids` should be a list of "
+            f"CORDEX domain names, e.g. `ids=['EUR-12']`, got {ids}"
+        )
+        raise ValueError(msg)
+    domains = {}
+    missing = []
+    for id_ in ids:
+        try:
+            domains[str(id_)] = _get_cordex_domain(str(id_))
+        except KeyError:
+            missing.append(str(id_))
+    if missing:
+        msg = f"Unknown CORDEX domain(s) {missing}"
+        raise ValueError(msg)
+    return domains
+
+
+def _is_missing(value: float | None) -> bool:
+    """Check if a value from the table of CORDEX domains is missing."""
+    return value is None or bool(np.isnan(value))
+
+
+def _get_cordex_domain(name: str) -> dict:
+    """Get the information describing a CORDEX domain."""
+    domain = dict(cx.domain_info(name))
+    # Not all domains have all information in the table of the cordex
+    # package, so fill in the missing information.
+    for axis in ("lon", "lat"):
+        if _is_missing(domain[f"ur_{axis}"]):
+            domain[f"ur_{axis}"] = (
+                domain[f"ll_{axis}"]
+                + (domain[f"n{axis}"] - 1) * domain[f"d{axis}"]
+            )
+    if _is_missing(domain["pollon"]) or _is_missing(domain["pollat"]):
+        # Domains on a regular latitude-longitude grid
+        domain["pollon"] = 180.0
+        domain["pollat"] = 90.0
+    return domain
+
+
+def _to_rotated_coords(
+    domain: dict,
+    lon: np.ndarray,
+    lat: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Transform geographical coordinates to the coordinates of a domain."""
+    crs = ccrs.RotatedPole(
+        pole_longitude=domain["pollon"],
+        pole_latitude=domain["pollat"],
+    )
+    points = crs.transform_points(
+        ccrs.Geodetic(),
+        np.ravel(lon),
+        np.ravel(lat),
+    )
+    return (
+        points[:, 0].reshape(np.shape(lon)),
+        points[:, 1].reshape(np.shape(lat)),
+    )
+
+
+def _get_cordex_mask(
+    domain: dict,
+    lon: np.ndarray,
+    lat: np.ndarray,
+) -> np.ndarray:
+    """Get a mask that selects the points inside a CORDEX domain.
+
+    The domain is a rectangle in rotated pole coordinates bounded by the outer
+    edges of the outer grid cells of the domain.
+    """
+    rlon, rlat = _to_rotated_coords(domain, lon, lat)
+    half_dlon = domain["dlon"] / 2
+    half_dlat = domain["dlat"] / 2
+    # The rotated longitudes of some domains, e.g. AUS, extend beyond 180, so
+    # make them start at the western edge of the domain.
+    west = domain["ll_lon"] - half_dlon
+    rlon = (rlon - west) % 360.0 + west
+    return (
+        (rlon <= domain["ur_lon"] + half_dlon)
+        & (rlat >= domain["ll_lat"] - half_dlat)
+        & (rlat <= domain["ur_lat"] + half_dlat)
+    )
+
+
+def _get_cordex_outline(domain: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Get the geographical coordinates of the outline of a CORDEX domain."""
+    # Use the cell vertices along the edges of the domain.
+    rlon, rlat = (
+        np.linspace(
+            domain[f"ll_{axis}"] - domain[f"d{axis}"] / 2,
+            domain[f"ur_{axis}"] + domain[f"d{axis}"] / 2,
+            round(
+                (domain[f"ur_{axis}"] - domain[f"ll_{axis}"])
+                / domain[f"d{axis}"],
+            )
+            + 2,
+        )
+        for axis in ("lon", "lat")
+    )
+    rlon_outline = np.concatenate(
+        [
+            rlon,
+            np.full_like(rlat, rlon[-1]),
+            rlon[::-1],
+            np.full_like(rlat, rlon[0]),
+        ],
+    )
+    rlat_outline = np.concatenate(
+        [
+            np.full_like(rlon, rlat[0]),
+            rlat,
+            np.full_like(rlon, rlat[-1]),
+            rlat[::-1],
+        ],
+    )
+    crs = ccrs.RotatedPole(
+        pole_longitude=domain["pollon"],
+        pole_latitude=domain["pollat"],
+    )
+    points = ccrs.Geodetic().transform_points(crs, rlon_outline, rlat_outline)
+    return points[:, 0], points[:, 1]
+
+
+def _get_cordex_bounds(
+    domains: dict[str, dict],
+) -> tuple[float, float, float, float, bool]:
+    """Get a geographical bounding box containing the CORDEX domains.
+
+    Returns
+    -------
+    lon_min, lat_min, lon_max, lat_max, cmor_coords
+        Coordinates of the bounding box and whether the longitudes are in
+        the range [0, 360] (``True``) or [-180, 180] (``False``).
+
+    """
+    lons = []
+    lats = []
+    contains_pole = False
+    for domain in domains.values():
+        lon, lat = _get_cordex_outline(domain)
+        # The outline does not reach the poles if they are inside the domain.
+        for pole_lat in (-90.0, 90.0):
+            if _get_cordex_mask(domain, np.array([0.0]), np.array([pole_lat])):
+                contains_pole = True
+                lat = np.append(lat, pole_lat)
+        lons.append(lon)
+        lats.append(lat)
+    lat = np.concatenate(lats)
+    lat_min, lat_max = float(lat.min()), float(lat.max())
+    if contains_pole:
+        return 0.0, lat_min, 360.0, lat_max, True
+
+    # Use the range of longitudes that results in the smallest box, i.e.
+    # [0, 360] if the domains cross the antimeridian.
+    lon = (np.concatenate(lons) + 180.0) % 360.0 - 180.0
+    lon_360 = lon % 360.0
+    if np.ptp(lon_360) < np.ptp(lon):
+        return (
+            float(lon_360.min()),
+            lat_min,
+            float(lon_360.max()),
+            lat_max,
+            True,
+        )
+    return float(lon.min()), lat_min, float(lon.max()), lat_max, False
+
+
+def _get_cordex_masks(
+    cube: Cube,
+    ids: list | dict | None,
+    method: str,
+    crop: bool,
+) -> tuple[Cube, dict[str, np.ndarray]]:
+    """Get masks for the requested CORDEX domains."""
+    if method != "contains":
+        msg = (
+            "When using `shapefile='cordex'`, `method` should be 'contains', "
+            f"got '{method}'"
+        )
+        raise ValueError(msg)
+    domains = _get_cordex_domains(ids)
+    if crop:
+        lon_min, lat_min, lon_max, lat_max, cmor_coords = _get_cordex_bounds(
+            domains,
+        )
+        cube = _crop_cube(
+            cube,
+            start_longitude=lon_min,
+            start_latitude=lat_min,
+            end_longitude=lon_max,
+            end_latitude=lat_max,
+            cmor_coords=cmor_coords,
+        )
+    lon, lat = _get_lon_lat(cube)
+    masks = {
+        id_: _get_cordex_mask(domain, lon, lat)
+        for id_, domain in domains.items()
+    }
+    return cube, masks
+
+
 def extract_shape(
     cube: Cube,
     shapefile: str | Path,
@@ -772,6 +994,12 @@ def extract_shape(
           6 (https://doi.org/10.5281/zenodo.5176260). Should be used in
           combination with a :obj:`dict` for the argument `ids`, e.g.,
           ``ids={'Acronym': ['GIC', 'WNA']}``.
+        * ``'cordex'``: CORDEX domains as defined by the :mod:`cordex`
+          package. Should be used in combination with a :obj:`list` of domain
+          names for the argument `ids`, e.g., ``ids=['EUR-12']``. A domain
+          consists of all grid cells of the official domain grid, i.e. its
+          boundary lies at the outer edges of the outer grid cells. Only
+          ``method='contains'`` is supported.
     method:
         Select all points contained by the shape or select a single
         representative point. Choose either `'contains'` or `'representative'`.
@@ -779,8 +1007,8 @@ def extract_shape(
         the shape, a representative point will be selected.
     crop:
         In addition to masking, crop the resulting cube using
-        :func:`~esmvalcore.preprocessor.extract_region`. Data on irregular
-        grids will not be cropped.
+        :func:`~esmvalcore.preprocessor.extract_region`. Data on irregular or
+        unstructured grids will not be cropped.
     decomposed:
         If set to `True`, the output cube will have an additional dimension
         `shape_id` describing the requested regions.
@@ -800,6 +1028,9 @@ def extract_shape(
           Example: ``ids={'Acronym': ['GIC', 'WNA']}`` for ``shapefile='ar6'``.
         * `None`: select all available shapes from the shapefile.
 
+        For ``shapefile='cordex'``, `ids` should be a :obj:`list` of CORDEX
+        domain names, e.g. ``ids=['EUR-12', 'CAM-25']``.
+
     Returns
     -------
     iris.cube.Cube
@@ -810,6 +1041,12 @@ def extract_shape(
     extract_region: Extract a region from a cube.
 
     """
+    if _is_cordex_shapefile(shapefile):
+        cube, masks = _get_cordex_masks(cube, ids, method, crop)
+        if not decomposed and len(masks) > 1:
+            masks = _merge_masks(masks, next(iter(masks.values())).shape)
+        return _apply_masks(cube, masks, decomposed)
+
     shapefile = _update_shapefile_path(shapefile)
     with fiona.open(shapefile) as geometries:
         # Get parameters specific to the shapefile (NE used case e.g.
@@ -859,7 +1096,15 @@ def extract_shape(
             decomposed=decomposed,
         )
 
-    # Mask input cube based on requested regions
+    return _apply_masks(cube, masks, decomposed)
+
+
+def _apply_masks(
+    cube: Cube,
+    masks: dict[str, np.ndarray],
+    decomposed: bool,
+) -> Cube:
+    """Mask the input cube based on the requested regions."""
     result = _mask_cube(cube, masks)
 
     # Remove dummy scalar coordinate if final cube is not decomposed

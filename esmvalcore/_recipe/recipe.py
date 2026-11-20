@@ -47,7 +47,10 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
     _get_preprocessor_filename,
 )
-from esmvalcore.preprocessor._area import _update_shapefile_path
+from esmvalcore.preprocessor._area import (
+    _is_cordex_shapefile,
+    _update_shapefile_path,
+)
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -616,7 +619,7 @@ def _update_extract_shape(
     """Update settings for ``extract_shape``."""
     if "extract_shape" in settings:
         shapefile = settings["extract_shape"].get("shapefile")
-        if shapefile:
+        if shapefile and not _is_cordex_shapefile(shapefile):
             shapefile = _update_shapefile_path(shapefile, session=session)
             settings["extract_shape"]["shapefile"] = shapefile
         check.extract_shape(settings["extract_shape"])
