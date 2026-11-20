@@ -163,6 +163,30 @@ def test_find_data_no_results_sets_debug_info(mocker: MockerFixture) -> None:
     assert data_source.debug_info == expected_debug_info
 
 
+def test_find_data_resets_time_range(mocker: MockerFixture) -> None:
+    """The time range of a previous search should not be used."""
+    data_source = IntakeESGFDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        facets={"short_name": "variable_id"},
+    )
+    cat = intake_esgf.ESGFCatalog()
+    cat.file_start = cat.file_end = pd.Timestamp("2000-01-01")
+    search = mocker.patch.object(
+        cat,
+        "search",
+        side_effect=intake_esgf.exceptions.NoSearchResults("no results"),
+    )
+    data_source.catalog = cat
+
+    data_source.find_data(short_name="tas")
+
+    search.assert_called_once_with(variable_id=["tas"], quiet=True)
+    assert cat.file_start is None
+    assert cat.file_end is None
+
+
 def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
     """find_data should convert catalog.df rows into IntakeESGFDataset instances."""
     cat = intake_esgf.ESGFCatalog()
@@ -202,6 +226,31 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         cat.last_search = kwargs
 
     mocker.patch.object(cat, "search", side_effect=fake_search)
+    historical = "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn"
+    ssp585 = "CMIP6.ScenarioMIP.CCCma.CanESM5.ssp585.r1i1p1f1.Amon.tas.gn"
+    mocker.patch.object(
+        cat,
+        "_get_file_info",
+        return_value=[
+            {
+                "key": historical,
+                "path": "tas_Amon_CanESM5_historical_r1i1p1f1_gn_185001-194912.nc",
+            },
+            {
+                "key": historical,
+                "path": "tas_Amon_CanESM5_historical_r1i1p1f1_gn_195001-201412.nc",
+            },
+            # A file without a time range, so the dataset has none.
+            {
+                "key": ssp585,
+                "path": "tas_Amon_CanESM5_ssp585_r1i1p1f1_gn.nc",
+            },
+            {
+                "key": ssp585,
+                "path": "tas_Amon_CanESM5_ssp585_r1i1p1f1_gn_201501-210012.nc",
+            },
+        ],
+    )
 
     data_source = IntakeESGFDataSource(
         name="src",
@@ -250,6 +299,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20190429",
     }
     dataset = results[1]
