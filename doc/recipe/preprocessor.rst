@@ -3059,7 +3059,7 @@ In the example above, ERA-Interim is used as reference dataset for the t-test
 calculation.
 
 It is also possible to use the output from the :ref:`multi-model statistics` or
-:ref:`ensemble statistics` preprocessor as reference dataset.
+:ref:`ensemble_statistics` preprocessor as reference dataset.
 In this case, make sure to use ``reference_for_t_test: true`` for each dataset
 that will be used to create the reference dataset and use the option
 ``keep_input_datasets: false`` for the multi-dataset preprocessor.
