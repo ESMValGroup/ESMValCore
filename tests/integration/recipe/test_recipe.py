@@ -4112,7 +4112,7 @@ def test_align_metadata_missing_arg(
         get_recipe(tmp_path, content, session)
 
 
-def test_t_test_no_ref(tmp_path, patched_datafinder, session):
+def test_t_test_no_ref(get_recipe, tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           test_t_test:
@@ -4146,7 +4146,7 @@ def test_t_test_no_ref(tmp_path, patched_datafinder, session):
     assert "found 0" in exc.value.failed_tasks[0].message
 
 
-def test_t_test_two_refs(tmp_path, patched_datafinder, session):
+def test_t_test_two_refs(get_recipe, tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           test_t_test:
