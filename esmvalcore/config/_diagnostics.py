@@ -157,15 +157,40 @@ class TagsManager(dict):
         """
         return tuple(self.get_tag_value(section, tag) for tag in tags)
 
-    def replace_tags_in_dict(self, dct: dict) -> None:
+    def replace_tags_in_dict(self, dct: dict, *, warn: bool = True) -> None:
         """Resolve tags and updates the given dict in-place.
 
         Tags are updated one level deep, and only if the corresponding
-        section exists in the ``TagsManager``.
+        section exists in the ``TagsManager``. Tags that are not defined are
+        kept as they are, because this only makes the provenance less
+        complete.
+
+        Parameters
+        ----------
+        dct
+            Dictionary with lists of tags, by section.
+        warn
+            Log a warning for each tag that is not defined.
         """
         for key, tags in dct.items():
             if key in self:
-                dct[key] = self.get_tag_values(key, tags)
+                dct[key] = tuple(
+                    self._resolve_tag(key, tag, warn=warn) for tag in tags
+                )
+
+    def _resolve_tag(self, section: str, tag: str, *, warn: bool) -> object:
+        """Get the value of a tag, or the tag itself if it is not defined."""
+        if tag in self[section]:
+            return self[section][tag]
+        if warn:
+            logger.warning(
+                "Tag '%s' is not defined in section '%s' of %s, so the "
+                "provenance will be incomplete",
+                tag,
+                section,
+                self.source_file,
+            )
+        return tag
 
 
 DIAGNOSTICS = Diagnostics.find()

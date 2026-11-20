@@ -158,6 +158,14 @@ class IntakeESGFDataSource(DataSource):
             self.project.lower()
         ]
 
+    @property
+    def searchable_facets(self) -> frozenset[str]:
+        """Facets that can be used to search for data.
+
+        These are the facets in :attr:`facets`.
+        """
+        return frozenset(self.facets)
+
     def find_data(self, **facets: FacetValue) -> list[IntakeESGFDataset]:
         """Find data.
 

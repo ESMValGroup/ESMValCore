@@ -96,7 +96,7 @@ def test_empty_run(tmp_path):
     config_file = config_dir / "config.yml"
     config_file.write_text(f"output_dir: {out_dir}")
 
-    msg = "The given recipe does not have any diagnostic."
+    msg = "diagnostics: expected a mapping, got None."
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         with pytest.raises(RecipeError, match=msg):
@@ -225,7 +225,7 @@ def test_config_show_single_project(
     with arguments("esmvaltool", "config", "show", "--project=CMIP7"):
         run()
     stdout = capsys.readouterr().out
-    expected_header = "Current configuration for project 'CMIP7', excluding the keys 'extra_facets':\n"
+    expected_header = "Current configuration for project 'CMIP7', excluding the keys 'extra_facets', 'required_facets':\n"
     assert expected_header in stdout
     cfg_txt = stdout.split(expected_header)[1]
     cfg = yaml.safe_load(cfg_txt)
@@ -255,9 +255,7 @@ def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
     with arguments("esmvaltool", "config", "show"):
         run()
     stdout = capsys.readouterr().out
-    expected_header = (
-        "Current configuration, excluding the keys 'extra_facets':\n"
-    )
+    expected_header = "Current configuration, excluding the keys 'extra_facets', 'required_facets':\n"
     assert expected_header in stdout
     # Check that the configuration that is listed by default is sufficiently
     # brief for easy reading by a human.
@@ -267,3 +265,4 @@ def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
     assert "projects" in cfg
     for project in cfg["projects"]:
         assert "extra_facets" not in cfg["projects"][project]
+        assert "required_facets" not in cfg["projects"][project]

@@ -12,8 +12,6 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import yaml
-
 import esmvalcore.io.esgf
 from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
@@ -23,13 +21,14 @@ from esmvalcore._recipe.to_datasets import (
     _derive_needed,
     _get_input_datasets,
     _representative_datasets,
+    datasets_from_recipe,
 )
+from esmvalcore._recipe.validate import ensure_valid_recipe
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.config._tasksep import TASKSEP
-from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import (
     GRIB_FORMATS,
@@ -65,6 +64,7 @@ if TYPE_CHECKING:
 
     from esmvalcore._task import BaseTask
     from esmvalcore.config import Session
+    from esmvalcore.dataset import Dataset
     from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets
 
@@ -87,14 +87,7 @@ USED_DATASETS: list[Dataset] = []
 def read_recipe_file(filename: Path, session: Session) -> Recipe:
     """Read a recipe from file."""
     recipe_text = filename.read_text(encoding="utf-8")
-    try:
-        # Use CSafeLoader for speed, but fall back to SafeLoader for better
-        # error messages if parsing fails or if CSafeLoader is not available.
-        raw_recipe = yaml.load(recipe_text, Loader=yaml.CSafeLoader)
-    except (yaml.YAMLError, AttributeError):
-        raw_recipe = yaml.safe_load(recipe_text)
-    check.recipe_with_schema(raw_recipe, path=filename)
-
+    raw_recipe = ensure_valid_recipe(recipe_text, filename, session)
     return Recipe(raw_recipe, session, recipe_file=filename)
 
 
@@ -525,7 +518,6 @@ def _update_multiproduct(
     settings = next(iter(multiproducts)).settings[step]
 
     if step == "ensemble_statistics":
-        check.ensemble_statistics_preproc(settings)
         grouping: tuple[str, ...] | None = (
             "project",
             "dataset",
@@ -533,7 +525,6 @@ def _update_multiproduct(
             "sub_experiment",
         )
     else:
-        check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)
 
     downstream_settings = _get_downstream_settings(step, order, multiproducts)
@@ -606,7 +597,6 @@ def _update_align_metadata(
             "target_short_name",
             dataset.facets["short_name"],
         )
-        check.align_metadata(settings["align_metadata"])
 
 
 def _update_extract_shape(
@@ -821,11 +811,6 @@ def _update_preproc_functions(
     _update_regrid_time(dataset, settings)
     if dataset.facets.get("frequency") == "fx":
         check.check_for_temporal_preprocs(settings)
-    check.statistics_preprocessors(settings)
-    check.regridding_schemes(settings)
-    check.bias_type(settings)
-    check.metric_type(settings)
-    check.resample_hours(settings)
 
 
 def _get_preprocessor_task(
@@ -837,13 +822,8 @@ def _get_preprocessor_task(
     # First set up the preprocessor profile
     facets = datasets[0].facets
     session = datasets[0].session
+    # The preprocessor is checked when the recipe is validated.
     preprocessor = str(facets.get("preprocessor", "default"))
-    if preprocessor not in profiles:
-        msg = (
-            f"Unknown preprocessor '{preprocessor}' in variable "
-            f"{facets['variable_group']} of diagnostic {facets['diagnostic']}"
-        )
-        raise RecipeError(msg)
     logger.info(
         "Creating preprocessor '%s' task for variable '%s'",
         preprocessor,
@@ -922,7 +902,7 @@ class Recipe:
         self._preprocessors = raw_recipe.get("preprocessors", {})
         if "default" not in self._preprocessors:
             self._preprocessors["default"] = {}
-        self.datasets = Dataset.from_recipe(recipe_file, session)
+        self.datasets = datasets_from_recipe(raw_recipe, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe["diagnostics"],
         )
@@ -982,7 +962,8 @@ class Recipe:
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
 
-        TAGS.replace_tags_in_dict(doc)
+        # Undefined tags have been reported when checking the recipe.
+        TAGS.replace_tags_in_dict(doc, warn=False)
 
         return get_recipe_provenance(doc, self._filename)
 
@@ -992,8 +973,6 @@ class Recipe:
     ) -> dict[str, Diagnostic]:
         """Define diagnostics in recipe."""
         logger.debug("Retrieving diagnostics from recipe")
-        check.diagnostics(raw_diagnostics)
-
         diagnostics = {}
 
         for name, raw_diagnostic in raw_diagnostics.items():
@@ -1089,14 +1068,9 @@ class Recipe:
                         script_name,
                     )
                     ancestors: list[BaseTask] = []
+                    # The ancestors are checked when the recipe is validated.
                     for id_glob in script_cfg["ancestors"]:
                         ancestor_ids = fnmatch.filter(tasks, id_glob)
-                        if not ancestor_ids:
-                            msg = (
-                                "Could not find any ancestors matching "
-                                f"'{id_glob}'."
-                            )
-                            raise RecipeError(msg)
                         logger.debug(
                             "Pattern %s matches %s",
                             id_glob,

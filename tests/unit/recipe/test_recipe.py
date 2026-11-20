@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest import mock
@@ -1027,26 +1028,26 @@ def test_special_name_to_dataset_invalid_special_name_type():
         _recipe._special_name_to_dataset(facets, "reference_dataset")
 
 
-@pytest.mark.parametrize("has_csafeloader", [True, False])
 def test_read_recipe_file(
     mocker: MockerFixture,
-    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
-    has_csafeloader: bool,
 ) -> None:
-    """Test that a recipe is read with and without ``yaml.CSafeLoader``."""
-    if not has_csafeloader:
-        monkeypatch.delattr(yaml, "CSafeLoader", raising=False)
-    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    """Test that a recipe is validated and read."""
+    raw_recipe: dict[str, dict[str, dict]] = {"diagnostics": {"diag": {}}}
+    mock_check = mocker.patch.object(
+        _recipe,
+        "ensure_valid_recipe",
+        return_value=raw_recipe,
+    )
     mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
     session = mocker.sentinel.session
     recipe_file = tmp_path / "recipe_test.yml"
-    recipe_file.write_text("diagnostics:\n  diag: {}\n", encoding="utf-8")
+    recipe_text = "diagnostics:\n  diag: {}\n"
+    recipe_file.write_text(recipe_text, encoding="utf-8")
 
     result = _recipe.read_recipe_file(recipe_file, session)
 
-    raw_recipe: dict[str, dict[str, dict]] = {"diagnostics": {"diag": {}}}
-    mock_check.assert_called_once_with(raw_recipe, path=recipe_file)
+    mock_check.assert_called_once_with(recipe_text, recipe_file, session)
     mock_recipe.assert_called_once_with(
         raw_recipe,
         session,
@@ -1055,19 +1056,32 @@ def test_read_recipe_file(
     assert result == mock_recipe.return_value
 
 
+def test_read_recipe_file_invalid(
+    session: esmvalcore.config.Session,
+    tmp_path: Path,
+) -> None:
+    """Test that an invalid recipe is not read."""
+    recipe_file = tmp_path / "recipe_test.yml"
+    recipe_file.write_text("diagnostics: {}\n", encoding="utf-8")
+    msg = "recipe: missing required key 'documentation'."
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        _recipe.read_recipe_file(recipe_file, session)
+
+
 def test_read_recipe_file_invalid_yaml(
     mocker: MockerFixture,
     tmp_path: Path,
 ) -> None:
     """Test that invalid YAML is re-parsed with ``yaml.safe_load``."""
-    safe_load = mocker.spy(_recipe.yaml, "safe_load")
-    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    safe_load = mocker.spy(yaml, "safe_load")
+    mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
     recipe_file = tmp_path / "recipe_test.yml"
     recipe_text = "diagnostics: [\n"
     recipe_file.write_text(recipe_text, encoding="utf-8")
 
-    with pytest.raises(yaml.YAMLError):
+    msg = f"Recipe {recipe_file} is invalid:\n- line 2: recipe: invalid YAML"
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         _recipe.read_recipe_file(recipe_file, mocker.sentinel.session)
 
     safe_load.assert_called_once_with(recipe_text)
-    mock_check.assert_not_called()
+    mock_recipe.assert_not_called()
