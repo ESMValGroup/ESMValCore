@@ -36,6 +36,12 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 
+MISSING_DEPRECATED = (
+    " Datasets without these facets are deprecated and will not work in "
+    "v2.18.0."
+)
+
+
 def _issues(
     recipe: object,
     session: Session | None = None,
@@ -119,6 +125,17 @@ def test_statistics_invalid_kwargs() -> None:
         "preprocessors > pp > annual_statistics: Invalid kwargs for operator "
         "'mean': ",
     )
+
+
+def test_statistics_invalid_kwargs_one_period() -> None:
+    """Test that a message that ends with a period gets no second one."""
+    settings = {"statistics": ["percentile"]}
+    message = (
+        "preprocessors > pp > ensemble_statistics > statistics > 0: Invalid "
+        "kwargs for operator 'percentile': percentile aggregator requires "
+        "the mandatory keyword argument 'percent'."
+    )
+    assert _messages({"ensemble_statistics": settings}) == [message]
 
 
 @pytest.mark.parametrize(
@@ -247,7 +264,7 @@ def test_session_configuration(session: Session) -> None:
     assert _issues(recipe) == []
     message = (
         "datasets > 0: missing required key 'institute'. Needed to find the "
-        "data of project 'CMIP6'."
+        "data of project 'CMIP6'." + MISSING_DEPRECATED
     )
     issues = _issues(recipe, session=session)
     assert [str(i) for i in issues] == [message]
@@ -955,7 +972,8 @@ def test_validate_recipe_missing_facets(project: str) -> None:
         RecipeIssue(
             ("datasets", 1),
             "missing required keys 'tier', 'type'. Needed to find the data "
-            f"of project '{project}'.",
+            f"of project '{project}'." + MISSING_DEPRECATED,
+            severity="warning",
         ),
     ]
 
@@ -986,7 +1004,8 @@ def test_validate_recipe_facets_of_variable_group() -> None:
                 1,
             ),
             "missing required key 'type'. Needed to find the data of "
-            "project 'OBS'.",
+            "project 'OBS'." + MISSING_DEPRECATED,
+            severity="warning",
         ),
     ]
 
@@ -1046,7 +1065,8 @@ def test_validate_recipe_missing_facets_esgf_project() -> None:
         RecipeIssue(
             ("datasets", 2),
             "missing required key 'grid'. Needed to find the data of "
-            "project 'CMIP6'.",
+            "project 'CMIP6'." + MISSING_DEPRECATED,
+            severity="warning",
         ),
     ]
 
@@ -1064,7 +1084,8 @@ def test_validate_recipe_required_facets_configured(
         RecipeIssue(
             path,
             "missing required key 'institute'. Needed to find the data of "
-            "project 'CMIP6'.",
+            "project 'CMIP6'." + MISSING_DEPRECATED,
+            severity="warning",
         )
         for path in [
             ("datasets", 2),

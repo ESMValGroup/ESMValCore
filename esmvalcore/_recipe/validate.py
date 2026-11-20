@@ -716,7 +716,7 @@ def _yaml_issue(
     )
 
 
-# The types of plain scalars in the core schema of YAML 1.2, see
+# The types of plain scalars in the core schema of YAML 1.2, refer to
 # https://yaml.org/spec/1.2.2/#1032-tag-resolution.
 _YAML_12_TYPES = {
     "null": re.compile(r"null|Null|NULL|~|"),
@@ -995,7 +995,9 @@ def _find_missing_facets(
                 RecipeIssue(
                     dataset.path,
                     f"missing required {keys} {names}. Needed to find the "
-                    f"data of project '{project}'.",
+                    f"data of project '{project}'. Datasets without these "
+                    "facets are deprecated and will not work in v2.18.0.",
+                    severity="warning",
                 ),
             )
     return issues
@@ -1444,7 +1446,7 @@ def _aggregator_issue(
         get_iris_aggregator(str(operator), **kwargs)
     # A TypeError means that a keyword argument is not a string.
     except (TypeError, ValueError) as exc:
-        return [RecipeIssue(path, f"{exc}.")]
+        return [RecipeIssue(path, f"{str(exc).rstrip('.')}.")]
     return []
 
 

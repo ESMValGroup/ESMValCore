@@ -32,10 +32,8 @@ def _load_recipe(recipe: Path | str | dict[str, Any] | None) -> dict[str, Any]:
         }
 
     text = _recipe_text(recipe)
-    if text is not None:
-        recipe = _parse_yaml(text)
-
-    return _copy(recipe)
+    loaded = recipe if text is None else _parse_yaml(text)
+    return _copy(loaded)
 
 
 def _recipe_text(recipe: Path | str | dict[str, Any] | None) -> str | None:
@@ -49,7 +47,7 @@ def _recipe_text(recipe: Path | str | dict[str, Any] | None) -> str | None:
     return None
 
 
-def _parse_yaml(text: str) -> Any:  # noqa: ANN401
+def _parse_yaml(text: str) -> object:
     """Parse YAML text."""
     try:
         # Use CSafeLoader for speed, but fall back to SafeLoader for better
