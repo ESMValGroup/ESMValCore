@@ -665,6 +665,10 @@ def t_test(
         the p-value.
     **kwargs:
         Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`.
+        Unlike :func:`scipy.stats.ttest_ind`, ``equal_var=False`` is used by
+        default, which will result in a Welch's t-test. Explicitly set
+        ``equal_var=True`` to get the default behavior of
+        :func:`scipy.stats.ttest_ind`.
 
     Returns
     -------
@@ -743,7 +747,12 @@ def _calculate_t_test(
     """Calculate the t-test and attach the p-value as ancillary variable to cube."""
     cube = cube.copy()  # do not modify input cube
 
-    # Ensure that data is not chunked along desired coords
+    # Unlike scipy.stats.ttest_ind, we want to run a Welch's t-test by default,
+    # which does not assume equal variances between the samples.
+    kwargs = dict(kwargs)
+    kwargs.setdefault("equal_var", False)
+
+    # Data must not chunked along desired coords
     coords = get_all_coords(cube, coords)
     cube = rechunk_cube(cube, coords)
     reference = rechunk_cube(reference, coords)
@@ -773,10 +782,9 @@ def _calculate_t_test(
             **kwargs,
         )
     else:
-        # Avoid realizing cube.data
         cube_data = (
             cube.lazy_data().compute() if cube.has_lazy_data() else cube.data
-        )
+        )  # avoid unnecessarily realizing data
         ref_data = (
             reference.lazy_data().compute()
             if reference.has_lazy_data()

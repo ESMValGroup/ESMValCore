@@ -3009,12 +3009,16 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 ``t_test``
 ----------
 
-This function performs a :func:`t-test <scipy.stats.ttest_ind>` (null
-hypothesis: 2 independent samples have identical mean) with respect to a
-reference dataset and attaches the corresponding p-value as ancillary variable
-to the data.
+This function runs :func:`t-test <scipy.stats.ttest_ind>` (null hypothesis: 2
+independent samples have identical mean) with respect to a reference dataset.
+By default, a `Welch's t-test
+<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__ is performed, which does
+not assume equal variances between the samples.
 
-With `Iris <https://scitools-iris.readthedocs.io/>`__, the p-value can be accessed with the following code:
+This preprocessor attaches the corresponding p-value as ancillary variable to
+the data.
+With `Iris <https://scitools-iris.readthedocs.io/>`__, the p-value can be
+accessed with the following code:
 
 .. code-block:: python
 
@@ -3092,21 +3096,25 @@ The ``t_test`` preprocessor supports the following arguments in the recipe:
   If ``None``, calculate the metric over all coordinates, which results in a
   scalar cube.
 * Other parameters are passed to :func:`scipy.stats.ttest_ind`.
+  Unlike :func:`scipy.stats.ttest_ind`, ``equal_var: false`` is used by default,
+  which will result in a Welch's t-test.
+  Explicitly set ``equal_var: true`` to get the default behavior of
+  :func:`scipy.stats.ttest_ind`.
 
 Example:
 
 .. code-block:: yaml
 
     preprocessors:
-      welchs_t_test:
+      t_test:
         t_test:
           coords: [time]
-          equal_var: false
+          # equal_var: true  # uncomment to get default behavior of scipy.stats.ttest_ind
           nan_policy: omit
 
 This will perform a `Welch's t-test
-<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__, which does not assume
-equal variances between the samples.
+<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__ (do not assume equal
+variances between the samples) over the time coordinate.
 In addition, all masked values will be omitted in the t-test calculation (the
 default behavior is to return masked values if at least one input value is
 masked).

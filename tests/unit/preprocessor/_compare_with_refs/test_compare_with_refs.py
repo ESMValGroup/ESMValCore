@@ -1044,7 +1044,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     assert_correct_p_value(
         out_cube,
-        [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
         dims=(1, 2),
     )
     assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
@@ -1064,7 +1064,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     assert_correct_p_value(
         out_cube,
-        [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
         dims=(1, 2),
     )
     assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
@@ -1117,7 +1117,7 @@ def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy, coords_as_str):
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     assert_correct_p_value(
         out_cube,
-        [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
         dims=(1, 2),
         is_lazy=lazy,
     )
@@ -1126,8 +1126,8 @@ def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy, coords_as_str):
 @pytest.mark.parametrize(
     ("dims", "p_value", "out_dims"),
     [
-        ((0, 1), [0.4679941236972809, 0.3202061057090759], (2,)),
-        ((0, 2), [0.6890520453453064, 0.17230847477912903], (1,)),
+        ((0, 1), [0.4950256049633026, 0.34128352999687195], (2,)),
+        ((0, 2), [0.7026968598365784, 0.1957930326461792], (1,)),
     ],
 )
 @pytest.mark.parametrize("lazy", [True, False])
@@ -1171,10 +1171,10 @@ def test_t_test_cubes_2d(
 @pytest.mark.parametrize(
     ("coords", "p_value", "out_dims"),
     [
-        (("time", "latitude"), [0.4679941236972809, 0.3202061057090759], (2,)),
+        (("time", "latitude"), [0.4950256049633026, 0.34128352999687195], (2,)),
         (
             ("time", "longitude"),
-            [0.6890520453453064, 0.17230847477912903],
+            [0.7026968598365784, 0.1957930326461792],
             (1,),
         ),
     ],
@@ -1225,7 +1225,7 @@ def test_t_test_cubes_scalar_result(regular_cubes, ref_cubes, lazy):
     out_cubes = t_test(
         [cube],
         ref_cube,
-        equal_var=False,
+        equal_var=True,
     )
 
     assert cube.has_lazy_data() is lazy
@@ -1245,7 +1245,7 @@ def test_t_test_cubes_scalar_result(regular_cubes, ref_cubes, lazy):
     assert out_cube.aux_coords == cube.aux_coords
     assert_correct_p_value(
         out_cube,
-        [0.20223067700862885],
+        [0.1872035712003708],
         dims=(),
         is_lazy=lazy,
     )
@@ -1279,7 +1279,7 @@ def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     assert_correct_p_value(
         out_cube,
-        [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
         dims=(1, 2),
     )
 
