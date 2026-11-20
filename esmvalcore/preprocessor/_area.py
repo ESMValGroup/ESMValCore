@@ -20,8 +20,12 @@ from dask import array as da
 from iris.coords import AuxCoord
 from iris.cube import CubeList
 from iris.exceptions import CoordinateNotFoundError
+from iris.mesh import MeshXY
 
-from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.iris_helpers import (
+    has_unstructured_grid,
+    ignore_iris_vague_metadata_warnings,
+)
 from esmvalcore.preprocessor._shared import (
     apply_mask,
     get_dims_along_axes,
@@ -91,7 +95,7 @@ def extract_region(  # noqa: C901
     if abs(end_latitude) > 90.0:
         msg = f"Invalid end_latitude: {end_latitude}"
         raise ValueError(msg)
-    if cube.coord("latitude").ndim == 1:
+    if cube.coord("latitude").ndim == 1 and not has_unstructured_grid(cube):
         # Iris checks if any point of the cell is inside the region.
         # To check only the center, ignore_bounds must be set to True.
         region_subset = cube.intersection(
@@ -164,7 +168,7 @@ def extract_region(  # noqa: C901
     return region_subset
 
 
-def _extract_irregular_region(
+def _extract_irregular_region(  # noqa: C901
     cube,
     start_longitude,
     end_longitude,
@@ -192,6 +196,30 @@ def _extract_irregular_region(
         select_lats = (lats >= start_latitude) | (lats <= end_latitude)
 
     selection = select_lats & select_lons
+
+    # Crop selection for unstructured/curvilinear grids
+    if has_unstructured_grid(cube):
+        recreate_mesh = False
+        if cube.mesh:
+            mesh_dim = cube.mesh_dim()
+            mesh_location = cube.location
+            recreate_mesh = True
+        i_range = selection.nonzero()[0]
+        if i_range.size == 0:
+            msg = "No data points available in selected region"
+            raise ValueError(msg)
+
+        cube = cube[..., selection]
+        if recreate_mesh:
+            coords_on_mesh_dim = cube.coords(dimensions=mesh_dim)
+            new_mesh = MeshXY.from_coords(
+                *[c for c in coords_on_mesh_dim if c.has_bounds()],
+            )
+            new_mesh_coords = new_mesh.to_MeshCoords(mesh_location)
+            for coord in new_mesh_coords:
+                cube.remove_coord(coord.name())
+                cube.add_aux_coord(coord, mesh_dim)
+        return cube
 
     # Crop the selection, but keep rectangular shape
     i_range, j_range = selection.nonzero()
