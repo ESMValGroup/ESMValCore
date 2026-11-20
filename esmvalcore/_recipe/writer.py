@@ -36,8 +36,14 @@ _DATASET: _Order = (
     0,
 )
 _VARIABLE: _Order = (
-    {"start_year": 1, "end_year": 2, "additional_datasets": 3},
-    0,
+    {
+        "<<": 0,
+        "short_name": 1,
+        "start_year": 3,
+        "end_year": 4,
+        "additional_datasets": 5,
+    },
+    2,
 )
 _DIAGNOSTIC: _Order = (
     {

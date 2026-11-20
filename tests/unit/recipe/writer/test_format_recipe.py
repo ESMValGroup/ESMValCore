@@ -103,6 +103,33 @@ def test_format_recipe_merge_list() -> None:
     assert "  <<: [*a, *b]\n" in format_recipe(text)
 
 
+def test_format_recipe_short_name_first() -> None:
+    """Test that short_name is the first key of a variable."""
+    text = textwrap.dedent("""\
+        diagnostics:
+          diag:
+            variables:
+              tas: &tas
+                mip: Amon
+                short_name: tas
+              pr:
+                short_name: pr
+                <<: *tas
+    """)
+    expected = textwrap.dedent("""\
+        diagnostics:
+          diag:
+            variables:
+              tas: &tas
+                short_name: tas
+                mip: Amon
+              pr:
+                <<: *tas
+                short_name: pr
+    """)
+    assert format_recipe(text) == expected
+
+
 def test_format_recipe_self_reference() -> None:
     """Test that a mapping that refers to itself can be formatted."""
     text = "a: &a\n  b: [*a]\n"
