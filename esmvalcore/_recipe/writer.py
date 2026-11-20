@@ -61,7 +61,7 @@ class RecipeDumper(yaml.SafeDumper):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.anchor_names: dict[yaml.Node, str] = {}
-        # The comments of the items, see _attach_comments.
+        # The comments of the items, refer to _attach_comments.
         self.comments: dict[Hashable, _Comments] = {}
         self._item_comments: _Comments | None = None
         self._event_comments: dict[yaml.Event, _Comments] = {}
