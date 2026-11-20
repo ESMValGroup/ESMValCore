@@ -103,6 +103,27 @@ def test_format_recipe_merge_list() -> None:
     assert "  <<: [*a, *b]\n" in format_recipe(text)
 
 
+def test_format_recipe_datasets_anchor() -> None:
+    """Test that datasets defined at the top level are written on one line."""
+    text = textwrap.dedent("""\
+        cmip6: &cmip6
+          - &defaults
+            project: CMIP6
+            dataset: A
+          - <<: *defaults
+            dataset: B
+        diagnostics:
+          d:
+            additional_datasets: *cmip6
+    """)
+    expected = textwrap.dedent("""\
+        cmip6: &cmip6
+          - &defaults {dataset: A, project: CMIP6}
+          - {<<: *defaults, dataset: B}
+    """)
+    assert format_recipe(text).startswith(expected)
+
+
 def test_format_recipe_short_name_first() -> None:
     """Test that short_name is the first key of a variable."""
     text = textwrap.dedent("""\
@@ -174,7 +195,7 @@ def test_format_recipe_empty() -> None:
 )
 def test_format_recipe_keeps_header(header: str) -> None:
     """Test that the document start and the comments before it are kept."""
-    body = "a: 1  # comment\n# comment\nb: 2\n"
+    body = "a: 1  # comment\n\n# comment\nb: 2\n"
     formatted = format_recipe(f"{header}{body}")
     assert formatted == f"{header}{body}"
     assert format_recipe(formatted) == formatted
@@ -304,13 +325,13 @@ def test_description_short_stays_plain() -> None:
         pytest.param(
             "a: &a  # one\n  x: 1\nb:\n  <<: *a  # two\n  y: 2\n"
             "c:\n  - &c 1\n  # three\n  - *c\n",
-            "a: &a  # one\n  x: 1\nb:\n  <<: *a  # two\n  y: 2\n"
+            "a: &a  # one\n  x: 1\n\nb:\n  <<: *a  # two\n  y: 2\n\n"
             "c:\n  - &c 1\n  # three\n  - *c\n",
             id="anchors-and-aliases",
         ),
         pytest.param(
             "a: 'x # y'\nb: |\n  # not a comment\n",
-            "a: 'x # y'\nb: |\n  # not a comment\n",
+            "a: 'x # y'\n\nb: |\n  # not a comment\n",
             id="not-comments",
         ),
         pytest.param(
@@ -336,7 +357,7 @@ def test_format_recipe_comment_after_wrapped_scalar() -> None:
     assert yaml.safe_load(formatted) == yaml.safe_load(text)
     lines = formatted.splitlines()
     assert len(lines) > 2
-    assert lines[-2].endswith(" word  # comment")
+    assert lines[-3].endswith(" word  # comment")
 
 
 def test_format_recipe_comment_after_description_header() -> None:
@@ -369,16 +390,21 @@ def test_format_recipe_dict_sorts_infinite_number_last() -> None:
     assert format_recipe(recipe) == "a:\n  2: 3\n  .inf: 1\n"
 
 
-def test_format_recipe_blank_lines_only_before_sections() -> None:
-    """Test that keys that start like a section get no blank line."""
-    text = "a: 1\ndatasets_extra: 1\ndiagnostics: {}\n"
-    assert (
-        format_recipe(text) == "a: 1\ndatasets_extra: 1\n\ndiagnostics: {}\n"
-    )
+def test_format_recipe_blank_lines_between_top_level_keys() -> None:
+    """Test that there is a blank line between all top-level keys."""
+    text = "a: 1\nb:\n  - 1\nc: 2\n"
+    assert format_recipe(text) == "a: 1\n\nb:\n  - 1\n\nc: 2\n"
+
+
+def test_format_recipe_keeps_order_of_other_top_level_keys() -> None:
+    """Test that top-level keys without a standard order keep their order."""
+    text = "diagnostics: {}\nb: 1\na: 2\ndocumentation: {}\n"
+    expected = "documentation: {}\n\nb: 1\n\na: 2\n\ndiagnostics: {}\n"
+    assert format_recipe(text) == expected
 
 
 def test_format_recipe_comment_with_dash_after_item_dash() -> None:
     """Test a comment with a "-" between the "-" of an item and its value."""
     text = "a:\n  - # note-x\n    b: 1\n  - c\n  # after c\nd: 1\n"
-    expected = "a:\n  - b: 1  # note-x\n  - c\n  # after c\nd: 1\n"
+    expected = "a:\n  - b: 1  # note-x\n  - c\n  # after c\n\nd: 1\n"
     assert format_recipe(text) == expected

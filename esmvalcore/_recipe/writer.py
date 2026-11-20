@@ -466,19 +466,24 @@ class _Formatter:
         flow: bool = False,
         sort: bool | None = None,
     ) -> None:
-        """Format a mapping and the values in it."""
+        """Format a mapping and the values in it.
+
+        Keys with the same rank in ``order`` are sorted by name, unless
+        ``sort`` is :obj:`False`.
+        """
         if not isinstance(node, yaml.MappingNode):
             self.generic(node)
             return
         if not self._first_visit(node):
             return
         node.flow_style = flow
-        if order is not None or (self.sort if sort is None else sort):
+        by_name = (order is not None or self.sort) if sort is None else sort
+        if order is not None or by_name:
             ranks, default = order or ({}, 0)
             node.value.sort(
                 key=lambda item: (
                     ranks.get(_key(item), default),
-                    *_name_order(item),
+                    *(_name_order(item) if by_name else ()),
                 ),
             )
         for key_node, value_node in node.value:
@@ -525,9 +530,25 @@ class _Formatter:
 
     def recipe(self, node: yaml.Node) -> None:
         """Format a recipe."""
-        self._mapping(node, _TOP_LEVEL, self._section)
+        # Format the other top-level items last, so that anchors defined in
+        # them, for example lists of datasets, get the style of the place
+        # where they are used.
+        others: list[yaml.Node] = []
+        self._mapping(
+            node,
+            _TOP_LEVEL,
+            lambda key, value: self._section(key, value, others),
+            sort=False,
+        )
+        for value in others:
+            self.generic(value)
 
-    def _section(self, key: str, node: yaml.Node) -> None:
+    def _section(
+        self,
+        key: str,
+        node: yaml.Node,
+        others: list[yaml.Node],
+    ) -> None:
         if key == "documentation":
             self._mapping(node, _DOCUMENTATION)
         elif key == "datasets":
@@ -537,7 +558,7 @@ class _Formatter:
         elif key == "diagnostics":
             self._named(node, self._diagnostic)
         else:
-            self.generic(node)
+            others.append(node)
 
     def _preprocessor(self, node: yaml.Node) -> None:
         # The order of the preprocessor steps may matter, so keep it.
@@ -627,19 +648,12 @@ def _sort_datasets(recipe: dict) -> dict:
 
 
 def add_blank_lines_between_top_level_items(yaml_text: str) -> str:
-    """Insert blank lines between top-level YAML sections."""
+    """Insert blank lines between top-level YAML items."""
     lines = yaml_text.splitlines()
-
-    top_level_keys = {
-        "documentation",
-        "preprocessors",
-        "datasets",
-        "diagnostics",
-    }
     formatted_lines = [lines[0]]
 
     for line in lines[1:]:
-        if line.partition(":")[0] in top_level_keys:
+        if line and line[0] not in " #-":
             # Put the blank line before the comments above the item.
             start = len(formatted_lines)
             while start > 1 and (
