@@ -24,7 +24,8 @@ The `ESMValTool language server
 <https://github.com/ESMValGroup/esmvaltool-language-server>`__ helps you write
 recipes in editors such as Visual Studio Code, Neovim, and Emacs.
 It checks recipes while you write them, with many of the same checks that
-ESMValCore runs before running a recipe, and offers completion and documentation.
+ESMValCore runs before running a recipe, and offers completion and
+documentation.
 Refer to its documentation for installation instructions and the supported
 editors.
 If you cannot use the language server, the
@@ -907,8 +908,8 @@ other YAML parsers interpret differently:
   Other YAML parsers, for example those in editors, do not accept these, so
   they are deprecated and will not work in ESMValCore v2.18.0.
   Refer to :ref:`recipe_reuse_parameters` for how to merge several mappings.
-- Values that YAML 1.1, which ESMValCore currently uses, and YAML 1.2 read differently,
-  for example ``1e-2``, which is text in YAML 1.1 and a number in YAML 1.2,
+- Values that YAML 1.1, which ESMValCore currently uses, and YAML 1.2 read
+  differently, for example ``1e-2``, which is text in YAML 1.1 and a number in YAML 1.2,
   and ``yes``, which is a boolean in YAML 1.1 and text in YAML 1.2.
   These values are deprecated and will not work in ESMValCore v2.18.0.
   Write ``1.0e-2`` or ``0.01`` for the number, ``true`` for the boolean, or

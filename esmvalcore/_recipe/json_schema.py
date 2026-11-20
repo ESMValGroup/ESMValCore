@@ -186,9 +186,10 @@ REQUIRED_KEYS: dict[str, dict[str, JSONSchema]] = {
     "regrid": {"scheme": {"reference": {"type": "string"}}},
 }
 
-# Operators of the statistics preprocessors that can be used in a recipe, see
-# the table ``supported_stat_operator`` in ``doc/recipe/preprocessor.rst``. The
-# other aggregators in :mod:`iris.analysis` require a Python function.
+# Operators of the statistics preprocessors that can be used in a recipe,
+# refer to the table ``supported_stat_operator`` in
+# ``doc/recipe/preprocessor.rst``. The other aggregators in
+# :mod:`iris.analysis` require a Python function.
 STATISTICS_OPERATORS = (
     "gmean",
     "hmean",
@@ -935,7 +936,7 @@ def _type_schema() -> JSONSchema:
 def _facets_schema(projects: list[str]) -> JSONSchema:
     """Create a JSON Schema for the facets of a dataset or variable.
 
-    See doc/reference/facets.rst for the facets that ESMValCore uses.
+    Refer to doc/reference/facets.rst for the facets that ESMValCore uses.
     """
     year = {"type": "integer", "minimum": 0, "maximum": 10000}
     project: JSONSchema = {

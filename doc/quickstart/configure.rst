@@ -1023,8 +1023,11 @@ addition to ``project``, ``dataset``, ``mip``, and ``short_name``, are
 configured using ``required_facets``.
 Recipes are checked for these facets before running, and also while editing
 them if the editor supports this (refer to :ref:`recipe_editor_support`).
-Facets that are automatically added from the :ref:`extra facets <config-extra-facets>`
-of the project do not have to be specified in the recipe.
+Datasets without these facets are deprecated and will not work in ESMValCore
+v2.18.0.
+Facets that are automatically added from the
+:ref:`extra facets <config-extra-facets>` of the project do not have to be
+specified in the recipe.
 
 Default values are provided in ``defaults/required_facets.yml``, for example:
 
