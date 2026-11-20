@@ -681,20 +681,8 @@ def _format_recipe_data(recipe: dict) -> str:
 def format_recipe(recipe: str | dict) -> str:
     """Format a recipe in a standard way.
 
-    The sections of the recipe and the facets of the datasets and variables
-    are put in a standard order, and the style of the YAML is made
-    consistent.
-
-    If the recipe is given as YAML text, anchors, aliases, comments, and the
-    document start marker ``---`` are kept. Comments move together with the
-    item that they belong to. Comments inside a dataset that is written on
-    one line are put at the end of that line or before the dataset. The order
-    of the datasets, preprocessors, preprocessor steps, diagnostics, variable
-    groups, and scripts is kept.
-
-    If the recipe is given as a :obj:`dict`, the lists of datasets are
-    sorted and the keys of other mappings are sorted by name, except the
-    preprocessor steps.
+    The sections and facets are put in a standard order and the YAML style is
+    made consistent.
 
     Parameters
     ----------
