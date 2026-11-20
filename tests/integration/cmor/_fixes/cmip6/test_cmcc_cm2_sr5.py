@@ -1,12 +1,9 @@
 """Tests for the fixes of CMCC-CM2-SR5."""
 
-from unittest import mock
-
 import iris
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.cmcc_cm2_sr5 import Cl
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -36,19 +33,8 @@ def cl_cubes():
     return iris.cube.CubeList([cube])
 
 
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert issubclass(Cl, ClFixHybridPressureCoord)
-
-
-@mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.cmcc_cm2_sr5.ClFixHybridPressureCoord."
-    "fix_metadata",
-    autospec=True,
-)
-def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
+def test_cl_fix_metadata(cl_cubes):
     """Test ``fix_metadata`` for ``cl``."""
-    mock_base_fix_metadata.side_effect = lambda x, y: y
     vardef = get_var_info("CMIP6", "Amon", "cl")
     fix = Cl(vardef)
     assert cl_cubes[0].coord(var_name="ps").standard_name == "air_pressure"

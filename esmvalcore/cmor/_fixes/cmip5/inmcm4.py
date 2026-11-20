@@ -2,10 +2,7 @@
 
 import iris
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-
-Cl = ClFixHybridPressureCoord
 
 
 class Gpp(Fix):

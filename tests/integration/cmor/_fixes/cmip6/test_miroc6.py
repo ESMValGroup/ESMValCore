@@ -4,43 +4,9 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.miroc6 import Cl, Cli, Clw, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip6.miroc6 import Tos
 from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor.table import get_var_info
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "MIROC6", "Amon", "cl")
-    assert fix == [Cl(None), GenericFix(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
-
-
-def test_get_cli_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "MIROC6", "Amon", "cli")
-    assert fix == [Cli(None), GenericFix(None)]
-
-
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert Cli is ClFixHybridPressureCoord
-
-
-def test_get_clw_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "MIROC6", "Amon", "clw")
-    assert fix == [Clw(None), GenericFix(None)]
-
-
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert Clw is ClFixHybridPressureCoord
 
 
 @pytest.fixture

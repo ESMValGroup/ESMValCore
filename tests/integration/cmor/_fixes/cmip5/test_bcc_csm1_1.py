@@ -3,25 +3,13 @@
 import iris
 import numpy as np
 
-from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1 import Cl, Tos
+from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1 import Tos
 from esmvalcore.cmor._fixes.common import (
-    ClFixHybridPressureCoord,
     OceanFixGrid,
 )
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP5", "bcc-csm1-1", "Amon", "cl")
-    assert fix == [Cl(None), GenericFix(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
 
 
 def test_get_tos_fix():

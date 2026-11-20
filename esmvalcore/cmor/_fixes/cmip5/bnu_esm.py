@@ -3,11 +3,10 @@
 from cf_units import Unit
 from dask import array as da
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
-class Cl(ClFixHybridPressureCoord):
+class Cl(Fix):
     """Fixes for cl."""
 
     def fix_data(self, cube):

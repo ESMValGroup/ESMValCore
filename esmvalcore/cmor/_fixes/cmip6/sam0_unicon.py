@@ -1,15 +1,6 @@
 """Fixes for SAM0-UNICON model."""
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-
-Cl = ClFixHybridPressureCoord
-
-
-Cli = ClFixHybridPressureCoord
-
-
-Clw = ClFixHybridPressureCoord
 
 
 class Nbp(Fix):

@@ -760,6 +760,12 @@ class Dataset:
     def load(self) -> Cube:
         """Load dataset.
 
+        Unlike :func:`iris.load`, this does not return the reference surface
+        of a derived coordinate (e.g., surface air pressure for hybrid
+        pressure coordinates) as a separate cube. It is available as an
+        auxiliary coordinate of the returned cube instead. To get the
+        reference surface as a cube, load it as a dataset of its own.
+
         Raises
         ------
         InputFilesNotFound
