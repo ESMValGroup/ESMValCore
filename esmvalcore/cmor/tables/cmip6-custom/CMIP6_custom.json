@@ -301,6 +301,18 @@
             "type": "real",
             "units": "1"
         },
+        "cdd22": {
+            "cell_measures": "area: areacella",
+            "cell_methods": "time: mean",
+            "dimensions": "longitude latitude time",
+            "frequency": "day",
+            "long_name": "Cooling degree days (base = 22 degC)",
+            "modeling_realm": "atmos",
+            "out_name": "cdd22",
+            "standard_name": "",
+            "type": "real",
+            "units": "degC day"
+        },
         "ch4s": {
             "cell_measures": "area: areacella",
             "cell_methods": "area: time: mean",
