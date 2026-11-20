@@ -1,6 +1,11 @@
 # Dask configuration profiles.
 
 dask:
+  # Options passed to xarray.set_options on each Dask distributed worker. See
+  # https://docs.xarray.dev/en/stable/generated/xarray.set_options.html
+  # for all available options.
+  worker_xarray_options:
+    file_cache_maxsize: 4  # limit the memory used by open netCDF files
   use: local_threaded  # use the `local_threaded` profile defined below
   profiles:
     local_threaded:
