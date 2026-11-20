@@ -626,7 +626,11 @@ def t_test(
     """Perform t-test between dataset and reference dataset.
 
     This is a test for the null hypothesis that 2 independent samples (dataset
-    and reference dataset) have identical average (expected) values.
+    and reference dataset) have identical average (expected) values. By
+    default, a `Welch's t-test
+    <https://en.wikipedia.org/wiki/Welch%27s_t-test>`__ is performed, which
+    does not assume equal variances between the samples. This can be changed by
+    specifying the argument ``equal_var: True``.
 
     All input datasets need to have the same shape. To ensure this, the
     preprocessors :func:`esmvalcore.preprocessor.regrid` might be helpful.
