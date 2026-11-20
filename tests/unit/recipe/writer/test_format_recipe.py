@@ -130,6 +130,20 @@ def test_format_recipe_short_name_first() -> None:
     assert format_recipe(text) == expected
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("a: [1, 2.5, 3, 4]\n", "a: [1, 2.5, 3, 4]\n"),
+        ("a:\n  - 1\n  - 2\n  - 3\n  - 4\n", "a: [1, 2, 3, 4]\n"),
+        ("a: [1, 2, 3]\n", "a:\n  - 1\n  - 2\n  - 3\n"),
+        ("a: [1, 2, 3, x]\n", "a:\n  - 1\n  - 2\n  - 3\n  - x\n"),
+    ],
+)
+def test_format_recipe_number_list(text: str, expected: str) -> None:
+    """Test that lists of more than three numbers are written on one line."""
+    assert format_recipe(text) == expected
+
+
 def test_format_recipe_self_reference() -> None:
     """Test that a mapping that refers to itself can be formatted."""
     text = "a: &a\n  b: [*a]\n"

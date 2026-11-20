@@ -512,7 +512,12 @@ class _Formatter:
             )
         elif isinstance(node, yaml.SequenceNode):
             if self._first_visit(node):
-                node.flow_style = False
+                # Write long lists of numbers as [1, 2, 3, 4].
+                node.flow_style = len(node.value) > 3 and all(
+                    isinstance(item, yaml.ScalarNode)
+                    and item.tag in _NUMBER_TAGS
+                    for item in node.value
+                )
                 for item in node.value:
                     self.generic(item)
         else:
