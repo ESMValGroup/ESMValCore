@@ -2553,7 +2553,11 @@ def test_wrong_branding_suffix(
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
+    msg = (
+        "Variable 'tos' with branding suffix 'wrong' not available in table "
+        "'ocean' of project 'CMIP7'. Available branding suffixes are: "
+        "tavg-u-hm-sea, tavg-u-hxy-sea, tpt-u-hxy-sea."
+    )
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg
