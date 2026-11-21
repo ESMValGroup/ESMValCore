@@ -92,6 +92,13 @@ projects:
         - cmip6/Tables
         - cmip6-custom
       strict: false
+  FESOM:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
   ICON:
     cmor_table:
       type: esmvalcore.cmor.table.CMIP6Info
