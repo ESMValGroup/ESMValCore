@@ -528,7 +528,7 @@ def _check_literal(
     *,
     step: str,
     option: str,
-    allowed_values: tuple[None | str, ...],
+    allowed_values: tuple[str | None, ...],
 ) -> None:
     """Check that an option for a preprocessor has a valid value."""
     if step not in settings:
@@ -623,6 +623,13 @@ reference_for_distance_metric_preproc = partial(
     _check_ref_attributes,
     step="distance_metric",
     attr_name="reference_for_metric",
+)
+
+
+reference_for_t_test_preproc = partial(
+    _check_ref_attributes,
+    step="t_test",
+    attr_name="reference_for_t_test",
 )
 
 

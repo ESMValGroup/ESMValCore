@@ -547,8 +547,9 @@ is always disabled.
 
 .. warning::
 
-   To get all desired time points, do **not** use ``start_year`` and
-   ``end_year`` in the recipe, but rather ``timerange`` with at least 8 digits.
+   If ``shift_time: true`` (i.e., the default) is used, do **not** use
+   ``start_year`` and ``end_year`` in the recipe, but rather ``timerange`` with
+   at least 8 digits.
    For example, to get data for the years 2000 and 2001, use ``timerange:
    20000101/20020101`` instead of ``timerange: 2000/2001`` or ``start_year:
    2000``, ``end_year: 2001``.
@@ -604,7 +605,7 @@ The paths to these files can be specified absolute or relative (to the
    provides a 3D air pressure field instead of a simple 1D vertical coordinate.
    This also works if your files only contain altitude information (in this
    case, the US standard atmosphere is used to convert between altitude and
-   pressure levels; see :ref:`Vertical interpolation` for details).
+   pressure levels; see :ref:`extract_levels` for details).
    Example:
 
    .. code-block:: yaml
@@ -699,7 +700,7 @@ Key                 Description                      Default value if not specif
    If you want to use the :func:`~esmvalcore.preprocessor.area_statistics`
    preprocessor on *regridded* ICON data, make sure to **not** use the cell area
    files by using the ``skip: true`` syntax in the recipe as described in
-   :ref:`preprocessors_using_supplementary_variables`, e.g.,
+   :ref:`add_supplementary_variables`, e.g.,
 
    .. code-block:: yaml
 

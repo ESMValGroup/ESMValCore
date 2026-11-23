@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pytest
@@ -14,6 +17,9 @@ import esmvalcore.io.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 LOGGER = logging.getLogger(__name__)
 
@@ -181,6 +187,40 @@ def test_run(mocker, session, search_data):
     esmvalcore._main.process_recipe.assert_called_once_with(
         recipe_file=recipe,
         session=session,
+    )
+
+
+@pytest.mark.parametrize(
+    ("max_parallel_tasks", "expected"),
+    [(None, 8), (4, 4)],
+)
+def test_process_recipe_logs_n_processes(
+    mocker: MockerFixture,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    session: mock.MagicMock,
+    max_parallel_tasks: int | None,
+    expected: int,
+) -> None:
+    """Test that the log message uses the CPUs available to the process."""
+    recipe = tmp_path / "recipe_test.yml"
+    recipe.touch()
+    session.run_dir.mkdir(parents=True)
+    session["max_parallel_tasks"] = max_parallel_tasks
+    session["compress_netcdf"] = False
+    mocker.patch.object(esmvalcore._main.os, "cpu_count", return_value=256)
+    mocker.patch.object(
+        esmvalcore._task,
+        "available_cpu_count",
+        return_value=8,
+    )
+    mocker.patch("esmvalcore._recipe.recipe.read_recipe_file")
+
+    with caplog.at_level(logging.INFO, logger="esmvalcore._main"):
+        esmvalcore._main.process_recipe(recipe, session)
+
+    assert (
+        f"Running tasks using at most {expected} processes" in caplog.messages
     )
 
 

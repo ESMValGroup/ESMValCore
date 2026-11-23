@@ -164,7 +164,7 @@ def find_matching_coord_dims(
 def get_data_dims(
     cube: Cube,
     ancillary: Cube | iris.coords.AncillaryVariable,
-) -> list[None | int]:
+) -> list[int | None]:
     """Get matching data dimensions between cube and ancillary variable.
 
     Parameters
@@ -185,7 +185,7 @@ def get_data_dims(
     """
     # Match the coordinates of the ancillary cube to coordinates and
     # dimensions in the input cube before adding the ancillary variable.
-    data_dims: list[None | int] = []
+    data_dims: list[int | None] = []
     if isinstance(ancillary, iris.coords.AncillaryVariable):
         start_dim = cube.ndim - len(ancillary.shape)
         data_dims = list(range(start_dim, cube.ndim))

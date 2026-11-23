@@ -4,9 +4,10 @@
 # CMOR variable name and the labels to use by ESMValTool to find the
 # corresponding file, and the corresponding variable in the file
 #
-# For format 'Analyse', the config-development.yml file tells
-# ESMValTool to use key 'ipsl_varname' for building the filename,
-# while for format 'Output' it specifies to use key 'group'
+# For format 'Analyse', the data source configuration (see
+# data-native-ipslcm.yml) tells ESMValTool to use key 'ipsl_varname' for
+# building the filename, while for format 'Output' it specifies to use key
+# 'group'
 #
 # Specifying 'igcm_dir' here allows to avoid having to specify it in
 # datasets definitions

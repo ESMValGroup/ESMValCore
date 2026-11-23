@@ -26,9 +26,9 @@ from esmvalcore._recipe.to_datasets import (
 )
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
-from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import (
@@ -709,6 +709,7 @@ def _get_preprocessor_products(
 
     check.reference_for_bias_preproc(products)
     check.reference_for_distance_metric_preproc(products)
+    check.reference_for_t_test_preproc(products)
 
     _configure_multi_product_preprocessor(
         products=products,

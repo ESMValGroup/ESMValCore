@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import logging
 import os
 import re
@@ -108,7 +108,7 @@ def test_get_preferred_hosts(monkeypatch, tmp_path, age_in_hours):
       speed (MB/s): 0.9
     """).lstrip()
     hosts_file.write_text(content)
-    now = datetime.datetime.now().timestamp()
+    now = dt.datetime.now().timestamp()
     file_age = now - age_in_hours * 3600
     os.utime(hosts_file, (file_age, file_age))
     monkeypatch.setattr(_download, "HOSTS_FILE", hosts_file)

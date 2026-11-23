@@ -4,15 +4,9 @@ from pathlib import Path
 
 import dask.config
 import pytest
-import yaml
 
-import esmvalcore.cmor.table
+import esmvalcore.config
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config import CFG, _config, _config_validators
-from esmvalcore.config._config import (
-    get_ignored_warnings,
-)
-from esmvalcore.exceptions import RecipeError
 
 BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
     "configurations",
@@ -95,19 +89,6 @@ TEST_LOAD_EXTRA_FACETS = [
         },
     ),
 ]
-
-
-def test_get_project_config(mocker):
-    mock_result = mocker.Mock()
-    mocker.patch.object(_config, "CFG", {"CMIP6": mock_result})
-
-    # Check valid result
-    result = _config.get_project_config("CMIP6")
-    assert result == mock_result
-
-    # Check error
-    with pytest.raises(RecipeError):
-        _config.get_project_config("non-existent-project")
 
 
 def test_load_default_config(cfg_default, monkeypatch):
@@ -208,79 +189,3 @@ def test_load_default_config(cfg_default, monkeypatch):
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path
     assert session.plot_dir == session.session_dir / "plots"
-
-
-def test_rootpath_obs4mips_case_correction(monkeypatch):
-    """Test that the name of the obs4MIPs project is correct in rootpath."""
-    monkeypatch.setitem(CFG, "rootpath", {"obs4mips": "/path/to/data"})
-    assert "obs4mips" not in CFG["rootpath"]
-    assert CFG["rootpath"]["obs4MIPs"] == [Path("/path/to/data")]
-
-
-def test_drs_obs4mips_case_correction(monkeypatch):
-    """Test that the name of the obs4MIPs project is correct in rootpath."""
-    monkeypatch.setitem(CFG, "drs", {"obs4mips": "ESGF"})
-    assert "obs4mips" not in CFG["drs"]
-    assert CFG["drs"]["obs4MIPs"] == "ESGF"
-
-
-def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
-    monkeypatch.setattr(_config, "CFG", {})
-    mocker.patch.object(_config, "read_cmor_tables", autospec=True)
-    cfg_file = tmp_path / "config-developer.yml"
-    project_cfg = {"input_dir": {"default": "/"}}
-    cfg_dev = {
-        "obs4mips": project_cfg,
-    }
-    with cfg_file.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(cfg_dev, file)
-
-    _config.load_config_developer(cfg_file)
-
-    assert "obs4mips" not in _config.CFG
-    assert _config.CFG["obs4MIPs"] == project_cfg
-
-    # Restore config-developer file
-    _config_validators.validate_config_developer(None)
-
-
-def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
-    monkeypatch.setattr(_config, "CFG", {})
-    mocker.patch.object(_config, "read_cmor_tables", autospec=True)
-    cfg_file = tmp_path / "config-developer.yml"
-    cfg_dev = {"custom": {"cmor_path": "/path/to/tables"}}
-    with cfg_file.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(cfg_dev, file)
-
-    _config.load_config_developer(cfg_file)
-
-    assert "custom" in _config.CFG
-
-    # Restore config-developer file
-    _config_validators.validate_config_developer(None)
-
-
-@pytest.mark.parametrize(
-    ("project", "step"),
-    [
-        ("invalid_project", "load"),
-        ("CMIP6", "load"),
-        ("EMAC", "save"),
-    ],
-)
-def test_get_ignored_warnings_none(project, step):
-    """Test ``get_ignored_warnings``."""
-    assert get_ignored_warnings(project, step) is None
-
-
-def test_get_ignored_warnings_emac(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test ``get_ignored_warnings``."""
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    ignored_warnings = get_ignored_warnings("EMAC", "load")
-    assert isinstance(ignored_warnings, list)
-    assert ignored_warnings

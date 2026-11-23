@@ -1452,10 +1452,14 @@ def test_from_recipe_with_glob(tmp_path: Path, session: Session) -> None:
     recipe.write_text(recipe_txt, encoding="utf-8")
 
     filenames = [
-        "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r1i1p1/"
-        "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r1i1p1_200601-210012.nc",
-        "cmip5/output1/NIMR-KMA/HadGEM2-AO/rcp85/mon/atmos/Amon/r1i1p1/"
-        "v20130815/tas_Amon_HadGEM2-AO_rcp85_r1i1p1_186001-200512.nc",
+        (
+            "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r1i1p1/"
+            "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r1i1p1_200601-210012.nc"
+        ),
+        (
+            "cmip5/output1/NIMR-KMA/HadGEM2-AO/rcp85/mon/atmos/Amon/r1i1p1/"
+            "v20130815/tas_Amon_HadGEM2-AO_rcp85_r1i1p1_186001-200512.nc"
+        ),
     ]
     for filename in filenames:
         path = tmp_path / filename
@@ -1573,20 +1577,24 @@ def create_esgf_file(timerange, version):
         "dataset_id": "CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical"
         f".r1i1p1f1.Amon.tas.gr.{version}|esgf-data1.llnl.gov",
         "dataset_id_template_": [
-            "%(mip_era)s.%(activity_drs)s.%(institution_id)s."
-            "%(source_id)s.%(experiment_id)s.%(member_id)s."
-            "%(table_id)s.%(variable_id)s.%(grid_label)s",
+            (
+                "%(mip_era)s.%(activity_drs)s.%(institution_id)s."
+                "%(source_id)s.%(experiment_id)s.%(member_id)s."
+                "%(table_id)s.%(variable_id)s.%(grid_label)s"
+            ),
         ],
         "project": ["CMIP6"],
         "size": 4745571,
         "source_id": ["EC-Earth3"],
         "title": f"tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_{timerange}.nc",
         "url": [
-            "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
-            "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
-            f"/r1i1p1f1/Amon/tas/gr/{version}/tas_Amon_EC-Earth3"
-            f"_historical_r1i1p1f1_gr_{timerange}.nc"
-            "|application/netcdf|HTTPServer",
+            (
+                "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
+                "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
+                f"/r1i1p1f1/Amon/tas/gr/{version}/tas_Amon_EC-Earth3"
+                f"_historical_r1i1p1f1_gr_{timerange}.nc"
+                "|application/netcdf|HTTPServer"
+            ),
         ],
     }
 

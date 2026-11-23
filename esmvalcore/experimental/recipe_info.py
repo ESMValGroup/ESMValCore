@@ -128,7 +128,7 @@ class RecipeInfo:
 
     @property
     def projects(self) -> tuple:
-        """List of recipe projects."""
+        """Research projects that funded the development of the recipe."""
         if self._projects is None:
             tags = self.data["documentation"].get("projects", [])
             self._projects = tuple(Project.from_tag(tag) for tag in tags)

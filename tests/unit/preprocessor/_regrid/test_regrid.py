@@ -174,8 +174,10 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
     if cache_weights:
         assert len(_cached_regridders) == 2
         key_1 = (
-            "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': "
-            "'mask'}",
+            (
+                "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': "
+                "'mask'}"
+            ),
             (18,),
             (36,),
             (30,),

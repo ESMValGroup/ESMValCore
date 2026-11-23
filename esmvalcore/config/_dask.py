@@ -75,7 +75,7 @@ def validate_dask_config(dask_config: Mapping) -> None:
 
 
 @contextlib.contextmanager
-def get_distributed_client(session: Session) -> Generator[None | Client]:
+def get_distributed_client(session: Session) -> Generator[Client | None]:
     """Get a Dask distributed client."""
     dask_config = deepcopy(session["dask"])
     validate_dask_config(dask_config)
@@ -90,8 +90,8 @@ def get_distributed_client(session: Session) -> Generator[None | Client]:
     logger.debug("Using additional Dask settings %s", profile)
     dask.config.set(profile)
 
-    cluster: None | Cluster
-    client: None | Client
+    cluster: Cluster | None
+    client: Client | None
 
     # Threaded scheduler
     if cluster_kwargs is None:

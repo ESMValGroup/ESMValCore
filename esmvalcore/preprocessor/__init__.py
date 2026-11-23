@@ -23,7 +23,6 @@ from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -32,7 +31,11 @@ from esmvalcore.preprocessor._area import (
     meridional_statistics,
     zonal_statistics,
 )
-from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
+from esmvalcore.preprocessor._compare_with_refs import (
+    bias,
+    distance_metric,
+    t_test,
+)
 from esmvalcore.preprocessor._concatenate import concatenate
 from esmvalcore.preprocessor._cycles import amplitude
 from esmvalcore.preprocessor._dask_progress import _compute_with_progress
@@ -219,6 +222,7 @@ __all__ = [  # noqa: RUF022
     # Multi model statistics
     "multi_model_statistics",
     # Comparison with reference datasets
+    "t_test",
     "bias",
     "distance_metric",
     # Remove supplementary variables from cube
@@ -262,6 +266,7 @@ MULTI_MODEL_FUNCTIONS: set[str] = {
     "multi_model_statistics",
     "mask_multimodel",
     "mask_fillvalues",
+    "t_test",
 }
 
 
@@ -298,15 +303,6 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
         .get(dataset.facets["project"], {})
         .get("preprocessor_filename_template", default_template)
     )
-    if template is default_template:
-        try:
-            # Use config-developer.yml for backward compatibility, remove in v2.16.
-            return _get_output_file(
-                dataset.facets,
-                dataset.session.preproc_dir,
-            )
-        except RecipeError:
-            pass
 
     def normalize(value: FacetValue) -> str:
         """Normalize a facet value to a string that can be used in a filename."""

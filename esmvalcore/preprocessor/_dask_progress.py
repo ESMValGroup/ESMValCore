@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import logging
 import threading
 import time
@@ -219,7 +219,7 @@ def _compute_with_progress(
         use_distributed = False
 
     log_progress_interval = session["logging"]["log_progress_interval"]
-    if isinstance(log_progress_interval, (str, datetime.timedelta)):
+    if isinstance(log_progress_interval, (str, dt.timedelta)):
         log_progress_interval = dask.utils.parse_timedelta(
             log_progress_interval,
         )
