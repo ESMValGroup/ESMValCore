@@ -490,6 +490,14 @@ def test_validate_recipe_valid() -> None:
             7,
             "datasets > 1 > tier: expected at most 3, got 7.",
         ),
+        (
+            ["datasets", 1, "tier"],
+            "7",
+            (
+                "datasets > 1 > tier: invalid value '7', choose from '1', "
+                "'2', '3', or an integer."
+            ),
+        ),
     ],
 )
 def test_validate_recipe_invalid(
@@ -503,6 +511,14 @@ def test_validate_recipe_invalid(
         parent = parent[key]
     parent[path[-1]] = value
     assert [str(i) for i in _issues(recipe)] == [message]
+
+
+@pytest.mark.parametrize("tier", [3, "3"])
+def test_validate_recipe_tier(tier: object) -> None:
+    # The tier can be text, as in the paths to the data.
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1]["tier"] = tier
+    assert not [i for i in _issues(recipe) if "tier" in i.path]
 
 
 @pytest.mark.parametrize(

@@ -903,12 +903,16 @@ _TYPES = {"OBS": _OBS_TYPES, "OBS6": _OBS_TYPES}
 
 
 def _tier_schema() -> JSONSchema:
-    """Create a JSON Schema for the tier of an observational dataset."""
+    """Create a JSON Schema for the tier of an observational dataset.
+
+    The tier can also be text, as in the paths to the data.
+    """
     description = "Tier of an observational dataset"
     return {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 3,
+        "anyOf": [
+            {"type": "integer", "minimum": 1, "maximum": 3},
+            {"type": "string", "enum": ["1", "2", "3"]},
+        ],
         "description": f"{description}.",
         "markdownDescription": (
             f"{description}: 2 for freely available datasets and 3 for "
