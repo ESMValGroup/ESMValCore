@@ -408,6 +408,11 @@ class ESGFDataSource(DataSource):
             os.path.expandvars(self.download_dir),
         ).expanduser()
 
+    @property
+    def searchable_facets(self) -> frozenset[str]:
+        """Facets that can be used to search for data."""
+        return frozenset({"project", *FACETS.get(self.project, {})})
+
     def find_data(self, **facets: FacetValue) -> list[ESGFFile]:
         """Find data.
 
