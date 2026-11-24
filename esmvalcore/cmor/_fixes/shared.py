@@ -276,7 +276,7 @@ def cube_to_aux_coord(cube):
     )
 
 
-def ensure_c_contiguous_input[T](
+def ensure_c_contiguous_and_aligned_input[T](
     func: Callable[[np.ndarray], T],
 ) -> Callable[[ArrayLike], T]:
     """Ensure that input to a function is C-contiguous and aligned.
@@ -309,7 +309,7 @@ def get_altitude_to_pressure_func() -> Callable[[ArrayLike], np.ndarray]:
         kind="cubic",
         fill_value="extrapolate",
     )
-    return ensure_c_contiguous_input(interpolator)
+    return ensure_c_contiguous_and_aligned_input(interpolator)
 
 
 def get_bounds_cube(cubes, coord_var_name):
@@ -368,7 +368,7 @@ def get_pressure_to_altitude_func() -> Callable[[ArrayLike], np.ndarray]:
         kind="cubic",
         fill_value="extrapolate",
     )
-    return ensure_c_contiguous_input(interpolator)
+    return ensure_c_contiguous_and_aligned_input(interpolator)
 
 
 def fix_bounds(cube, cubes, coord_var_names):

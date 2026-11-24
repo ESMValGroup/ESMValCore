@@ -24,7 +24,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
     cube_to_aux_coord,
-    ensure_c_contiguous_input,
+    ensure_c_contiguous_and_aligned_input,
     fix_bounds,
     fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
@@ -760,11 +760,11 @@ def test_get_time_bounds_invalid_hr_fail(time_coord, freq):
         get_time_bounds(time_coord, freq)
 
 
-def test_ensure_c_contiguous_input() -> None:
+def test_ensure_c_contiguous_and_aligned_input() -> None:
     def identity[T](x: T) -> T:
         return x
 
-    wrapped_identity = ensure_c_contiguous_input(identity)
+    wrapped_identity = ensure_c_contiguous_and_aligned_input(identity)
 
     f_arr = np.ones((2, 3), order="F")
     assert f_arr.flags["C_CONTIGUOUS"] is False
@@ -789,11 +789,11 @@ def _unaligned_array() -> np.ndarray:
     return arr
 
 
-def test_ensure_c_contiguous_input_aligned() -> None:
+def test_ensure_c_contiguous_and_aligned_input_aligned() -> None:
     def identity[T](x: T) -> T:
         return x
 
-    wrapped_identity = ensure_c_contiguous_input(identity)
+    wrapped_identity = ensure_c_contiguous_and_aligned_input(identity)
 
     result = wrapped_identity(_unaligned_array())
     assert result.flags["C_CONTIGUOUS"] is True
@@ -806,6 +806,9 @@ def test_ensure_c_contiguous_input_aligned() -> None:
 )
 def test_unaligned_input(get_func: Callable[[], Callable]) -> None:
     """Test that unaligned input works (e.g. from other Dask workers)."""
-    arr = _unaligned_array()
+    unaligned_arr = _unaligned_array()
+    aligned_arr = unaligned_arr.copy()
+    assert unaligned_arr.flags["ALIGNED"] is False
+    assert aligned_arr.flags["ALIGNED"] is True
     func = get_func()
-    np.testing.assert_allclose(func(arr), func(arr.copy()))
+    np.testing.assert_allclose(func(unaligned_arr), func(aligned_arr))
