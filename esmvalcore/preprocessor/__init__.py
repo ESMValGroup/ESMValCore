@@ -45,8 +45,6 @@ from esmvalcore.preprocessor._io import (
     write_metadata,
 )
 from esmvalcore.preprocessor._mask import (
-    boolean_above_threshold,
-    boolean_below_threshold,
     mask_above_threshold,
     mask_below_threshold,
     mask_fillvalues,
@@ -173,8 +171,6 @@ __all__ = [  # noqa: RUF022
     # Masking missing values
     "mask_multimodel",
     "mask_fillvalues",
-    "boolean_above_threshold",
-    "boolean_below_threshold",
     "mask_above_threshold",
     "mask_below_threshold",
     "mask_inside_range",

@@ -204,6 +204,29 @@ def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
         settings["regrid_time"]["frequency"] = dataset.facets["frequency"]
 
 
+def _update_count(settings: dict) -> None:
+    """Call threshold exceedance function for count.
+
+    Call a function checking the exceedances of a threshold for statistics
+    preprocessor functions used with count operator.
+    """
+    for step, step_settings in settings.items():
+        if (
+            "_statistics" in step
+            and ("operator", "count") in step_settings.items()
+        ):
+            if "above_threshold" in step_settings:
+                threshold = step_settings.pop("above_threshold")
+                settings[step]["function"] = (
+                    lambda value, threshold=threshold: value > threshold
+                )
+            if "below_threshold" in step_settings:
+                threshold = step_settings.pop("below_threshold")
+                settings[step]["function"] = (
+                    lambda value, threshold=threshold: value < threshold
+                )
+
+
 def _select_dataset(dataset_name: str, datasets: Sequence[Dataset]) -> Dataset:
     for dataset in datasets:
         if dataset.facets["dataset"] == dataset_name:
@@ -802,6 +825,7 @@ def _update_preproc_functions(
     _update_align_metadata(settings, dataset)
     _update_extract_shape(settings, session)
     _update_weighting_settings(settings, dataset.facets)
+    _update_count(settings)
     try:
         _update_target_levels(
             dataset=dataset,

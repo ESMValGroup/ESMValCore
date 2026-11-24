@@ -766,14 +766,6 @@ for threshold masking or the pair ``minimum``, ``maximum`` for interval masking.
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
 
-Converting to Boolean
----------------------
-
-Tests if a threshold is exceeded and returns the corresponding boolean with the
-same mask as the input. Available functions are ``boolean_above_threshold`` and
-``boolean_below_threshold`` and both require the argument ``threshold``.
-
-See also :func:`esmvalcore.preprocessor.boolean_above_threshold`.
 
 .. _Horizontal regridding:
 
