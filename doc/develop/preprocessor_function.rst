@@ -15,10 +15,10 @@ The function should look like this:
 .. code-block:: python
 
     def example_preprocessor_function(
-        cube,
-        example_argument,
-        example_optional_argument=5,
-    ):
+        cube: iris.cube.Cube,
+        example_argument: str,
+        example_optional_argument: int = 5,
+    ) -> iris.cube.Cube:
         """Compute an example quantity.
 
         A more extensive explanation of the computation can be added here. Add

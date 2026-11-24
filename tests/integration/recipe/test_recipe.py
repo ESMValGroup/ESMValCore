@@ -2553,7 +2553,11 @@ def test_wrong_branding_suffix(
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
+    msg = (
+        "Variable 'tos' with branding suffix 'wrong' not available in table "
+        "'ocean' of project 'CMIP7'. Available branding suffixes are: "
+        "tavg-u-hm-sea, tavg-u-hxy-sea, tpt-u-hxy-sea."
+    )
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg
@@ -4110,3 +4114,71 @@ def test_align_metadata_missing_arg(
     msg = "Missing required argument"
     with pytest.raises(ValueError, match=msg):
         get_recipe(tmp_path, content, session)
+
+
+def test_t_test_no_ref(get_recipe, tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_t_test:
+            t_test:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_t_test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: 20000101/20001231
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_t_test: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 0" in exc.value.failed_tasks[0].message
+
+
+def test_t_test_two_refs(get_recipe, tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_t_test:
+            t_test:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_t_test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: 20000101/20001231
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5, reference_for_t_test: true}
+                  - {dataset: CESM2, reference_for_t_test: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_t_test: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 2" in exc.value.failed_tasks[0].message

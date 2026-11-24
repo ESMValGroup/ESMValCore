@@ -1,6 +1,9 @@
 """Preprocessor functions calculate trends from data."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import iris
@@ -11,6 +14,9 @@ from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     preserve_float_dtype,
 )
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +89,7 @@ def _set_trend_units(cube, coord):
 
 
 @preserve_float_dtype
-def linear_trend(cube, coordinate="time"):
+def linear_trend(cube: Cube, coordinate: str = "time") -> Cube:
     """Calculate linear trend of data along a given coordinate.
 
     The linear trend is defined as the slope of an ordinary linear regression.
@@ -143,7 +149,7 @@ def linear_trend(cube, coordinate="time"):
 
 
 @preserve_float_dtype
-def linear_trend_stderr(cube, coordinate="time"):
+def linear_trend_stderr(cube: Cube, coordinate: str = "time") -> Cube:
     """Calculate standard error of linear trend along a given coordinate.
 
     This gives the standard error (not confidence intervals!) of the trend

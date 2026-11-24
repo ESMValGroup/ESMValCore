@@ -88,7 +88,7 @@ class Contributor:
 
 
 class Project:
-    """Use this class to acknowledge a project associated with the recipe.
+    """Research project that funded the development of the recipe.
 
     Parameters
     ----------

@@ -7,6 +7,7 @@ import pytest
 
 import esmvalcore.config
 import esmvalcore.io.protocol
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
 def test_configurations_valid(cfg_default: esmvalcore.config.Config) -> None:
@@ -80,3 +81,36 @@ def test_load_data_sources_invalid_data_source_type(
         match=r"Expected a data source of type `esmvalcore.io.protocol.DataSource`.*",
     ):
         esmvalcore.io.load_data_sources(session, project="test")
+
+
+@dataclass
+class DataSourceWithoutSearchableFacets:
+    """A data source that does not have the `searchable_facets` attribute."""
+
+    name: str
+    project: str
+    priority: int
+    debug_info: str = ""
+
+    def find_data(self, **facets):
+        return []
+
+
+def test_load_data_sources_without_searchable_facets(
+    session: esmvalcore.config.Session,
+) -> None:
+    """Test that data sources without `searchable_facets` are deprecated."""
+    session["projects"]["test"] = {
+        "data": {
+            "old_source": {
+                "type": "tests.unit.io.test_load_data_sources.DataSourceWithoutSearchableFacets",
+            },
+        },
+    }
+    with pytest.warns(
+        ESMValCoreDeprecationWarning,
+        match=r"does not have the attribute `searchable_facets`",
+    ):
+        data_sources = esmvalcore.io.load_data_sources(session, project="test")
+    assert len(data_sources) == 1
+    assert isinstance(data_sources[0], DataSourceWithoutSearchableFacets)
