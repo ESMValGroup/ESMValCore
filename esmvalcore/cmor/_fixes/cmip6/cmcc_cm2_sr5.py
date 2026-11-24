@@ -1,9 +1,9 @@
 """Fixes for CMCC-CM2-SR5 model."""
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
-class Cl(ClFixHybridPressureCoord):
+class Cl(Fix):
     """Fixes for ``cl``."""
 
     def fix_metadata(self, cubes):
@@ -22,4 +22,4 @@ class Cl(ClFixHybridPressureCoord):
         cube = self.get_cube_from_list(cubes)
         ps_coord = cube.coord(var_name="ps")
         ps_coord.standard_name = None
-        return super().fix_metadata(cubes)
+        return cubes

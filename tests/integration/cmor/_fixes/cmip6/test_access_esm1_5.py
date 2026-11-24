@@ -1,13 +1,10 @@
 """Tests for the fixes of ACCESS-ESM1-5."""
 
-import unittest.mock
-
 import iris
 import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.access_esm1_5 import Cl, Cli, Clw, Hus, Zg
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -118,24 +115,13 @@ def test_get_cl_fix():
     assert fix == [Cl(None), GenericFix(None)]
 
 
-@unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.access_esm1_5.ClFixHybridHeightCoord."
-    "fix_metadata",
-    autospec=True,
-)
-def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
+def test_cl_fix_metadata(cl_cubes):
     """Test ``fix_metadata`` for ``cl``."""
-    mock_base_fix_metadata.side_effect = lambda x, y: y
     fix = Cl(None)
     out_cube = fix.fix_metadata(cl_cubes)[0]
     b_coord = out_cube.coord(var_name="b")
     np.testing.assert_allclose(b_coord.points, B_POINTS)
     np.testing.assert_allclose(b_coord.bounds, B_BOUNDS)
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert issubclass(Cl, ClFixHybridHeightCoord)
 
 
 def test_get_cli_fix():

@@ -1,7 +1,6 @@
 """Test Access1-0 fixes."""
 
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 from cf_units import Unit, num2date
@@ -95,17 +94,10 @@ def cl_cubes():
     return CubeList([cl_cube, x_cube])
 
 
-@patch(
-    "esmvalcore.cmor._fixes.cmip5.access1_0.ClFixHybridHeightCoord."
-    "fix_metadata",
-    autospec=True,
-)
-def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
+def test_cl_fix_metadata(cl_cubes):
     """Test ``fix_metadata`` for ``cl``."""
-    mock_base_fix_metadata.return_value = cl_cubes
     fix = Cl(get_var_info("CMIP5", "Amon", "cl"))
     fixed_cubes = fix.fix_metadata(cl_cubes)
-    mock_base_fix_metadata.assert_called_once_with(fix, cl_cubes)
     assert len(fixed_cubes) == 2
     cl_cube = fixed_cubes.extract_cube(
         "cloud_area_fraction_in_atmosphere_layer",

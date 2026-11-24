@@ -4,17 +4,12 @@ import logging
 
 import numpy as np
 
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord, OceanFixGrid
+from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.fixes import get_time_bounds
 
 logger = logging.getLogger(__name__)
 
-Cl = ClFixHybridHeightCoord
-
-Cli = ClFixHybridHeightCoord
-
-Clw = ClFixHybridHeightCoord
 
 Tos = OceanFixGrid
 

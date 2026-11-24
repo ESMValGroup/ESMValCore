@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -45,13 +44,6 @@ class AllVars(Fix):
                     cube.coord("longitude").bounds = lon_bnds
 
         return cubes
-
-
-Cl = ClFixHybridPressureCoord
-
-Cli = ClFixHybridPressureCoord
-
-Clw = ClFixHybridPressureCoord
 
 
 class Siconc(Fix):

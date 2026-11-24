@@ -22214,7 +22214,7 @@ packages:
   - requests
   - rich
   - scipy>=1.6
-  - scitools-iris>=3.12.2
+  - scitools-iris>=3.13
   - shapely>=2.0.0
   - stratify>=0.3
   - xarray

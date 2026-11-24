@@ -4,10 +4,10 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.canesm5_1 import Cl, Cli, Clw, Co2, Gpp, Ps
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip6.canesm5_1 import Cl, Cli, Clw, Co2, Gpp
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_co2_fix():
@@ -69,20 +69,10 @@ def test_get_cl_fix():
     assert fix == [Cl(None), GenericFix(None)]
 
 
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert issubclass(Cl, ClFixHybridPressureCoord)
-
-
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "cli")
     assert fix == [Cli(None), GenericFix(None)]
-
-
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert issubclass(Cli, ClFixHybridPressureCoord)
 
 
 def test_get_clw_fix():
@@ -91,17 +81,27 @@ def test_get_clw_fix():
     assert fix == [Clw(None), GenericFix(None)]
 
 
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert issubclass(Clw, ClFixHybridPressureCoord)
-
-
 def test_get_ps_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "ps")
-    assert fix == [Ps(None), GenericFix(None)]
+    """Test that ``ps`` files, which have no hybrid coordinate, are not fixed."""
+    assert Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "ps") == [
+        GenericFix(None),
+    ]
 
 
-def test_ps_fix():
-    """Test fix for ``ps``."""
-    assert issubclass(Ps, ClFixHybridPressureCoord)
+@pytest.mark.parametrize("fix_class", [Cl, Cli, Clw])
+def test_cl_fix_metadata(fix_class):
+    """Test that the standard name of ``ps`` no longer clashes."""
+    ps_coord = iris.coords.AuxCoord(
+        [0.0],
+        var_name="ps",
+        standard_name="air_pressure",
+    )
+    cube = iris.cube.Cube(
+        [1.0],
+        var_name="cl",
+        standard_name="cloud_area_fraction_in_atmosphere_layer",
+        aux_coords_and_dims=[(ps_coord, 0)],
+    )
+    vardef = get_var_info("CMIP6", "Amon", "cl")
+    fixed_cubes = fix_class(vardef).fix_metadata(iris.cube.CubeList([cube]))
+    assert fixed_cubes[0].coord(var_name="ps").standard_name is None

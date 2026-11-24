@@ -1,13 +1,6 @@
 """Fixes for GISS-E2-1-G model."""
 
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-
-Cl = ClFixHybridPressureCoord
-
-Cli = ClFixHybridPressureCoord
-
-Clw = ClFixHybridPressureCoord
 
 
 class Tos(Fix):

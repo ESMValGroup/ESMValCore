@@ -1,6 +1,5 @@
 """Fixes for CMIP6 UKESM1-0-LL."""
 
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -29,12 +28,3 @@ class AllVars(Fix):
             except KeyError:
                 pass
         return cubes
-
-
-Cl = ClFixHybridHeightCoord
-
-
-Cli = ClFixHybridHeightCoord
-
-
-Clw = ClFixHybridHeightCoord
