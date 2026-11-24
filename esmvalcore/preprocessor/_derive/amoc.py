@@ -18,8 +18,23 @@ class DerivedVariable(DerivedVariableBase):
             required = [{"short_name": "msftmyz", "mip": "Omon"}]
         elif project == "CMIP6":
             required = [
-                {"short_name": "msftmz", "optional": True},
-                {"short_name": "msftyz", "optional": True},
+                {"short_name": "msftmz", "mip": "Omon", "optional": True},
+                {"short_name": "msftyz", "mip": "Omon", "optional": True},
+            ]
+        elif project == "CMIP7":
+            required = [
+                {
+                    "short_name": "msftm",
+                    "branding_suffix": "tavg-ol-hyb-sea",
+                    "mip": "ocean",
+                    "frequency": "mon",
+                },
+                {
+                    "short_name": "msfty",
+                    "branding_suffix": "tavg-ol-ht-sea",
+                    "mip": "ocean",
+                    "frequency": "mon",
+                },
             ]
         elif project == "ICON":
             required = [{"short_name": "msftmz", "mip": "Omon"}]
