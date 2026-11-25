@@ -17,9 +17,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):  # noqa: ARG004
         """Declare the variable needed for derivation."""
-        # 'sic' is sufficient as there is already an entry
-        # in the mapping table esmvalcore/cmor/variable_alt_names.yml
-        return [{"short_name": "sic"}]
+        if project == "CMIP6" or project == "CMIP7":
+            return [{"short_name": "siconc"}]
+        else:
+            return [{"short_name": "sic"}]
 
     @staticmethod
     def calculate(cubes):
