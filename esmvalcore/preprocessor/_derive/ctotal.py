@@ -32,6 +32,11 @@ class DerivedVariable(DerivedVariableBase):
                 {"short_name": "cVeg", "mip": "Lmon"},
                 {"short_name": "cSoil", "mip": "Emon"},
             ]
+        else:
+            msg = (
+                f"Project {project} cannot be used for derivation of 'ctotal'"
+            )
+            raise ValueError(msg)
         return required
 
     @staticmethod
