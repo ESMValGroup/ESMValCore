@@ -17,6 +17,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):  # noqa: ARG004
         """Declare the variable needed for derivation."""
+        # Note: CMIP6 is also included, as the mapping table
+        # esmvalcore/cmor/variable_alt_names.yml is not used
+        # when requesing missing data from ESGF
         if project == "CMIP6" or project == "CMIP7":
             return [{"short_name": "siconc"}]
         else:
