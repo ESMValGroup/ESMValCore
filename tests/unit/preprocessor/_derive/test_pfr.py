@@ -224,7 +224,7 @@ def test_pfr_calculation_major_lon_differences():
 def test_pfr_required_cmip6():
     """Test function ``required``."""
     derived_var = pfr.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({"project": "CMIP6"})
     assert output == [
         {"short_name": "tsl", "mip": "Lmon"},
         {"short_name": "sftlf", "mip": "fx"},
