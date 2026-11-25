@@ -13,6 +13,7 @@ projects:
           frequency: "frequency"
           grid: "grid_label"
           institute: "institution_id"
+          mip: "realm"
           project: "project"
           region: "region"
           short_name: "variable_id"
