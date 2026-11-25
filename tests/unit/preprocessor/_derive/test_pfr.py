@@ -235,7 +235,7 @@ def test_pfr_required_cmip6():
 def test_pfr_required_cmip7():
     """Test function ``required``."""
     derived_var = pfr.DerivedVariable()
-    output = derived_var.required("CMIP7")
+    output = derived_var.required({"project": "CMIP7"})
     assert output == [
         {
             "short_name": "tsl",

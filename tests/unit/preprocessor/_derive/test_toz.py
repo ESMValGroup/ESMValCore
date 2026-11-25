@@ -198,5 +198,5 @@ def test_toz_calculate_unmasked_cubes(unmasked_cubes):
 def test_toz_required(project, out):
     """Test function ``required``."""
     derived_var = toz.DerivedVariable()
-    output = derived_var.required(project)
+    output = derived_var.required({"project": project})
     assert output == out
