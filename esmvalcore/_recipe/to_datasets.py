@@ -557,7 +557,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
 
     # Configure input datasets needed to derive variable
     datasets = []
-    required_vars = get_required(facets)  # type: ignore
+    required_vars = get_required(facets)
     # idea: add option to specify facets in list of dicts that is value of
     # 'derive' in the recipe and use that instead of get_required?
     for input_facets in required_vars:
