@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import fnmatch
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     import iris.cube
     from intake_esm.core import esm_datastore
 
+    from esmvalcore.config import Session
     from esmvalcore.typing import Facets, FacetValue
 
 
@@ -200,15 +202,49 @@ class IntakeEsmDataSource(DataSource):
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
+    session: Session | None = field(
+        init=False,
+        repr=False,
+        compare=False,
+        default=None,
+    )
+    """Session sharing opened catalogs between independently configured sources."""
+
+    _catalog_location: str | None = field(
+        init=False,
+        repr=False,
+        compare=False,
+        default=None,
+    )
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Serialize the source location, not a full cached catalog."""
+        state = self.__dict__.copy()
+        if self._catalog_location is not None:
+            state["catalog"] = self._catalog_location
+        return state
+
     @property
     def searchable_facets(self) -> frozenset[str]:
         """Facets mapped to searchable catalog columns."""
         return frozenset(self.facets)
 
     def _get_catalog(self) -> esm_datastore:
-        """Open a configured catalog once, when it is first needed."""
+        """Open a configured catalog once per session, when first needed."""
         if isinstance(self.catalog, str | Path):
-            self.catalog = intake.open_esm_datastore(str(self.catalog))
+            location = str(self.catalog)
+            if "://" not in location:
+                location = str(Path(location).expanduser().absolute())
+            self._catalog_location = location
+            open_catalog = partial(intake.open_esm_datastore, location)
+            self.catalog = (
+                open_catalog()
+                if self.session is None
+                else self.session.get_cached_resource(
+                    ("intake-esm", location),
+                    open_catalog,
+                )
+            )
         return self.catalog
 
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:

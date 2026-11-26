@@ -88,6 +88,7 @@ def load_data_sources(
         If the project or its settings are not found in the configuration.
 
     """
+    intake_esm = importlib.import_module("esmvalcore.io.intake_esm")
     data_sources: list[esmvalcore.io.protocol.DataSource] = []
     if project is not None and project not in session["projects"]:
         msg = f"Unknown project '{project}', please configure it under 'projects'."
@@ -110,6 +111,8 @@ def load_data_sources(
                 priority=priority,
                 **kwargs,
             )
+            if isinstance(data_source, intake_esm.IntakeEsmDataSource):
+                data_source.session = session
             if not isinstance(data_source, esmvalcore.io.protocol.DataSource):
                 # TODO: Remove in v2.18.0
                 if isinstance(data_source, _DataSourceWithoutSearchableFacets):

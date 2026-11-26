@@ -886,6 +886,11 @@ Incompatible coordinates, units, or calendars raise an error instead of silently
 discarding a candidate.
 Selection reads coordinates while preserving lazy field data, but opening all
 candidates can add I/O compared with stopping at the first source.
+Configured catalogs are opened lazily and shared between datasets within a
+session, while each source keeps its own filters and search state.
+Start a new session to read an updated catalog at the same location.
+Preprocessing workers receive selected catalog rows, without the full cached
+catalog.
 
 For the data source interface, see :mod:`esmvalcore.io.intake_esm`.
 

@@ -6,7 +6,7 @@ import datetime as dt
 import os
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import dask.config
 
@@ -20,7 +20,9 @@ from esmvalcore.config._validated_config import ValidatedConfig
 from esmvalcore.exceptions import InvalidConfigParameter
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Callable, Hashable, Iterable, Mapping
+
+_Resource = TypeVar("_Resource")
 
 URL = (
     "https://docs.esmvaltool.org/projects/"
@@ -287,6 +289,7 @@ class Session(ValidatedConfig):
 
     def __init__(self, config: dict, name: str = "session") -> None:
         super().__init__(config)
+        self._resource_cache: dict[Hashable, Any] = {}
         self.session_name: str | None = None
         self.set_session_name(name)
         msg = (
@@ -295,6 +298,33 @@ class Session(ValidatedConfig):
             "`esmvalcore.config.CFG.start_session` instead."
         )
         warnings.warn(msg, UserWarning, stacklevel=2)
+
+    def get_cached_resource(
+        self,
+        key: Hashable,
+        factory: Callable[[], _Resource],
+    ) -> _Resource:
+        """Get a resource shared within this session, creating it if needed.
+
+        Parameters
+        ----------
+        key:
+            A key uniquely identifying the resource and its configuration.
+        factory:
+            Called without arguments when the resource is not cached yet.
+
+        Returns
+        -------
+        :
+            The shared resource. It is not part of the configuration mapping.
+        """
+        if key not in self._resource_cache:
+            self._resource_cache[key] = factory()
+        return cast("_Resource", self._resource_cache[key])
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Do not copy disposable caches into preprocessing worker processes."""
+        return {**self.__dict__, "_resource_cache": {}}
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(<config>, name={self.session_name})"

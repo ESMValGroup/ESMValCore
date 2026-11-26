@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import copy
 import csv
 import importlib.resources
 import json
+import pickle
 import shutil
 from typing import TYPE_CHECKING
 
@@ -22,7 +24,9 @@ from esmvalcore.io.intake_esm import IntakeEsmDataset, IntakeEsmDataSource
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from esmvalcore.config import Session
+    from pytest_mock import MockerFixture
+
+    from esmvalcore.config import Config, Session
     from esmvalcore.io.protocol import DataElement
 
 
@@ -753,3 +757,223 @@ def test_gcs_example_loads_public_cmip6_data(session: Session) -> None:
     recipe_dataset.session = session
     cube = recipe_dataset.load()
     assert cube.shape[0] == 2
+
+
+@pytest.fixture
+def cached_catalog_dataset(small_catalog: Path, session: Session) -> Dataset:
+    """Configure a dataset with two independently selectable catalog versions."""
+    session["projects"]["CMIP6"]["data"] = {
+        "catalog": {
+            "type": "esmvalcore.io.intake_esm.IntakeEsmDataSource",
+            "catalog": str(small_catalog),
+            "facets": {
+                "activity": "activity_id",
+                "dataset": "source_id",
+                "ensemble": "member_id",
+                "exp": "experiment_id",
+                "institute": "institution_id",
+                "grid": "grid_label",
+                "mip": "table_id",
+                "short_name": "variable_id",
+                "version": "version",
+            },
+            "to_dask_kwargs": {"xarray_open_kwargs": {"decode_times": False}},
+            "squeeze_dimensions": ["member_id", "dcpp_init_year"],
+        },
+    }
+    dataset = Dataset(
+        project="CMIP6",
+        activity="CMIP",
+        institute="TEST",
+        dataset="TEST-MODEL",
+        exp="historical",
+        ensemble="r1i1p1f1",
+        mip="Amon",
+        short_name="tas",
+        grid="gn",
+        version="v1",
+        frequency="mon",
+        timerange="200001/200002",
+    )
+    dataset.session = session
+    return dataset
+
+
+def _used_catalog_source(dataset: Dataset) -> IntakeEsmDataSource:
+    """Get the catalog source retained by a dataset search."""
+    source = dataset._used_data_sources[0]
+    assert isinstance(source, IntakeEsmDataSource)
+    return source
+
+
+def test_catalog_cache_shared_across_datasets(
+    cached_catalog_dataset: Dataset,
+    mocker: MockerFixture,
+) -> None:
+    """Repeated dataset searches open and retain only one full catalog."""
+    opener = mocker.spy(intake, "open_esm_datastore")
+    datasets = [
+        cached_catalog_dataset,
+        cached_catalog_dataset.copy(version="v2"),
+        cached_catalog_dataset.copy(),
+    ]
+    esmvalcore.io.load_data_sources(cached_catalog_dataset.session, "CMIP6")
+    opener.assert_not_called()
+    for dataset in datasets:
+        dataset.find_files()
+    assert opener.call_count == 1
+    sources = [_used_catalog_source(dataset) for dataset in datasets]
+    assert len({id(source) for source in sources}) == 3
+    assert len({id(source._get_catalog().df) for source in sources}) == 1
+    assert [dataset.files[0].facets["version"] for dataset in datasets] == [
+        "v1",
+        "v2",
+        "v1",
+    ]
+    assert len(sources[0]._get_catalog().df) == 2
+    assert sources[0].find_data(short_name="missing") == []
+    assert sources[0].debug_info
+    assert not sources[1].debug_info
+
+
+def test_catalog_cache_keeps_source_options_independent(
+    cached_catalog_dataset: Dataset,
+    mocker: MockerFixture,
+) -> None:
+    """Sources can share catalog metadata with different mappings and filters."""
+    session = cached_catalog_dataset.session
+    settings = session["projects"]["CMIP6"]["data"]
+    settings["catalog"]["catalog_filters"] = {"version": "v1"}
+    settings["other"] = copy.deepcopy(settings["catalog"])
+    settings["other"]["catalog_filters"] = {"version": "v2"}
+    settings["other"]["facets"]["variable"] = settings["other"]["facets"].pop(
+        "short_name",
+    )
+    settings["other"]["to_dask_kwargs"] = {}
+    opener = mocker.spy(intake, "open_esm_datastore")
+    first, second = esmvalcore.io.load_data_sources(session, "CMIP6")
+    assert isinstance(first, IntakeEsmDataSource)
+    assert isinstance(second, IntakeEsmDataSource)
+    first_result = first.find_data(short_name="tas")
+    second_result = second.find_data(variable="tas")
+    assert opener.call_count == 1
+    assert first.catalog is second.catalog
+    assert first_result[0].facets["version"] == "v1"
+    assert second_result[0].facets["version"] == "v2"
+    assert first_result[0].to_dask_kwargs == {
+        "xarray_open_kwargs": {"decode_times": False},
+    }
+    assert second_result[0].to_dask_kwargs == {}
+
+
+def test_catalog_cache_respects_changed_locations_and_sessions(
+    cached_catalog_dataset: Dataset,
+    cfg_default: Config,
+    small_catalog: Path,
+    mocker: MockerFixture,
+) -> None:
+    """A changed location or a new session opens its own catalog snapshot."""
+    opener = mocker.spy(intake, "open_esm_datastore")
+    cached_catalog_dataset.find_files()
+    session = cached_catalog_dataset.session
+    settings = session["projects"]["CMIP6"]["data"]
+    other_path = small_catalog.with_name("other.json")
+    shutil.copyfile(small_catalog, other_path)
+    settings["catalog"]["catalog"] = other_path
+    other = cached_catalog_dataset.copy()
+    other.find_files()
+    assert opener.call_count == 2
+    assert (
+        _used_catalog_source(other).catalog
+        is not _used_catalog_source(cached_catalog_dataset).catalog
+    )
+    fresh = cached_catalog_dataset.copy()
+    fresh.session = cfg_default.start_session("fresh-catalog")
+    fresh.session["projects"]["CMIP6"]["data"] = settings
+    fresh.find_files()
+    assert opener.call_count == 3
+    assert (
+        _used_catalog_source(fresh).catalog
+        is not _used_catalog_source(other).catalog
+    )
+    assert session.copy()["projects"]["CMIP6"]["data"] == settings
+    assert "_resource_cache" not in session.copy()
+
+
+@pytest.mark.parametrize("copy_method", ["deepcopy", "pickle"])
+def test_catalog_cache_not_copied_to_workers(
+    cached_catalog_dataset: Dataset,
+    small_catalog: Path,
+    mocker: MockerFixture,
+    copy_method: str,
+) -> None:
+    """Worker payloads retain selected assets without the full source catalog."""
+    csv_path = small_catalog.with_suffix(".csv")
+    with csv_path.open(newline="") as file:
+        rows = list(csv.DictReader(file))
+    sentinel = "UNSELECTED_FULL_CATALOG_SENTINEL"
+    with csv_path.open("a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+        writer.writerow({**rows[0], "source_id": sentinel})
+
+    dataset = cached_catalog_dataset
+    dataset.find_files()
+    assert (
+        sentinel
+        in _used_catalog_source(dataset)
+        ._get_catalog()
+        .df["source_id"]
+        .tolist()
+    )
+    payload = pickle.dumps((dataset, dataset.session))
+    assert sentinel.encode() not in payload
+    if copy_method == "pickle":
+        # The payload above is created locally from this test's fixture.
+        copied, session = pickle.loads(payload)  # noqa: S301
+    else:
+        copied, session = copy.deepcopy((dataset, dataset.session))
+    assert copied.session is session
+    assert not session._resource_cache
+    assert _used_catalog_source(copied).catalog == str(small_catalog)
+    assert copied.files[0] == dataset.files[0]
+    assert hash(copied.files[0]) == hash(dataset.files[0])
+    mocker.patch(
+        "intake.open_esm_datastore",
+        side_effect=AssertionError("Workers must only load selected assets"),
+    )
+    cube = copied.load()
+    assert cube.shape == (2, 1, 2)
+    np.testing.assert_array_equal(cube.data.ravel(), np.arange(4) + 280)
+
+
+def test_catalog_cache_reopens_in_copied_session(
+    cached_catalog_dataset: Dataset,
+    mocker: MockerFixture,
+) -> None:
+    """A copied session can lazily open catalogs for a subsequent search."""
+    opener = mocker.spy(intake, "open_esm_datastore")
+    cached_catalog_dataset.find_files()
+    copied = copy.deepcopy(cached_catalog_dataset)
+    copied.find_files()
+    assert opener.call_count == 2
+    assert (
+        _used_catalog_source(copied).catalog
+        is not _used_catalog_source(cached_catalog_dataset).catalog
+    )
+
+
+def test_catalog_cache_preserves_explicit_catalog_objects(
+    cached_catalog_dataset: Dataset,
+    small_catalog: Path,
+) -> None:
+    """Explicit in-memory catalogs still survive copying without a reload path."""
+    catalog = intake.open_esm_datastore(str(small_catalog))
+    session = cached_catalog_dataset.session
+    session["projects"]["CMIP6"]["data"]["catalog"]["catalog"] = catalog
+    cached_catalog_dataset.find_files()
+    copied = copy.deepcopy(cached_catalog_dataset)
+    assert isinstance(
+        _used_catalog_source(copied).catalog,
+        intake.catalog.Catalog,
+    )
+    assert len(_used_catalog_source(copied)._get_catalog().df) == 2
