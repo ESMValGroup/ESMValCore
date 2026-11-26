@@ -5,16 +5,23 @@ authors:
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lvp`."""
 
     @staticmethod
-    def required(project):  # noqa: ARG004
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [
             {"short_name": "hfls"},

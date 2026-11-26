@@ -1,12 +1,18 @@
 """Create mask for derivation of variable `siextent`."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import iris
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +21,7 @@ class DerivedVariable(DerivedVariableBase):
     """Create mask for derivation of variable `siextent`."""
 
     @staticmethod
-    def required(project):  # noqa: ARG004
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variable needed for derivation."""
         # 'sic' is sufficient as there is already an entry
         # in the mapping table esmvalcore/cmor/variable_alt_names.yml

@@ -32,7 +32,9 @@ def cubes(realistic_4d_cube: Cube) -> CubeList:
 
 @pytest.mark.parametrize("project", ["CMIP3", "CMIP5", "CMIP6", "CMIP7"])
 def test_get_required(project: str) -> None:
-    assert get_required("phcint", project) == [{"short_name": "thetao"}]
+    assert get_required({"short_name": "phcint", "project": project}) == [
+        {"short_name": "thetao"},
+    ]
 
 
 def test_derive(cubes: CubeList) -> None:

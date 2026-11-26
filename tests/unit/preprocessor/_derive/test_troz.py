@@ -136,5 +136,5 @@ def test_troz_calculate_hybrid_plevs(cubes_hybrid_plevs):
 def test_toz_required(project, out):
     """Test function ``required``."""
     derived_var = troz.DerivedVariable()
-    output = derived_var.required(project)
+    output = derived_var.required({"project": project})
     assert output == out

@@ -1,6 +1,9 @@
 """Derivation of variable `pfr`."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import cftime
 import dask.array as da
@@ -13,6 +16,9 @@ from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
 
 from ._baseclass import DerivedVariableBase
 
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
+
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -24,8 +30,9 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `pfr` (permafrost extent)."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
+        project = facets["project"]
         if project == "CMIP7":
             return [
                 {

@@ -50,7 +50,7 @@ def test_lapserate_calculate(cubes):
 def test_lapserate_required():
     """Test function ``required``."""
     derived_var = lapserate.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({})
     assert output == [
         {"short_name": "ta"},
         {"short_name": "zg"},

@@ -124,5 +124,5 @@ def test_soz_calculate_hybrid_plevs(cubes_hybrid_plevs):
 def test_soz_required(project, out):
     """Test function ``required``."""
     derived_var = soz.DerivedVariable()
-    output = derived_var.required(project)
+    output = derived_var.required({"project": project})
     assert output == out

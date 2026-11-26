@@ -185,7 +185,7 @@ def test_check_units_fail(mock_cubes):
 
 def test_get_required():
     """Test getting required variables for derivation."""
-    variables = get_required("alb", "CMIP5")
+    variables = get_required({"short_name": "alb", "project": "CMIP5"})
 
     reference = [
         {
@@ -201,7 +201,7 @@ def test_get_required():
 
 def test_get_required_with_fx():
     """Test getting required variables for derivation with fx variables."""
-    variables = get_required("ohc", "CMIP5")
+    variables = get_required({"short_name": "ohc", "project": "CMIP5"})
 
     reference = [
         {"short_name": "thetao"},
@@ -214,7 +214,7 @@ def test_get_required_with_fx():
 def test_get_required_invalid_var():
     msg = r"Cannot derive variable '_invalid_var_'"
     with pytest.raises(NotImplementedError, match=msg):
-        get_required("_invalid_var_", "CMIP5")
+        get_required({"short_name": "_invalid_var_", "project": "CMIP5"})
 
 
 def test_derive_nonstandard_nofx():

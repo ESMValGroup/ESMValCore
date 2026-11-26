@@ -22,9 +22,10 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
 
     @staticmethod
-    def required(project: str) -> list[Facets]:
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
         volcello: Facets = {"short_name": "volcello", "mip": "fx"}
+        project = facets["project"]
         if project == "CMIP5":
             volcello["ensemble"] = "r0i0p0"
         elif project == "CMIP6":

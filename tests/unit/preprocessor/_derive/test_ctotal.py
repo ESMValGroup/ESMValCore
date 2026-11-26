@@ -8,6 +8,40 @@ from cf_units import Unit
 from esmvalcore.preprocessor._derive import ctotal
 
 
+@pytest.mark.parametrize(
+    ("project", "out"),
+    [
+        (
+            "CMIP5",
+            [
+                {"short_name": "cVeg", "mip": "Lmon"},
+                {"short_name": "cSoil", "mip": "Lmon"},
+            ],
+        ),
+        (
+            "CMIP6",
+            [
+                {"short_name": "cVeg", "mip": "Lmon"},
+                {"short_name": "cSoil", "mip": "Emon"},
+            ],
+        ),
+    ],
+)
+def test_required(project, out):
+    """Test function ``required``."""
+    derived_var = ctotal.DerivedVariable()
+    output = derived_var.required({"project": project})
+    assert output == out
+
+
+def test_required_not_supported_project():
+    """Test function ``required``."""
+    derived_var = ctotal.DerivedVariable()
+    msg = r"Project CMIP7 cannot be used for derivation of 'ctotal'"
+    with pytest.raises(ValueError, match=msg):
+        derived_var.required({"project": "CMIP7"})
+
+
 @pytest.fixture
 def cubes(project):
     if project == "CMIP5":

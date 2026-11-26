@@ -18,7 +18,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `qep`."""
 
     @staticmethod
-    def required(project: str) -> list[Facets]:  # noqa: ARG004
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [
             {"short_name": "evspsbl"},

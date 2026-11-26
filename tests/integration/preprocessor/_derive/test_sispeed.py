@@ -4,10 +4,27 @@ import math
 from unittest import mock
 
 import numpy as np
+import pytest
 from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._derive.sispeed import DerivedVariable
+
+
+@pytest.mark.parametrize(
+    ("project", "out"),
+    [
+        ("CMIP5", [{"short_name": "usi"}, {"short_name": "vsi"}]),
+        ("CMIP6", [{"short_name": "siu"}, {"short_name": "siv"}]),
+        ("CMIP7", [{"short_name": "usi"}, {"short_name": "vsi"}]),
+        ("OBS", [{"short_name": "usi"}, {"short_name": "vsi"}]),
+    ],
+)
+def test_required(project, out):
+    """Test function ``required``."""
+    derived_var = DerivedVariable()
+    output = derived_var.required({"project": project})
+    assert output == out
 
 
 def get_cube(name, lat=((0.5, 1.5), (2.5, 3.5)), lon=((0.5, 1.5), (2.5, 3.5))):

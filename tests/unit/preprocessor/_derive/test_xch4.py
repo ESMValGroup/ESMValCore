@@ -67,7 +67,7 @@ def test_xch4_calculate(cubes):
 def test_xch4_required():
     """Test function ``required``."""
     derived_var = xch4.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({})
     assert output == [
         {"short_name": "ch4"},
         {"short_name": "hus"},
