@@ -46,11 +46,10 @@ class DerivedVariable(DerivedVariableBase):
                 mod_suffix = suffix 
 
             return [
-                {"short_name": "co2", "branding_suffix": air_suffix},
-                {"short_name": "hus", "branding_suffix": u_suffix},
-                {"short_name": "zg", "branding_suffix": air_suffix},
-                # branding suffix for "ps" is different than for 3-dim variables "co2", "hus", "zg"
-                {"short_name": "ps", "branding_suffix": "tavg-u-hxy-u"},
+                {"short_name": "co2", "branding_suffix": air_suffix, "mip": "atmos"},
+                {"short_name": "hus", "branding_suffix": u_suffix, "mip": "atmos"},
+                {"short_name": "zg", "branding_suffix": air_suffix, "mip": "atmos"},
+                {"short_name": "ps", "branding_suffix": "tavg-u-hxy-u", "mip": "atmos"},
             ]
         else:
             return [
