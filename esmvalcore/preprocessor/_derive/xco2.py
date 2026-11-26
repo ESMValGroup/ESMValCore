@@ -12,12 +12,31 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        return [
-            {"short_name": "co2"},
-            {"short_name": "hus"},
-            {"short_name": "zg"},
-            {"short_name": "ps"},
-        ]
+        if project == "CMIP7":
+            org_suffix = None
+            # if no suffix is given, use "tavg-p19-hxy-air" for 3-dim variables as a default
+            if not org_suffix:
+                org_suffix = "tavg-p19-hxy-air"
+            # last element of suffix "tavg-p19-hxy-air" differs for hus (= "u")
+            if org_suffix.split("-")[1] == "p19":
+                # split suffix into elements (delimiter "-"), then change last element into "u" 
+                mod_suffix = "-".join([org_suffix.split("-")[:-1], "-u"])
+            else:
+                mod_suffix = org_suffix 
+            return [
+                {"short_name": "co2", "branding_suffix": org_suffix},
+                {"short_name": "hus", "branding_suffix": mod_suffix},
+                {"short_name": "zg", "branding_suffix": org_suffix},
+                # branding suffix for "ps" is different than for 3-dim variables "co2", "hus", "zg"
+                {"short_name": "ps", "branding_suffix": "tavg-u-hxy-u"},
+            ]
+        else:
+            return [
+                {"short_name": "co2"},
+                {"short_name": "hus"},
+                {"short_name": "zg"},
+                {"short_name": "ps"},
+            ]
 
     @staticmethod
     def calculate(cubes):
