@@ -17,6 +17,7 @@ import esmvalcore.io.intake_esm
 from esmvalcore.io.intake_esm import (
     IntakeEsmDataset,
     IntakeEsmDataSource,
+    _ranges_overlap,
 )
 
 if TYPE_CHECKING:
@@ -392,6 +393,40 @@ def test_search_time_overlap(timerange: str) -> None:
 
     with pytest.raises(ESMDataSourceError):
         dataset.to_iris()
+
+
+@pytest.mark.parametrize("requested", ["200002/200002", "P1M/200002"])
+@pytest.mark.parametrize(
+    ("asset", "overlaps"),
+    [
+        ("20000229-20000229", True),
+        ("20000230-20000230", True),
+        ("20000230T233000-20000230T233000", True),
+        ("2000-2000", True),
+        ("200002-200002", True),
+        ("20000130-20000130", False),
+        ("20000301-20000301", False),
+    ],
+)
+def test_catalog_overlap_is_calendar_agnostic(
+    requested: str,
+    asset: str,
+    overlaps: bool,
+) -> None:
+    """A full month includes its last days in all supported calendars."""
+    assert _ranges_overlap(requested, asset, "-") is overlaps
+
+
+@pytest.mark.parametrize(
+    "requested",
+    ["0150/0150", "P1Y/0150", "015002/015002", "P1M/015002"],
+)
+def test_catalog_overlap_preserves_four_digit_years(requested: str) -> None:
+    """Early control-run years must not select later centuries' assets."""
+    assert _ranges_overlap(requested, "0150-0150", "-")
+    assert _ranges_overlap(requested, "01500220-01500220", "-")
+    assert not _ranges_overlap(requested, "0200-0200", "-")
+    assert not _ranges_overlap(requested, "02000220-02000220", "-")
 
 
 def test_invalid_catalog_time_range() -> None:

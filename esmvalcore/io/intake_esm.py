@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import fnmatch
 from dataclasses import dataclass, field
+from datetime import timedelta
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -17,7 +18,8 @@ from typing import TYPE_CHECKING, Any
 import intake
 from dask.base import tokenize
 
-from esmvalcore.io.local import _parse_period, _truncate_dates
+from esmvalcore._time import _parse_timerange
+from esmvalcore.io.local import _truncate_dates
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
@@ -494,7 +496,18 @@ def _resolve_catalog_query(
 
 def _ranges_overlap(requested: str, asset: str, separator: str) -> bool:
     """Check overlap using the same mixed-resolution rules as local files."""
-    request_start, request_end = _parse_period(requested)
+    start, end = _parse_timerange(requested)
+    request_start = start.isoformat()
+    inclusive_end = end - timedelta(microseconds=1)
+    request_end = inclusive_end.isoformat()
+    if end.day == 1 and not any(
+        (end.hour, end.minute, end.second, end.microsecond),
+    ):
+        # Preserve whole years/months without assuming a Gregorian last day:
+        # a 360_day catalog can contain February 30.
+        request_end = f"{inclusive_end.year:04d}"
+        if end.month != 1:
+            request_end += f"{inclusive_end.month:02d}"
     asset_dates = asset.split(separator)
     if len(asset_dates) != 2:
         msg = (

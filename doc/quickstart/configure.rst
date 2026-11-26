@@ -881,9 +881,13 @@ Numeric versions compare numerically, with an optional ``v`` prefix ignored.
 Other version labels compare alphabetically and sort before numeric versions.
 Lower-ranked candidates fill missing timestamps, including gaps within files.
 Catalog asset intervals are checked for missing requested years when available.
-After loading regular annual, monthly, daily, or hourly data, ESMValCore also
-checks that the selected samples reach the requested first and last periods
-and include every requested year, even if catalog coverage is absent.
+After loading, ESMValCore checks that selected samples reach the requested
+first and last periods and include every requested year, even if catalog
+coverage is absent.
+Subhourly sampling intervals are inferred from regular time coordinates.
+Multi-year averages use their time bounds rather than a point in each year.
+Coverage that cannot be established from sampling intervals or time bounds
+raises an error.
 The usual CMOR checks validate the spacing between samples.
 Dataset identity facets distinguish models, experiments, members, and grids.
 CMOR coordinate history is ignored, as in ordinary concatenation.

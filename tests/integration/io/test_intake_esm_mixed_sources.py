@@ -753,3 +753,184 @@ def test_unknown_catalog_missing_internal_year(
     check.data_availability(dataset)
     with pytest.raises(InputFilesNotFound, match="do not cover requested"):
         dataset.load()
+
+
+def test_unknown_local_coverage_defers_catalog_year_check(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+) -> None:
+    """An alternative source with unknown intervals may complete a catalog."""
+    dataset, _ = mixed_sources(
+        "local",
+        catalog_years=(2000, 2000),
+        other_years=(2001, 2001),
+    )
+    dataset.find_files()
+    for element in dataset.files:
+        if not isinstance(element, IntakeEsmDataset):
+            element.facets.pop("timerange")
+    check.data_availability(dataset)
+    assert dataset.load().shape[0] == 24
+
+
+@pytest.mark.parametrize(
+    ("frequency", "samples", "timerange", "error"),
+    [
+        ("subhrPt", 48, "20000101T000000/20000101T235959", None),
+        ("subhrPt", 47, "20000101T000000/20000101T235959", "do not cover"),
+        ("subhrPt", 4, "2000/2001", "do not cover"),
+        ("subhrPt", 1, "20000101T000000/20000101T235959", "Cannot validate"),
+        ("dec", 2, "2000/2019", None),
+        ("dec", 1, "2000/2019", "do not cover"),
+    ],
+)
+def test_catalog_subhourly_and_decadal_coverage(
+    tmp_path: Path,
+    session: Session,
+    frequency: str,
+    samples: int,
+    timerange: str,
+    error: str | None,
+) -> None:
+    """Validate supported frequencies through the actual catalog/Dataset path."""
+    subhourly = frequency == "subhrPt"
+    points = (
+        np.arange(samples) / 48
+        if subhourly
+        else 1800 + 3600 * np.arange(samples)
+    )
+    coords: dict[str, Any] = {
+        "time": (
+            "time",
+            points,
+            {
+                "standard_name": "time",
+                "units": "days since 2000-01-01",
+                "calendar": "360_day",
+            },
+        ),
+    }
+    shape: tuple[int, ...]
+    dims: tuple[str, ...]
+    if subhourly:
+        mip, short_name, name, units = "Esubhr", "tas", "air_temperature", "K"
+        shape = (samples, 2, 2)
+        dims = ("time", "lat", "lon")
+        coords.update(
+            lat=(
+                "lat",
+                [-10.0, 10.0],
+                {"standard_name": "latitude", "units": "degrees_north"},
+            ),
+            lon=(
+                "lon",
+                [0.0, 90.0],
+                {"standard_name": "longitude", "units": "degrees_east"},
+            ),
+            height=(
+                (),
+                2.0,
+                {"standard_name": "height", "units": "m", "positive": "up"},
+            ),
+        )
+    else:
+        mip, short_name, name, units = (
+            "Odec",
+            "bigthetaoga",
+            "sea_water_conservative_temperature",
+            "degC",
+        )
+        shape = (samples,)
+        dims = ("time",)
+        coords["time"][2]["bounds"] = "time_bnds"
+    variables: dict[str, Any] = {
+        short_name: (
+            dims,
+            np.full(shape, 10.0, dtype="float32"),
+            {"standard_name": name, "units": units},
+        ),
+    }
+    if not subhourly:
+        variables["time_bnds"] = (
+            ("time", "bnds"),
+            np.stack((points - 1800, points + 1800), axis=1),
+        )
+    path = tmp_path / "data.nc"
+    xr.Dataset(variables, coords=coords).to_netcdf(path)
+    config = _catalog_config(path, "v1", "200001-201912")
+    if subhourly:
+        config["facets"].pop("timerange")
+    catalog = path.with_suffix(".json")
+    metadata = json.loads(catalog.read_text())
+    metadata["catalog_dict"][0].update(table_id=mip, variable_id=short_name)
+    if not subhourly:
+        # CMIP filenames can give point years rather than averaging bounds.
+        metadata["catalog_dict"][0]["time_range"] = (
+            f"200501-{2005 + 10 * (samples - 1)}01"
+        )
+    catalog.write_text(json.dumps(metadata))
+    session["projects"]["CMIP6"]["data"] = {"catalog": config}
+    dataset = Dataset(
+        project="CMIP6",
+        **{**FACETS, "mip": mip, "short_name": short_name},
+        frequency=frequency,
+        timerange=timerange,
+    )
+    dataset.session = session
+    check.data_availability(dataset)
+    if error:
+        with pytest.raises(InputFilesNotFound, match=error):
+            dataset.load()
+    else:
+        assert dataset.load().shape == shape
+
+
+def test_catalog_relative_and_explicit_time_ranges_agree(
+    tmp_path: Path,
+    session: Session,
+) -> None:
+    """A duration must select the same monthly assets as its explicit period."""
+    full = tmp_path / "input" / "full.nc"
+    _write_asset(full, (2001, 2001), 0.0)
+    rows = []
+    with xr.open_dataset(full, decode_cf=False) as data:
+        for month in range(1, 13):
+            asset = tmp_path / f"tas_2001{month:02d}.nc"
+            data.isel(time=slice(month - 1, month)).to_netcdf(asset)
+            config = _catalog_config(
+                asset,
+                "v1",
+                f"2001{month:02d}-2001{month:02d}",
+            )
+            metadata = json.loads(asset.with_suffix(".json").read_text())
+            rows.extend(metadata["catalog_dict"])
+    metadata["catalog_dict"] = rows
+    metadata["aggregation_control"]["aggregations"] = [
+        {
+            "type": "join_existing",
+            "attribute_name": "time_range",
+            "options": {"dim": "time"},
+        },
+    ]
+    catalog = tmp_path / "monthly.json"
+    catalog.write_text(json.dumps(metadata))
+    config["catalog"] = str(catalog)
+    session["projects"]["CMIP6"]["data"] = {"catalog": config}
+    outputs = []
+    for timerange in ("200101/200112", "P1Y/2001"):
+        dataset = Dataset(
+            project="CMIP6",
+            **FACETS,
+            frequency="mon",
+            timerange=timerange,
+        )
+        dataset.session = session
+        dataset.find_files()
+        element = dataset.files[0]
+        assert isinstance(element, IntakeEsmDataset)
+        assert len(element.catalog.df) == 12
+        outputs.append(dataset.load())
+    np.testing.assert_array_equal(outputs[0].data, outputs[1].data)
+    np.testing.assert_array_equal(
+        outputs[0].coord("time").points,
+        outputs[1].coord("time").points,
+    )
