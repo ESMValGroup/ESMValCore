@@ -901,11 +901,13 @@ def test_catalog_cache_respects_changed_locations_and_sessions(
 
 
 @pytest.mark.parametrize("copy_method", ["deepcopy", "pickle"])
+@pytest.mark.parametrize("catalog_type", ["file", "inline"])
 def test_catalog_cache_not_copied_to_workers(
     cached_catalog_dataset: Dataset,
     small_catalog: Path,
     mocker: MockerFixture,
     copy_method: str,
+    catalog_type: str,
 ) -> None:
     """Worker payloads retain selected assets without the full source catalog."""
     csv_path = small_catalog.with_suffix(".csv")
@@ -915,9 +917,20 @@ def test_catalog_cache_not_copied_to_workers(
     with csv_path.open("a", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writerow({**rows[0], "source_id": sentinel})
+    if catalog_type == "inline":
+        metadata = json.loads(small_catalog.read_text())
+        metadata.pop("catalog_file")
+        with csv_path.open(newline="") as file:
+            metadata["catalog_dict"] = list(csv.DictReader(file))
+        small_catalog.write_text(json.dumps(metadata))
 
     dataset = cached_catalog_dataset
     dataset.find_files()
+    assert len(dataset.files) == 1
+    assert isinstance(dataset.files[0], IntakeEsmDataset)
+    assert len(dataset.files[0].catalog.df) == 1
+    assert dataset.files[0].catalog.esmcat.catalog_dict is None
+    assert sentinel.encode() not in pickle.dumps(dataset.files[0])
     assert (
         sentinel
         in _used_catalog_source(dataset)
@@ -944,6 +957,50 @@ def test_catalog_cache_not_copied_to_workers(
     cube = copied.load()
     assert cube.shape == (2, 1, 2)
     np.testing.assert_array_equal(cube.data.ravel(), np.arange(4) + 280)
+
+
+@pytest.mark.parametrize("in_memory", [False, True])
+def test_inline_catalog_selection_preserves_original_metadata(
+    cached_catalog_dataset: Dataset,
+    small_catalog: Path,
+    mocker: MockerFixture,
+    in_memory: bool,
+) -> None:
+    """Removing redundant subset rows must not mutate a caller-owned catalog."""
+    metadata = json.loads(small_catalog.read_text())
+    csv_path = small_catalog.parent / metadata.pop("catalog_file")
+    with csv_path.open(newline="") as file:
+        metadata["catalog_dict"] = list(csv.DictReader(file))
+    small_catalog.write_text(json.dumps(metadata))
+    session = cached_catalog_dataset.session
+    source = esmvalcore.io.load_data_sources(session, "CMIP6")[0]
+    assert isinstance(source, IntakeEsmDataSource)
+    original = source._get_catalog()
+    if in_memory:
+        session["projects"]["CMIP6"]["data"]["catalog"]["catalog"] = original
+    mocker.patch.object(
+        type(original.esmcat),
+        "load",
+        side_effect=AssertionError("Searches must not reopen the catalog"),
+    )
+    search = mocker.spy(type(original), "search")
+    cached_catalog_dataset.find_files()
+    view = search.call_args_list[0].args[0]
+    assert view is not original
+    assert view.df is original.df
+    selected = cached_catalog_dataset.files[0]
+    assert isinstance(selected, IntakeEsmDataset)
+    assert len(selected.catalog.df) == 1
+    assert selected.catalog.esmcat.catalog_dict is None
+    assert original.esmcat.catalog_dict == metadata["catalog_dict"]
+    assert len(original.df) == 2
+    search.reset_mock()
+    other = cached_catalog_dataset.copy(version="v2")
+    other.find_files()
+    assert search.call_args_list[0].args[0].df is original.df
+    assert other.files[0].facets["version"] == "v2"
+    assert len(original.search(version="v2").df) == 1
+    assert _used_catalog_source(cached_catalog_dataset).catalog is original
 
 
 def test_catalog_cache_reopens_in_copied_session(

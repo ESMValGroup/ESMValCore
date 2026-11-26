@@ -293,6 +293,17 @@ class IntakeEsmDataSource(DataSource):
         debug_query = copy.deepcopy(query)
 
         catalog = self._get_catalog()
+        if catalog.esmcat.catalog_dict is not None:
+            # Intake searches copy this redundant row list into every subset,
+            # including the constructor arguments retained for serialization.
+            # Its copy protocol reopens the catalog; share instance state
+            # explicitly to keep the original DataFrame and loading options.
+            view = object.__new__(type(catalog))
+            view.__dict__.update(catalog.__dict__)
+            view.esmcat = catalog.esmcat.model_copy(
+                update={"catalog_dict": None},
+            )
+            catalog = view
         _validate_catalog_columns(catalog, self.facets, self.catalog_filters)
 
         # A catalog time_range describes asset coverage, not an exact recipe
