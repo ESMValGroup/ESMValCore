@@ -23623,7 +23623,7 @@ packages:
   - packaging
   - pandas
   - pillow
-  - prov
+  - prov[xml]>=3.0
   - psutil
   - py-cordex
   - pybtex

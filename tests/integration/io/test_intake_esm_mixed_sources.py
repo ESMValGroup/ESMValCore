@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 import yaml
+from prov.model import ProvDocument
 
 from esmvalcore._recipe.recipe import read_recipe_file
 from esmvalcore.dataset import Dataset
@@ -290,6 +291,16 @@ def test_recipe_reuses_catalog_across_preprocessing_tasks(
             )
             np.testing.assert_array_equal(output.time.dt.year, years)
             assert len(np.unique(output.time.to_numpy())) == len(values)
+        provenance = ProvDocument.deserialize(
+            outputs[0].with_name(f"{outputs[0].stem}_provenance.xml"),
+            format="xml",
+        )
+        assert any(
+            str(name) == "attribute:intake_esm_attrs:_data_format_"
+            and value == "netcdf"
+            for record in provenance.get_records()
+            for name, value in record.attributes
+        )
 
 
 @pytest.mark.parametrize("catalog_priority", [1, 2])
