@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import intake
+from dask.base import tokenize
 
 from esmvalcore.io.local import _parse_period, _truncate_dates
 from esmvalcore.io.protocol import DataElement, DataSource
@@ -32,9 +33,14 @@ __all__ = [
 ]
 
 
-@dataclass
+@dataclass(eq=False)
 class IntakeEsmDataset(DataElement):
-    """A catalog selection that can be loaded as Iris cubes."""
+    """A catalog selection that can be loaded as Iris cubes.
+
+    Selections compare by their initial catalog metadata and loading settings.
+    Reading and caching attributes does not change their identity, so a
+    selection can be shared safely by multiple preprocessing tasks.
+    """
 
     name: str
     """A unique name identifying the data."""
@@ -60,9 +66,37 @@ class IntakeEsmDataset(DataElement):
         default=None,
     )
 
+    _identity: str = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        # Intake's equality compares DataFrames as booleans. Fingerprint only
+        # the selected rows, catalog semantics and loading options instead.
+        self._identity = tokenize(
+            self.name,
+            self.facets,
+            self.catalog.esmcat.model_dump(
+                exclude={"catalog_dict", "catalog_file"},
+            ),
+            self.catalog.df,
+            self.catalog.sep,
+            self.catalog.storage_options,
+            {
+                name: variable.model_dump()
+                for name, variable in self.catalog.derivedcat.items()
+            },
+            self.to_dask_kwargs,
+            self.squeeze_dimensions,
+        )
+
+    def __eq__(self, other: object) -> bool:
+        """Compare selections without consulting mutable load-time caches."""
+        if not isinstance(other, IntakeEsmDataset):
+            return NotImplemented
+        return self._identity == other._identity
+
     def __hash__(self) -> int:
         """Return a number uniquely representing the data element."""
-        return hash((self.name, self.facets.get("version")))
+        return hash(self._identity)
 
     def prepare(self) -> None:
         """Prepare the data for access.

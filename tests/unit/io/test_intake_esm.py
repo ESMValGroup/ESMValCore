@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import importlib.resources
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import intake
+import numpy as np
 import pytest
 import xarray as xr
+from intake_esm.derived import DerivedVariableRegistry
 from intake_esm.source import ESMDataSourceError
 
 import esmvalcore.io.intake_esm
@@ -43,6 +45,96 @@ def test_intake_esm_dataset_repr() -> None:
     cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
     dataset = IntakeEsmDataset(name="id", facets={}, catalog=cat)
     assert repr(dataset) == "IntakeEsmDataset(name='id')"
+
+
+@pytest.fixture
+def selected_catalog() -> esm_datastore:
+    """Return a selection with a DataFrame in its initialization."""
+    return intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
+        source_id="BCC-CSM2-MR",
+        experiment_id="abrupt-4xCO2",
+        variable_id="tasmax",
+        member_id="r1i1p1f1",
+    )
+
+
+def test_dataset_equality_after_loading(
+    selected_catalog: esm_datastore,
+) -> None:
+    """Repeated selections deduplicate, even after attributes are cached."""
+    first = IntakeEsmDataset("id", {"version": "v1"}, selected_catalog)
+    second = IntakeEsmDataset(
+        "id",
+        {"version": "v1"},
+        selected_catalog.search(variable_id="tasmax"),
+    )
+    scheduled = {first, second}
+    assert len(scheduled) == 1
+    original_hash = hash(first)
+    first.attributes = {"branch_time": np.array([0.0, 1.0])}
+    assert first == second
+    assert hash(first) == original_hash == hash(second)
+    assert first in scheduled
+    assert second in scheduled
+    assert first != object()
+
+
+@pytest.mark.parametrize(
+    "difference",
+    [
+        "name",
+        "facet",
+        "version",
+        "path",
+        "format",
+        "aggregation",
+        "registry",
+        "storage",
+        "loader",
+        "squeeze",
+    ],
+)
+def test_dataset_equality_preserves_distinct_inputs(
+    selected_catalog: esm_datastore,
+    difference: str,
+) -> None:
+    """The same logical name must not collapse different data selections."""
+    first = IntakeEsmDataset("id", {"version": "v1"}, selected_catalog)
+    other_catalog = selected_catalog.search(variable_id="tasmax")
+    kwargs: dict[str, Any] = {
+        "name": "id",
+        "facets": {"version": "v1"},
+        "catalog": other_catalog,
+    }
+    if difference == "name":
+        kwargs["name"] = "other"
+    elif difference == "facet":
+        kwargs["facets"] = {"version": "v1", "ensemble": "r2i1p1f1"}
+    elif difference == "version":
+        kwargs["facets"] = {"version": "v2"}
+    elif difference == "path":
+        other_catalog.df[other_catalog.esmcat.assets.column_name] = "other.nc"
+    elif difference == "format":
+        other_catalog.esmcat.assets.format = "zarr"
+    elif difference == "aggregation":
+        other_catalog.esmcat.aggregation_control.groupby_attrs = ["source_id"]
+    elif difference == "registry":
+        other_catalog.derivedcat = DerivedVariableRegistry()
+        other_catalog.derivedcat.register(
+            variable="derived",
+            query={"variable_id": ["tasmax"]},
+        )(lambda data: data)
+    elif difference == "storage":
+        other_catalog.storage_options = {"anon": True}
+    elif difference == "loader":
+        kwargs["to_dask_kwargs"] = {
+            "xarray_open_kwargs": {"decode_times": False},
+        }
+    else:
+        kwargs["squeeze_dimensions"] = ("member_id",)
+    second = IntakeEsmDataset(**kwargs)
+    assert first != second
+    assert len({first, second}) == 2
 
 
 def test_prepare(mocker: MockerFixture) -> None:

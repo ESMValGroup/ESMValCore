@@ -10,7 +10,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+import yaml
 
+from esmvalcore._recipe.recipe import read_recipe_file
 from esmvalcore.dataset import Dataset
 
 if TYPE_CHECKING:
@@ -233,6 +235,61 @@ def _assert_selected_asset(dataset: Dataset, expected: Path) -> None:
         cube.data[:, 0, 0],
         280.0 + np.arange(24) + offset,
     )
+
+
+def test_recipe_reuses_catalog_across_preprocessing_tasks(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    recipe_documentation: str,
+    tmp_path: Path,
+) -> None:
+    """Run two profiles sharing each of two distinct catalog selections."""
+    dataset, _ = mixed_sources(
+        "intake",
+        catalog_years=(2000, 2000),
+        other_years=(2001, 2001),
+    )
+    session = dataset.session
+    session["max_parallel_tasks"] = 1
+    session.run_dir.mkdir(parents=True)
+    content = {
+        "datasets": [
+            {"project": "CMIP6", **FACETS, "timerange": "200001/200112"},
+        ],
+        "preprocessors": {
+            "monthly": {},
+            "annual": {"annual_statistics": {"operator": "mean"}},
+        },
+        "diagnostics": {
+            "temperature": {
+                "variables": {
+                    name: {"short_name": "tas", "preprocessor": name}
+                    for name in ("monthly", "annual")
+                },
+                "scripts": None,
+            },
+        },
+    }
+    path = tmp_path / "recipe_catalog.yml"
+    path.write_text(recipe_documentation + yaml.safe_dump(content))
+    recipe = read_recipe_file(path, session)
+    assert len(recipe._download_files) == 2
+    recipe.run()
+    expected = 280.0 + np.arange(24) + np.repeat([0.0, 100.0], 12)
+    for profile, values, years in (
+        ("monthly", expected, np.repeat([2000, 2001], 12)),
+        ("annual", expected.reshape(2, 12).mean(axis=1), [2000, 2001]),
+    ):
+        outputs = list(
+            (session.preproc_dir / "temperature" / profile).glob("*.nc"),
+        )
+        assert len(outputs) == 1
+        with xr.open_dataset(outputs[0]) as output:
+            np.testing.assert_array_equal(
+                output.tas.to_numpy()[:, 0, 0],
+                values,
+            )
+            np.testing.assert_array_equal(output.time.dt.year, years)
+            assert len(np.unique(output.time.to_numpy())) == len(values)
 
 
 @pytest.mark.parametrize("catalog_priority", [1, 2])
