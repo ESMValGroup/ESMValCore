@@ -2,8 +2,10 @@
 
 from unittest.mock import sentinel
 
+import numpy as np
 import pytest
-from iris.coords import AuxCoord
+from cf_units import Unit
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -55,6 +57,23 @@ def test_generic_fix_no_generic_lev_coords(generic_fix, monkeypatch):
     cube = generic_fix._fix_alternative_generic_level_coords(sentinel.cube)
 
     assert cube == sentinel.cube
+
+
+def test_fix_time_units_accepts_scalar_array_attributes(generic_fix):
+    """Convert scalar branch times from xarray-to-Iris conversions."""
+    cube = Cube(np.zeros(2))
+    cube.attributes["parent_time_units"] = "days since 1850-1-1"
+    cube.attributes["branch_time_in_parent"] = np.array(0.0)
+    cube.attributes["branch_time_in_child"] = np.array(1.0)
+    time = DimCoord(
+        [0.0, 1.0],
+        standard_name="time",
+        units=Unit("days since 1850-1-1", calendar="gregorian"),
+    )
+    generic_fix._fix_time_units(cube, time)
+
+    assert isinstance(cube.attributes["branch_time_in_parent"], float)
+    assert isinstance(cube.attributes["branch_time_in_child"], float)
 
 
 def test_requested_levels_2d_coord(generic_fix, mocker):

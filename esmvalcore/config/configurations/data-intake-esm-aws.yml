@@ -1,4 +1,4 @@
-# Documentation example: intake-esm catalog (AWS)
+# Template: intake-esm catalog (AWS). Install s3fs to read the assets.
 # Use `esmvaltool config copy data-intake-esm-aws.yml` to copy this example
 # to your configuration directory, then update the `catalog` URL if needed.
 projects:
@@ -16,9 +16,10 @@ projects:
           mip: "table_id"
           short_name: "variable_id"
           version: "version"
-          timerange: "time_range"
-        time_separator: "/"
         catalog: "https://cmip6-pds.s3.amazonaws.com/pangeo-cmip6.json"
+        squeeze_dimensions:
+          - member_id
+          - dcpp_init_year
         to_dask_kwargs:
           xarray_open_kwargs:
             decode_cf: false
