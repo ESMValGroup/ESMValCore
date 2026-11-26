@@ -873,6 +873,7 @@ Numeric versions compare numerically, with an optional ``v`` prefix ignored.
 Other version labels compare alphabetically and sort before numeric versions.
 Lower-ranked candidates fill missing timestamps, including gaps within files.
 Dataset identity facets distinguish models, experiments, members, and grids.
+CMOR coordinate history is ignored, as in ordinary concatenation.
 Incompatible coordinates, units, or calendars raise an error instead of silently
 discarding a candidate.
 Selection reads coordinates while preserving lazy field data, but opening all

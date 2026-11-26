@@ -412,6 +412,36 @@ def test_complementary_sources_preserve_time_coverage(
     ]
 
 
+def test_complementary_catalogs_with_different_coordinate_history(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+) -> None:
+    """CMOR coordinate history must not prevent combining available years."""
+    dataset, paths = mixed_sources(
+        "intake",
+        catalog_years=(2000, 2000),
+        other_years=(2001, 2001),
+    )
+    sources = dataset.session["projects"]["CMIP6"]["data"]
+    for name, path in paths.items():
+        with xr.open_dataset(path, decode_cf=False) as original:
+            annotated = original.load()
+        annotated["lat"].attrs["history"] = f"CMOR processing for {name}"
+        annotated_path = path.with_stem(f"{path.stem}_history")
+        annotated.to_netcdf(annotated_path)
+        period = "200001-200012" if name == "catalog" else "200101-200112"
+        sources[name] = _catalog_config(annotated_path, "v20200101", period)
+    cube = dataset.load()
+    assert cube.has_lazy_data()
+    np.testing.assert_array_equal(
+        cube.data[:, 0, 0],
+        280.0 + np.arange(24) + np.repeat([0.0, 100.0], 12),
+    )
+    dates = cube.coord("time").units.num2date(cube.coord("time").points)
+    assert [(date.year, date.month) for date in dates] == [
+        (year, month) for year in (2000, 2001) for month in range(1, 13)
+    ]
+
+
 @pytest.mark.parametrize(
     "other_kind",
     [

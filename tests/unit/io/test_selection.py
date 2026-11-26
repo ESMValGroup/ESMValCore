@@ -146,6 +146,51 @@ def test_static_field_uses_preferred_source() -> None:
     assert result[0].has_lazy_data()
 
 
+@pytest.mark.parametrize("histories", [(None, "new"), ("old", "new")])
+def test_coordinate_history_preserves_samples_and_input_metadata(
+    histories: tuple[str | None, str],
+) -> None:
+    """Ignore coordinate history without modifying the original cubes."""
+    first, second = _cube([0, 1], 10.0), _cube([1, 2], 20.0)
+    for cube, history in zip((first, second), histories, strict=True):
+        if history is not None:
+            cube.coord("latitude").attributes["history"] = history
+    result = select_cubes(
+        [_element("a"), _element("b")],
+        [[first], [second]],
+        {},
+    )
+    assert all(cube.has_lazy_data() for cube in [first, second, *result])
+    assert (
+        tuple(
+            cube.coord("latitude").attributes.get("history")
+            for cube in (first, second)
+        )
+        == histories
+    )
+    np.testing.assert_array_equal(
+        np.concatenate([cube.coord("time").points for cube in result]),
+        [0, 1, 2],
+    )
+    np.testing.assert_array_equal(
+        np.concatenate([cube.data[:, 0] for cube in result]),
+        [10.0, 10.0, 20.0],
+    )
+
+
+def test_coordinate_history_does_not_hide_other_metadata_differences() -> None:
+    first, second = _cube([0, 1]), _cube([0, 1], 2.0)
+    first.coord("latitude").attributes["history"] = "old"
+    second.coord("latitude").attributes.update(
+        {"history": "new", "uncertainty": 0.1},
+    )
+    with pytest.raises(
+        ValueError,
+        match="different coordinates, units or calendars",
+    ):
+        select_cubes([_element("a"), _element("b")], [[first], [second]], {})
+
+
 @pytest.mark.parametrize(
     "difference",
     ["units", "grid", "calendar", "time", "scalar"],

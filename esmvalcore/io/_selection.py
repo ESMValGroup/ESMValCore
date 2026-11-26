@@ -104,12 +104,19 @@ def _check_coordinates(reference: Cube, cube: Cube) -> None:
 
     def coordinates(item: Cube) -> list:
         time_dims = item.coord_dims("time") if item.coords("time") else ()
-        return [
-            (coord, item.coord_dims(coord))
-            for coord in item.coords()
-            if coord.name() != "time"
-            and not set(item.coord_dims(coord)).intersection(time_dims)
-        ]
+        result = []
+        for coord in item.coords():
+            dims = item.coord_dims(coord)
+            if coord.name() == "time" or set(dims).intersection(time_dims):
+                continue
+            comparison_coord = coord
+            if "history" in coord.attributes:
+                # Concatenate also ignores CMOR coordinate history. Compare
+                # copies so selection does not change the input metadata.
+                comparison_coord = coord.copy()
+                del comparison_coord.attributes["history"]
+            result.append((comparison_coord, dims))
+        return result
 
     reference_time = reference.coords("time")
     cube_time = cube.coords("time")
