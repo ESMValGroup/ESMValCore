@@ -73,8 +73,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
-        # TODO: make get_required _derive/__init__.py use variables as argument
-        # and make this dependent on mip
+        # TODO: make this dependent on mip
         project = facets["project"]
         required: list[Facets]
         if project == "CMIP6":
