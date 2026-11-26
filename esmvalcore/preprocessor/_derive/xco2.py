@@ -19,21 +19,36 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
+        project = facets["project"]
         if project == "CMIP7":
-            org_suffix = None
-            # if no suffix is given, use "tavg-p19-hxy-air" for 3-dim variables as a default
-            if not org_suffix:
-                org_suffix = "tavg-p19-hxy-air"
-            # last element of suffix "tavg-p19-hxy-air" differs for hus (= "u")
-            if org_suffix.split("-")[1] == "p19":
-                # split suffix into elements (delimiter "-"), then change last element into "u" 
-                mod_suffix = "-".join([org_suffix.split("-")[:-1], "-u"])
+            # For CMIP7, there are only three valid options for the branding_suffix of the
+            # 3-dim variables: tavg-p19-hxy-air, tavg-p19-hxy-u and tavg-al-hxy-u.
+            # These might differ among the three required 3-dim variables :(
+            valid_options = ["tavg-p19-hxy-air", "tavg-p19-hxy-u", "tavg-al-hxy-u"]
+
+            # check if branding_suffix was set in recipe
+            # if not, we use the 19-level suffix ("p19")
+            if "branding_suffix" in facets:
+                suffix = facets["branding_suffix"]
             else:
-                mod_suffix = org_suffix 
+                suffix = valid_options[0]
+
+            # make sure branding_suffix is one of the valid options
+            if suffix not in valid_options:
+               suffix = valid_options[0]
+            
+            # last element of 19-level suffix "tavg-p19-hxy-xxx" differs for hus and co2 / zg
+            if suffix.split("-")[1] == "p19":
+                # split suffix into elements (delimiter "-"), then make sure last element is "u" or "air" 
+                u_suffix = "-".join([*suffix.split("-")[:-1], "u"])
+                air_suffix = "-".join([*suffix.split("-")[:-1], "air"])
+            else:
+                mod_suffix = suffix 
+
             return [
-                {"short_name": "co2", "branding_suffix": org_suffix},
-                {"short_name": "hus", "branding_suffix": mod_suffix},
-                {"short_name": "zg", "branding_suffix": org_suffix},
+                {"short_name": "co2", "branding_suffix": air_suffix},
+                {"short_name": "hus", "branding_suffix": u_suffix},
+                {"short_name": "zg", "branding_suffix": air_suffix},
                 # branding suffix for "ps" is different than for 3-dim variables "co2", "hus", "zg"
                 {"short_name": "ps", "branding_suffix": "tavg-u-hxy-u"},
             ]
