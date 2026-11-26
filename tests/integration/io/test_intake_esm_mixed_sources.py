@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.resources
 import json
 from typing import TYPE_CHECKING, Any
 
@@ -236,6 +237,69 @@ def _assert_selected_asset(dataset: Dataset, expected: Path) -> None:
         cube.data[:, 0, 0],
         280.0 + np.arange(24) + offset,
     )
+
+
+@pytest.mark.parametrize(
+    ("experiment", "activity"),
+    [("historical", "CMIP"), ("ssp126", "ScenarioMIP")],
+)
+@pytest.mark.parametrize("selection", ["explicit", "inferred", "discovered"])
+def test_nci_example_preserves_activity(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    experiment: str,
+    activity: str,
+    selection: str,
+) -> None:
+    """NCI project_id must not override activity when mixing catalog sources."""
+    dataset, paths = mixed_sources("intake")
+    sources = dataset.session["projects"]["CMIP6"]["data"]
+    config_path = (
+        importlib.resources.files("esmvalcore.config")
+        / "configurations"
+        / "data-intake-esm-nci.yml"
+    )
+    config = yaml.safe_load(config_path.read_text())
+    nci_source = config["projects"]["CMIP6"]["data"]["nci-disk-catalog"]
+    nci_source.update(
+        catalog=sources["catalog"]["catalog"],
+        priority=sources["catalog"]["priority"],
+    )
+    for name, path in paths.items():
+        catalog_path = path.with_suffix(".json")
+        catalog = json.loads(catalog_path.read_text())
+        row = catalog["catalog_dict"][0]
+        row["experiment_id"] = experiment
+        row["activity_id"] = activity
+        if name == "catalog":
+            # Real fs38 rows use CMIP even for ScenarioMIP assets.
+            row.pop("activity_id")
+            row.update(project_id="CMIP", file_type="l")
+            catalog["aggregation_control"]["groupby_attrs"] = [
+                "project_id" if column == "activity_id" else column
+                for column in catalog["aggregation_control"]["groupby_attrs"]
+            ]
+            catalog["attributes"] = [
+                {"column_name": key} for key in row if key != "path"
+            ]
+        catalog_path.write_text(json.dumps(catalog))
+    sources["catalog"] = nci_source
+    dataset["exp"] = experiment
+    if selection == "explicit":
+        dataset["activity"] = activity
+    else:
+        dataset.facets.pop("activity")
+        if selection == "discovered":
+            dataset["exp"] = "*"
+            discovered = list(dataset.from_files())
+            assert len(discovered) == 1
+            dataset = discovered[0]
+    dataset.find_files()
+    assert dataset["exp"] == experiment
+    assert dataset["activity"] == activity
+    nci_element, other_element = dataset.files
+    assert "activity" not in nci_element.facets
+    assert other_element.facets["activity"] == activity
+    _assert_selected_asset(dataset, paths["catalog"])
 
 
 def test_recipe_reuses_catalog_across_preprocessing_tasks(

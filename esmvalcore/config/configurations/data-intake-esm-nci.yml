@@ -6,8 +6,9 @@ projects:
     data:
       nci-disk-catalog:
         type: esmvalcore.io.intake_esm.IntakeEsmDataSource
+        # fs38 project_id is not the CMIP6 activity (e.g. ScenarioMIP).
+        # Keep activity from the recipe or the CMIP6 experiment vocabulary.
         facets:
-          activity: "project_id"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"

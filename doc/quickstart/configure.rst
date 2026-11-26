@@ -838,8 +838,16 @@ example configuration:
 
 The ``catalog`` entry points to the public catalog. The catalog has no
 ``time_range`` search facet, so ESMValCore selects the requested period after
-loading. The NCI example targets the fs38 catalog on Gadi. The AWS and DKRZ
-configuration files need site-specific verification.
+loading.
+The NCI example targets the fs38 catalog on Gadi.
+Its ``project_id`` column is not the CMIP6 activity, so the example leaves
+``activity`` unmapped and retains it from the recipe or infers it from the
+CMIP6 experiment vocabulary.
+Use ``exp`` to select or discover experiments; the catalog cannot filter by
+``activity`` directly.
+For experiments absent from the CMIP6 vocabulary, specify ``activity`` in the
+recipe when it is needed by another data source.
+The AWS and DKRZ configuration files need site-specific verification.
 
 An intake-esm configuration maps ESMValCore facets to columns in that catalog.
 The configured columns must exist and each mapped facet must have one value per
