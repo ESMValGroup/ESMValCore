@@ -22,8 +22,9 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `vegFrac`."""
 
     @staticmethod
-    def required(project: str) -> list[Facets]:
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
+        project = facets["project"]
         sftlf: Facets = {"short_name": "sftlf", "mip": "fx"}
         if project == "CMIP5":
             sftlf["ensemble"] = "r0i0p0"

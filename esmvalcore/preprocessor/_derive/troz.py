@@ -1,5 +1,9 @@
 """Derivation of variable ``troz``."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import dask.array as da
 import iris
 
@@ -10,14 +14,17 @@ from .soz import STRATOSPHERIC_O3_THRESHOLD
 from .toz import DerivedVariable as Toz
 from .toz import add_longitude_coord, interpolate_hybrid_plevs
 
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
+
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable ``troz``."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
-        return Toz.required(project)
+        return Toz.required(facets)
 
     @staticmethod
     def calculate(cubes):

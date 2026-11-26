@@ -76,7 +76,7 @@ def test_siextent_no_data(cubes_sic):
 def test_siextent_required():
     """Test function ``required``."""
     derived_var = siextent.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({})
     assert output == [
         {
             "short_name": "sic",

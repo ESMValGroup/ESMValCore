@@ -1,11 +1,18 @@
 """Derivation of variable ``co2s``."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import iris
 
 from esmvalcore.preprocessor._supplementary_vars import add_ancillary_variable
 from esmvalcore.preprocessor._volume import extract_surface_from_atm
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -25,7 +32,7 @@ class DerivedVariable(DerivedVariableBase):
     """
 
     @staticmethod
-    def required(project):  # noqa: ARG004
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [{"short_name": "co2"}, {"short_name": "ps"}]
 

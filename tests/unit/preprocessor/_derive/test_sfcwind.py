@@ -32,7 +32,7 @@ def cubes():
 def test_sfcwind_calculate(cubes):
     """Test function ``calculate``."""
     derived_var = sfcwind.DerivedVariable()
-    required_vars = derived_var.required("CMIP5")
+    required_vars = derived_var.required({"project": "CMIP5"})
     expected_required_vars = [
         {"short_name": "uas"},
         {"short_name": "vas"},

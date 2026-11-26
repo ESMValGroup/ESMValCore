@@ -148,8 +148,8 @@ def _get_default_settings_for_chl(save_filename):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-    def get_required(short_name, _):
-        if short_name != "tas":
+    def get_required(facets: Facets) -> list[Facets]:
+        if facets["short_name"] != "tas":
             raise AssertionError
         return [
             {"short_name": "pr"},
@@ -2553,7 +2553,11 @@ def test_wrong_branding_suffix(
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
+    msg = (
+        "Variable 'tos' with branding suffix 'wrong' not available in table "
+        "'ocean' of project 'CMIP7'. Available branding suffixes are: "
+        "tavg-u-hm-sea, tavg-u-hxy-sea, tpt-u-hxy-sea."
+    )
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg

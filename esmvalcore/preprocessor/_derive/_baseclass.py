@@ -16,7 +16,7 @@ class DerivedVariableBase:
 
     @staticmethod
     @abstractmethod
-    def required(project: str) -> list[Facets]:
+    def required(facets: Facets) -> list[Facets]:
         """Return required variables for derivation.
 
         This method needs to be overridden in the child class belonging to the
@@ -32,13 +32,13 @@ class DerivedVariableBase:
 
         Parameters
         ----------
-        project:
-            Project of the dataset for which the desired variable is derived.
+        facets:
+            Facets of the derived variable.
 
         Returns
         -------
         list[esmvalcore.typing.Facets]
-            List of facets.
+            List of facets of required variables.
 
         """
 

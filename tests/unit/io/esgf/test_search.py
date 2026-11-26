@@ -456,6 +456,26 @@ class TestESGFDataSource:
         )
         assert isinstance(data_source, esmvalcore.io.protocol.DataSource)
 
+    def test_searchable_facets(self) -> None:
+        """Test that the facets used to search ESGF can be searched for."""
+        data_source = ESGFDataSource(
+            name="esgf-cmip6",
+            project="CMIP6",
+            priority=1,
+            download_dir=Path("/path/to/climate_data"),
+        )
+        assert data_source.searchable_facets == {
+            "activity",
+            "dataset",
+            "ensemble",
+            "exp",
+            "grid",
+            "institute",
+            "mip",
+            "project",
+            "short_name",
+        }
+
     def test_find_data(self, mocker: MockerFixture) -> None:
         """Test find_data method."""
         data_source = ESGFDataSource(

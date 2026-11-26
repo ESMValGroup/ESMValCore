@@ -1,5 +1,9 @@
 """Derivation of variable ``toz``."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cf_units
 import iris
 from scipy import constants
@@ -10,6 +14,9 @@ from esmvalcore.preprocessor._regrid import extract_levels, regrid
 
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 # Constants
 AVOGADRO_CONST = constants.value("Avogadro constant")
@@ -64,10 +71,12 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable ``toz``."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
         # TODO: make get_required _derive/__init__.py use variables as argument
         # and make this dependent on mip
+        project = facets["project"]
+        required: list[Facets]
         if project == "CMIP6":
             required = [
                 {"short_name": "o3"},
