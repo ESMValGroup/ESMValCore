@@ -857,6 +857,27 @@ catalog aggregation can be corrected. To deduplicate data across catalogs,
 configure the same ESMValCore identity facets in each source; versions are
 compared separately.
 
+When an intake-esm source is configured, both search modes inspect all sources.
+Catalog metadata may omit time coverage or hide gaps within an asset, so
+``Dataset.files`` lists candidate inputs, including those checked for coverage
+but ultimately superseded by a preferred source.
+When candidates include intake-esm data, ESMValCore selects overlapping samples
+using the actual time coordinates after metadata fixes:
+
+* ``search_data: quick`` prefers the source with the lowest ``priority`` value,
+  then the newest version within that source.
+* ``search_data: complete`` prefers the newest version across all sources,
+  using source priority to break ties.
+
+Numeric versions compare numerically, with an optional ``v`` prefix ignored.
+Other version labels compare alphabetically and sort before numeric versions.
+Lower-ranked candidates fill missing timestamps, including gaps within files.
+Dataset identity facets distinguish models, experiments, members, and grids.
+Incompatible coordinates, units, or calendars raise an error instead of silently
+discarding a candidate.
+Selection reads coordinates while preserving lazy field data, but opening all
+candidates can add I/O compared with stopping at the first source.
+
 For the data source interface, see :mod:`esmvalcore.io.intake_esm`.
 
 Authentication and access
@@ -880,7 +901,8 @@ provider's documentation for configuring authentication and network access.
 .. note::
 
     Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
-    and the :mod:`esmvalcore.io.local` data sources has not yet been implemented.
+    and the :mod:`esmvalcore.io.local` data sources without an intake-esm
+    candidate has not yet been implemented.
     Therefore it is recommended not to use the configuration option
     ``search_data: complete`` when using both data sources for the same project.
     The ``search_data: quick`` option can be safely used.

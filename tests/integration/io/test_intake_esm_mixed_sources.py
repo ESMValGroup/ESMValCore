@@ -1,8 +1,4 @@
-"""Selection and loading across intake-esm and other data sources.
-
-Strict xfails record unresolved selection gaps in PR #3234. Run this module
-with ``--runxfail`` to reproduce them before changing source selection.
-"""
+"""Selection and loading across intake-esm and other data sources."""
 
 from __future__ import annotations
 
@@ -16,7 +12,6 @@ import pytest
 import xarray as xr
 
 from esmvalcore.dataset import Dataset
-from esmvalcore.io.local import LocalFile
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -48,19 +43,8 @@ MAPPING = {
     "grid": "grid_label",
 }
 
-DIFFERENT_IDENTITIES = pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="Intake-esm, local and ESGF use different DataElement.name formats",
-)
-UNKNOWN_COVERAGE = pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="Quick search treats catalog data without timerange as complete",
-)
 
-
-def _write_asset(path: Path, years: tuple[int, int]) -> None:
+def _write_asset(path: Path, years: tuple[int, int], offset: float) -> None:
     """Write monthly data whose values identify their position in time."""
     path.parent.mkdir(parents=True)
     months = np.arange(12 * (years[0] - 2000), 12 * (years[1] - 1999))
@@ -69,7 +53,7 @@ def _write_asset(path: Path, years: tuple[int, int]) -> None:
             "tas": (
                 ("time", "lat", "lon"),
                 np.broadcast_to(
-                    (280.0 + months)[:, None, None],
+                    (280.0 + months + offset)[:, None, None],
                     (len(months), 1, 2),
                 ).astype("float32"),
                 {"standard_name": "air_temperature", "units": "K"},
@@ -168,7 +152,7 @@ def mixed_sources(
                 / version
                 / (f"tas_Amon_TEST-MODEL_historical_r1i1p1f1_gn_{period}.nc")
             )
-            _write_asset(paths[name], years)
+            _write_asset(paths[name], years, 100.0 if name == "other" else 0.0)
             configs[name] = _catalog_config(paths[name], version, period)
 
         if other_kind == "local":
@@ -242,15 +226,13 @@ def mixed_sources(
 
 
 def _assert_selected_asset(dataset: Dataset, expected: Path) -> None:
-    """Check both uniqueness and which source supplied the selected data."""
-    dataset.find_files()
-    assert len(dataset.files) == 1
-    selected = dataset.files[0]
-    if isinstance(selected, LocalFile):
-        assert selected == expected
-    else:
-        selected.to_iris()
-        assert selected.attributes["source_file"] == str(expected)
+    """Check the values identify the preferred source, without duplication."""
+    cube = dataset.load()
+    offset = 100.0 if expected.parent.parent.name == "other" else 0.0
+    np.testing.assert_array_equal(
+        cube.data[:, 0, 0],
+        280.0 + np.arange(24) + offset,
+    )
 
 
 @pytest.mark.parametrize("catalog_priority", [1, 2])
@@ -260,8 +242,8 @@ def _assert_selected_asset(dataset: Dataset, expected: Path) -> None:
         ("quick", "local"),
         ("quick", "esgf"),
         ("quick", "intake"),
-        pytest.param("complete", "local", marks=DIFFERENT_IDENTITIES),
-        pytest.param("complete", "esgf", marks=DIFFERENT_IDENTITIES),
+        ("complete", "local"),
+        ("complete", "esgf"),
         ("complete", "intake"),
     ],
 )
@@ -284,8 +266,8 @@ def test_duplicate_sources_use_priority(
 @pytest.mark.parametrize(
     "other_kind",
     [
-        pytest.param("local", marks=DIFFERENT_IDENTITIES),
-        pytest.param("esgf", marks=DIFFERENT_IDENTITIES),
+        "local",
+        "esgf",
         "intake",
     ],
 )
@@ -294,6 +276,7 @@ def test_duplicate_sources_use_priority(
     [
         ("v20200101", "v20210101", "other"),
         ("v20210101", "v20200101", "catalog"),
+        ("v9", "v10", "other"),
     ],
 )
 def test_complete_search_uses_newest_version(
@@ -312,11 +295,6 @@ def test_complete_search_uses_newest_version(
     _assert_selected_asset(dataset, paths[winner])
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="Dataset compares raw version strings, including the v prefix",
-)
 def test_catalog_versions_with_different_prefixes(
     mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
 ) -> None:
@@ -332,20 +310,12 @@ def test_catalog_versions_with_different_prefixes(
 @pytest.mark.parametrize(
     ("search_data", "other_kind"),
     [
-        pytest.param("quick", "local", marks=UNKNOWN_COVERAGE),
-        pytest.param("quick", "esgf", marks=UNKNOWN_COVERAGE),
-        pytest.param("quick", "intake", marks=UNKNOWN_COVERAGE),
+        ("quick", "local"),
+        ("quick", "esgf"),
+        ("quick", "intake"),
         ("complete", "local"),
         ("complete", "esgf"),
-        pytest.param(
-            "complete",
-            "intake",
-            marks=pytest.mark.xfail(
-                strict=True,
-                raises=AssertionError,
-                reason="Catalog identity omits coverage and drops complementary assets",
-            ),
-        ),
+        ("complete", "intake"),
     ],
 )
 def test_complementary_sources_preserve_time_coverage(
@@ -363,7 +333,10 @@ def test_complementary_sources_preserve_time_coverage(
     dataset.find_files()
     assert len(dataset.files) == 2
     cube = dataset.load()
-    np.testing.assert_array_equal(cube.data[:, 0, 0], 280.0 + np.arange(24))
+    np.testing.assert_array_equal(
+        cube.data[:, 0, 0],
+        280.0 + np.arange(24) + np.repeat([0.0, 100.0], 12),
+    )
     time = cube.coord("time")
     dates = time.units.num2date(time.points)
     assert [(date.year, date.month) for date in dates] == [
@@ -374,8 +347,8 @@ def test_complementary_sources_preserve_time_coverage(
 @pytest.mark.parametrize(
     "other_kind",
     [
-        pytest.param("local", marks=DIFFERENT_IDENTITIES),
-        pytest.param("esgf", marks=DIFFERENT_IDENTITIES),
+        "local",
+        "esgf",
         "intake",
     ],
 )
@@ -388,3 +361,49 @@ def test_lower_priority_subset_does_not_duplicate_months(
     _assert_selected_asset(dataset, paths["catalog"])
     cube = dataset.load()
     np.testing.assert_array_equal(cube.data[:, 0, 0], 280.0 + np.arange(24))
+
+
+@pytest.mark.parametrize("other_kind", ["local", "esgf", "intake"])
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_newer_partial_version_preserves_older_coverage(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    other_kind: str,
+    search_data: str,
+) -> None:
+    """A newer release replaces overlapping samples without losing a year."""
+    dataset, _ = mixed_sources(
+        other_kind,
+        other_version="v20210101",
+        other_years=(2001, 2001),
+        search_data=search_data,
+    )
+    cube = dataset.load()
+    offsets = np.repeat([0.0, 100.0 if search_data == "complete" else 0.0], 12)
+    np.testing.assert_array_equal(
+        cube.data[:, 0, 0],
+        280.0 + np.arange(24) + offsets,
+    )
+
+
+@pytest.mark.parametrize("other_kind", ["local", "esgf", "intake"])
+@pytest.mark.parametrize("months", [list(range(6)), [0, 2, 4, 6, 8, 10]])
+def test_quick_search_fills_missing_months_in_preferred_source(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    other_kind: str,
+    months: list[int],
+) -> None:
+    """Coverage of a year does not imply that every month is available."""
+    dataset, paths = mixed_sources(
+        other_kind,
+        other_years=(2000, 2000),
+        catalog_priority=2,
+        search_data="quick",
+    )
+    dataset["timerange"] = "200001/200012"
+    with xr.open_dataset(paths["other"], decode_cf=False) as data:
+        subset = data.isel(time=months).load()
+    subset.to_netcdf(paths["other"])
+    cube = dataset.load()
+    expected = 280.0 + np.arange(12)
+    expected[months] += 100.0
+    np.testing.assert_array_equal(cube.data[:, 0, 0], expected)

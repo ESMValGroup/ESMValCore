@@ -12,7 +12,7 @@ from copy import deepcopy
 from fnmatch import fnmatchcase
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
@@ -27,6 +27,8 @@ from esmvalcore.config import CFG
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io import esgf
+from esmvalcore.io._selection import select_cubes, version_key
+from esmvalcore.io.intake_esm import IntakeEsmDataset, IntakeEsmDataSource
 from esmvalcore.io.local import _dates_to_timerange
 from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
 
@@ -719,26 +721,40 @@ class Dataset:
             supplementary.find_files()
 
     def _find_files(self) -> None:
-        def version(file: DataElement) -> str:
-            return str(file.facets.get("version", ""))
-
         self._used_data_sources = []
         files: dict[str, DataElement] = {}
-        for data_source in sorted(
+        candidates: list[DataElement] = []
+        sources = sorted(
             _get_data_sources(self.session, self.facets["project"]),  # type: ignore[arg-type]
             key=lambda ds: ds.priority,
-        ):
-            result = data_source.find_data(**self.facets)
+        )
+        has_catalog = any(
+            isinstance(ds, IntakeEsmDataSource) for ds in sources
+        )
+        for data_source in sources:
+            result = list(data_source.find_data(**self.facets))
+            candidates.extend(sorted(result, key=version_key, reverse=True))
             for file in result:
                 if file.name not in files:
                     files[file.name] = file
-                if version(files[file.name]) < version(file):
+                if str(files[file.name].facets.get("version", "")) < str(
+                    file.facets.get("version", ""),
+                ):
                     files[file.name] = file
             self.files = list(files.values())
             self._used_data_sources.append(data_source)
+            if any(isinstance(file, IntakeEsmDataset) for file in candidates):
+                # Catalog keys can cover different or unknown periods. Retain
+                # alternatives until loading reveals their time coordinates.
+                self.files = (
+                    sorted(candidates, key=version_key, reverse=True)
+                    if self.session["search_data"] == "complete"
+                    else candidates
+                )
+                continue
             # 'quick' mode: if files are available from a higher
             # priority source, do not search lower priority sources.
-            if self.session["search_data"] == "quick":
+            if self.session["search_data"] == "quick" and not has_catalog:
                 try:
                     check.data_availability(self, log=False)
                 except InputFilesNotFound:
@@ -857,18 +873,34 @@ class Dataset:
                 "branding_suffix": self.facets.get("branding_suffix"),
             }
 
-        result: Sequence[PreprocessorItem] = self.files
+        mixed_sources = any(
+            isinstance(file, IntakeEsmDataset) for file in self.files
+        )
+        batches: list[Sequence[PreprocessorItem]] = (
+            [[file] for file in self.files] if mixed_sources else [self.files]
+        )
         for step, kwargs in settings.items():
-            result = preprocess(
-                result,
-                step,
-                input_files=self.files,
-                output_file=output_file,
-                debug=self.session["save_intermediary_cubes"],
-                **kwargs,
-            )
+            if step == "concatenate" and mixed_sources:
+                batches = [
+                    select_cubes(
+                        self.files,
+                        cast("Sequence[Sequence[Cube]]", batches),
+                        self.facets,
+                    ),
+                ]
+            batches = [
+                preprocess(
+                    batch,
+                    step,
+                    input_files=self.files,
+                    output_file=output_file,
+                    debug=self.session["save_intermediary_cubes"],
+                    **kwargs,
+                )
+                for batch in batches
+            ]
 
-        return result[0]
+        return batches[0][0]
 
     def from_ranges(self) -> list[Dataset]:
         """Create a list of datasets from short notations.

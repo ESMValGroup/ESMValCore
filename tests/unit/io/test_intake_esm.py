@@ -62,6 +62,14 @@ def test_attributes_raises_before_to_iris() -> None:
         _ = dataset.attributes
 
 
+def test_to_iris_rejects_multiple_catalog_keys() -> None:
+    """A data element must not silently load only one of several datasets."""
+    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
+    dataset = IntakeEsmDataset(name="ambiguous", facets={}, catalog=cat)
+    with pytest.raises(ValueError, match="Expected one intake-esm dataset"):
+        dataset.to_iris()
+
+
 def test_to_iris(mocker: MockerFixture) -> None:
     """`to_iris` should load the data and cache attributes."""
     cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
@@ -246,7 +254,8 @@ def test_to_iris_nomock():
         dataset.to_iris()
 
 
-def test_search_time_overlap() -> None:
+@pytest.mark.parametrize("timerange", ["200001/200002", "*", "2000*/2000*"])
+def test_search_time_overlap(timerange: str) -> None:
     """A short recipe period should match a long catalog asset period."""
     cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
 
@@ -274,7 +283,7 @@ def test_search_time_overlap() -> None:
     results = data_source.find_data(
         dataset="BCC-ESM1",
         short_name="tasmax",
-        timerange="200001/200002",
+        timerange=timerange,
     )
     assert len(results) == 1
     dataset = results[0]
@@ -291,3 +300,18 @@ def test_search_time_overlap() -> None:
 
     with pytest.raises(ESMDataSourceError):
         dataset.to_iris()
+
+
+def test_invalid_catalog_time_range() -> None:
+    """Malformed asset coverage must report the catalog value to the user."""
+    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
+    cat.df["time_range"] = "200001"
+    source = IntakeEsmDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        facets={"timerange": "time_range"},
+        catalog=cat,
+    )
+    with pytest.raises(ValueError, match="'200001' must contain two dates"):
+        source.find_data(timerange="200001/200012")

@@ -327,7 +327,8 @@ def test_configured_catalog_finds_and_loads_data(
     )
     recipe_dataset.session = session
     recipe_dataset.find_files()
-    assert len(recipe_dataset.files) == 1
+    # Coverage is unknown until loading, so retain both version candidates.
+    assert len(recipe_dataset.files) == 2
     assert recipe_dataset.files[0].facets["version"] == "v2"
     scheduled_files: set[DataElement] = set()
     monkeypatch.setattr(recipe_module, "DOWNLOAD_FILES", scheduled_files)
@@ -612,6 +613,21 @@ def test_ambiguous_catalog_aggregation_fails(
         source.find_data(dataset="TEST-MODEL", short_name="tas")
 
 
+def test_ambiguous_catalog_values_fail(small_catalog: Path) -> None:
+    """A catalog value interpreted as a regex must not select extra rows."""
+    catalog = intake.open_esm_datastore(str(small_catalog))
+    catalog.df.loc[0, "version"] = "v*"
+    source = IntakeEsmDataSource(
+        name="ambiguous",
+        project="CMIP6",
+        priority=1,
+        facets={"version": "version"},
+        catalog=catalog,
+    )
+    with pytest.raises(ValueError, match="returned ambiguous rows"):
+        source.find_data()
+
+
 def test_catalogs_deduplicate_by_logical_identity(
     chunked_catalog: Path,
     small_catalog: Path,
@@ -670,7 +686,7 @@ def test_catalogs_deduplicate_by_logical_identity(
     selected = Dataset(**common, version="v1")
     selected.session = session
     selected.find_files()
-    assert len(selected.files) == 1
+    assert len(selected.files) == 2
     selected_file = selected.files[0]
     assert isinstance(selected_file, IntakeEsmDataset)
     assert selected_file.catalog.esmcat.id == "chunked-local-catalog"
@@ -678,7 +694,7 @@ def test_catalogs_deduplicate_by_logical_identity(
     latest = Dataset(**common)
     latest.session = session
     latest.find_files()
-    assert len(latest.files) == 1
+    assert len(latest.files) == 3
     assert latest.files[0].facets["version"] == "v2"
     latest_file = latest.files[0]
     assert isinstance(latest_file, IntakeEsmDataset)
