@@ -287,6 +287,26 @@ def _extract_datetime(
     return cube_slice
 
 
+def _parse_timerange(timerange: str) -> tuple[dt.datetime, dt.datetime]:
+    """Resolve a recipe time range to inclusive start and exclusive end."""
+    start_date = _parse_start_date(timerange.split("/", maxsplit=1)[0])
+    end_date = _parse_end_date(timerange.split("/")[1])
+
+    if isinstance(start_date, isodate.duration.Duration):
+        start_date = _duration_to_date(start_date, end_date, sign=-1)
+    elif isinstance(start_date, dt.timedelta):
+        start_date = _duration_to_date(start_date, end_date, sign=-1)
+        start_date -= dt.timedelta(seconds=1)
+
+    if isinstance(end_date, isodate.duration.Duration):
+        end_date = _duration_to_date(end_date, start_date, sign=1)
+    elif isinstance(end_date, dt.timedelta):
+        end_date = _duration_to_date(end_date, start_date, sign=1)
+        end_date += dt.timedelta(seconds=1)
+
+    return start_date, end_date
+
+
 def clip_timerange(cube: Cube, timerange: str) -> Cube:
     """Extract time range with a resolution up to seconds.
 
@@ -310,20 +330,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
         Start/end times can not be parsed by isodate.
 
     """
-    start_date = _parse_start_date(timerange.split("/", maxsplit=1)[0])
-    end_date = _parse_end_date(timerange.split("/")[1])
-
-    if isinstance(start_date, isodate.duration.Duration):
-        start_date = _duration_to_date(start_date, end_date, sign=-1)
-    elif isinstance(start_date, dt.timedelta):
-        start_date = _duration_to_date(start_date, end_date, sign=-1)
-        start_date -= dt.timedelta(seconds=1)
-
-    if isinstance(end_date, isodate.duration.Duration):
-        end_date = _duration_to_date(end_date, start_date, sign=1)
-    elif isinstance(end_date, dt.timedelta):
-        end_date = _duration_to_date(end_date, start_date, sign=1)
-        end_date += dt.timedelta(seconds=1)
+    start_date, end_date = _parse_timerange(timerange)
 
     t_1 = PartialDateTime(
         year=start_date.year,

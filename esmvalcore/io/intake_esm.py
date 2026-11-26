@@ -62,6 +62,9 @@ class IntakeEsmDataset(DataElement):
     )
     """Catalog aggregation dimensions to drop when they have length one."""
 
+    timeranges: tuple[str, ...] | None = field(default=None, repr=False)
+    """Individual asset coverage intervals, or ``None`` when unknown."""
+
     _attributes: dict[str, Any] | None = field(
         init=False,
         repr=False,
@@ -88,6 +91,7 @@ class IntakeEsmDataset(DataElement):
             },
             self.to_dask_kwargs,
             self.squeeze_dimensions,
+            self.timeranges,
         )
 
     def __eq__(self, other: object) -> bool:
@@ -329,6 +333,8 @@ class IntakeEsmDataSource(DataSource):
                     )
                 ]
             if selected_ranges is not None:
+                if res.df[time_column].isna().any():
+                    selected_ranges.append(None)
                 res = res.search(**{time_column: selected_ranges})
 
         if not len(res):
@@ -407,6 +413,15 @@ class IntakeEsmDataSource(DataSource):
                     catalog=cat,
                     to_dask_kwargs=copy.deepcopy(self.to_dask_kwargs),
                     squeeze_dimensions=tuple(self.squeeze_dimensions),
+                    timeranges=(
+                        tuple(
+                            str(value).replace(self.time_separator, "/")
+                            for value in rows[time_column].unique()
+                        )
+                        if time_column is not None
+                        and not rows[time_column].isna().any()
+                        else None
+                    ),
                 ),
             )
         return result

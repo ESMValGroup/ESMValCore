@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.resources
 import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import intake_esgf
@@ -14,12 +15,15 @@ import xarray as xr
 import yaml
 from prov.model import ProvDocument
 
+from esmvalcore._recipe import check
 from esmvalcore._recipe.recipe import read_recipe_file
+from esmvalcore.cmor.check import CheckLevels, CMORCheckError
 from esmvalcore.dataset import Dataset
+from esmvalcore.exceptions import InputFilesNotFound
+from esmvalcore.io.intake_esm import IntakeEsmDataset
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
     from pytest_mock import MockerFixture
 
@@ -569,3 +573,183 @@ def test_quick_search_fills_missing_months_in_preferred_source(
     expected = 280.0 + np.arange(12)
     expected[months] += 100.0
     np.testing.assert_array_equal(cube.data[:, 0, 0], expected)
+
+
+@pytest.mark.parametrize("known_coverage", [False, True])
+@pytest.mark.parametrize("available_year", [2000, 2001])
+def test_catalog_rejects_missing_requested_year(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    known_coverage: bool,
+    available_year: int,
+) -> None:
+    """Missing leading or trailing coverage must not silently shorten output."""
+    dataset, _ = mixed_sources(
+        "intake",
+        catalog_years=(available_year, available_year),
+        other_years=(available_year, available_year),
+    )
+    if known_coverage:
+        with pytest.raises(
+            InputFilesNotFound,
+            match="No input data available",
+        ):
+            check.data_availability(dataset)
+    else:
+        for source in dataset.session["projects"]["CMIP6"]["data"].values():
+            source["facets"].pop("timerange")
+        check.data_availability(dataset)
+    with pytest.raises(InputFilesNotFound, match="do not cover requested"):
+        dataset.load()
+
+
+def test_recipe_rejects_incomplete_unknown_catalog_coverage(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    recipe_documentation: str,
+    tmp_path: Path,
+) -> None:
+    """A recipe cannot label one year of data as a requested two-year period."""
+    dataset, _ = mixed_sources(
+        "intake",
+        catalog_years=(2000, 2000),
+        other_years=(2000, 2000),
+    )
+    session = dataset.session
+    for source in session["projects"]["CMIP6"]["data"].values():
+        source["facets"].pop("timerange")
+    session["max_parallel_tasks"] = 1
+    session.run_dir.mkdir(parents=True)
+    path = tmp_path / "recipe_incomplete.yml"
+    path.write_text(
+        recipe_documentation
+        + yaml.safe_dump(
+            {
+                "datasets": [
+                    {
+                        "project": "CMIP6",
+                        **FACETS,
+                        "timerange": "200001/200112",
+                    },
+                ],
+                "diagnostics": {
+                    "temperature": {"variables": {"tas": {}}, "scripts": None},
+                },
+            },
+        ),
+    )
+    recipe = read_recipe_file(path, session)
+    with pytest.raises(InputFilesNotFound, match="do not cover requested"):
+        recipe.run()
+    assert not list(session.preproc_dir.rglob("*.nc"))
+
+
+@pytest.mark.parametrize("unknown_coverage", ["unmapped", "null"])
+def test_unknown_catalog_coverage_defers_missing_year_check(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    unknown_coverage: str,
+) -> None:
+    """Unknown metadata must not hide a usable complementary source."""
+    dataset, _ = mixed_sources(
+        "intake",
+        catalog_years=(2000, 2000),
+        other_years=(2001, 2001),
+    )
+    other = dataset.session["projects"]["CMIP6"]["data"]["other"]
+    if unknown_coverage == "unmapped":
+        other["facets"].pop("timerange")
+    else:
+        catalog = Path(other["catalog"])
+        metadata = json.loads(catalog.read_text())
+        metadata["catalog_dict"][0]["time_range"] = None
+        catalog.write_text(json.dumps(metadata))
+    check.data_availability(dataset)
+    cube = dataset.load()
+    assert cube.shape[0] == 24
+
+
+def test_catalog_metadata_does_not_fill_gaps_between_assets(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+) -> None:
+    """Separated catalog intervals must not imply that the gap is covered."""
+    dataset, _ = mixed_sources(
+        "intake",
+        catalog_years=(2000, 2000),
+        other_years=(2002, 2002),
+    )
+    sources = dataset.session["projects"]["CMIP6"]["data"]
+    catalog = Path(sources["catalog"]["catalog"])
+    metadata = json.loads(catalog.read_text())
+    metadata["catalog_dict"].extend(
+        json.loads(Path(sources["other"]["catalog"]).read_text())[
+            "catalog_dict"
+        ],
+    )
+    catalog.write_text(json.dumps(metadata))
+    sources.pop("other")
+    dataset["timerange"] = "2000/2002"
+    with pytest.raises(InputFilesNotFound, match="years 2001"):
+        check.data_availability(dataset)
+    assert len(dataset.files) == 1
+    element = dataset.files[0]
+    assert isinstance(element, IntakeEsmDataset)
+    assert element.timeranges == (
+        "200001/200012",
+        "200201/200212",
+    )
+
+
+@pytest.mark.parametrize("missing_month", [0, 12, 23])
+def test_catalog_coverage_is_checked_against_actual_samples(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+    missing_month: int,
+) -> None:
+    """Metadata claiming full coverage cannot hide missing monthly samples."""
+    dataset, paths = mixed_sources("intake")
+    for path in paths.values():
+        with xr.open_dataset(path, decode_cf=False) as data:
+            subset = data.isel(
+                time=np.delete(np.arange(24), missing_month),
+            ).load()
+        subset.to_netcdf(path)
+    check.data_availability(dataset)
+    error = CMORCheckError if missing_month == 12 else InputFilesNotFound
+    message = "Frequency" if missing_month == 12 else "do not cover requested"
+    with pytest.raises(error, match=message):
+        dataset.load()
+
+
+def test_catalog_metadata_overstates_actual_coverage(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+) -> None:
+    """A claimed second year must be checked against the actual data."""
+    dataset, paths = mixed_sources("intake")
+    for path in paths.values():
+        with xr.open_dataset(path, decode_cf=False) as data:
+            subset = data.isel(time=slice(0, 12)).load()
+        subset.to_netcdf(path)
+    check.data_availability(dataset)
+    with pytest.raises(InputFilesNotFound, match="do not cover requested"):
+        dataset.load()
+
+
+def test_unknown_catalog_missing_internal_year(
+    mixed_sources: Callable[..., tuple[Dataset, dict[str, Path]]],
+) -> None:
+    """Missing years remain errors even when CMOR cadence checks are disabled."""
+    dataset, paths = mixed_sources(
+        "intake",
+        catalog_years=(2000, 2002),
+        other_years=(2000, 2002),
+    )
+    dataset["timerange"] = "2000/2002"
+    dataset.session["check_level"] = CheckLevels.IGNORE
+    for source in dataset.session["projects"]["CMIP6"]["data"].values():
+        source["facets"].pop("timerange")
+    for path in paths.values():
+        with xr.open_dataset(path, decode_cf=False) as data:
+            subset = data.isel(
+                time=list(range(12)) + list(range(24, 36)),
+            ).load()
+        subset.to_netcdf(path)
+    check.data_availability(dataset)
+    with pytest.raises(InputFilesNotFound, match="do not cover requested"):
+        dataset.load()

@@ -880,6 +880,11 @@ class Dataset:
             [[file] for file in self.files] if mixed_sources else [self.files]
         )
         for step, kwargs in settings.items():
+            if step == "clip_timerange" and mixed_sources:
+                check.loaded_data_availability(
+                    self,
+                    cast("Cube", batches[0][0]),
+                )
             if step == "concatenate" and mixed_sources:
                 batches = [
                     select_cubes(

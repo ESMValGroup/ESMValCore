@@ -6,6 +6,7 @@ import inspect
 import logging
 import os
 import subprocess
+from datetime import datetime, timedelta
 from functools import partial
 from pprint import pformat
 from shutil import which
@@ -13,9 +14,11 @@ from typing import TYPE_CHECKING, Any
 
 import isodate
 import yamale
+from cftime import datetime as cf_datetime
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.io.intake_esm import IntakeEsmDataset
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
@@ -30,13 +33,17 @@ from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
+from esmvalcore.preprocessor._time import _parse_timerange
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
     from pathlib import Path
 
+    from iris.cube import Cube
+
     from esmvalcore._task import TaskSet
     from esmvalcore.dataset import Dataset
+    from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets
 
 
@@ -232,6 +239,22 @@ def _group_years(years: Iterable[int]) -> str:
     return ", ".join(ranges)
 
 
+def _data_timeranges(input_files: Sequence[DataElement]) -> list[str] | None:
+    """Return asset intervals, deferring checks if any coverage is unknown."""
+    timeranges: list[str] = []
+    for file in input_files:
+        if isinstance(file, IntakeEsmDataset):
+            if file.timeranges is None:
+                return None
+            timeranges.extend(file.timeranges)
+        else:
+            timerange = file.facets.get("timerange")
+            if not isinstance(timerange, str):
+                return None
+            timeranges.append(timerange)
+    return timeranges
+
+
 def data_availability(dataset: Dataset, log: bool = True) -> None:
     """Check if input_files cover the required years."""
     input_files = dataset.files
@@ -244,20 +267,25 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if (
-        "*" in facets.get("timerange", "*")  # type: ignore[operator]
-        or any("timerange" not in f.facets for f in input_files)
-    ):
+    if "*" in facets.get("timerange", "*"):  # type: ignore[operator]
+        return
+    timeranges = _data_timeranges(input_files)
+    if timeranges is None:
         return
 
-    start_date, end_date = _parse_period(facets["timerange"])
-    start_year = int(start_date[0:4])
-    end_year = int(end_date[0:4])
+    if any(isinstance(file, IntakeEsmDataset) for file in input_files):
+        start, end = _parse_timerange(str(facets["timerange"]))
+        start_year = start.year
+        end_year = (end - timedelta(microseconds=1)).year
+    else:
+        start_date, end_date = _parse_period(facets["timerange"])
+        start_year = int(start_date[0:4])
+        end_year = int(end_date[0:4])
     required_years = set(range(start_year, end_year + 1, 1))
     available_years: set[int] = set()
 
-    for file in input_files:
-        start_date, end_date = file.facets["timerange"].split("/")  # type: ignore[union-attr]
+    for timerange in timeranges:
+        start_date, end_date = timerange.split("/")
         start_year = int(start_date[:4])
         end_year = int(end_date[:4])
         available_years.update(range(start_year, end_year + 1))
@@ -269,6 +297,67 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = "No input data available for years {} in files:\n{}".format(
             missing_txt,
             "\n".join(str(f) for f in input_files),
+        )
+        raise InputFilesNotFound(msg)
+
+
+def loaded_data_availability(dataset: Dataset, cube: Cube) -> None:
+    """Check requested endpoints and years against selected time samples.
+
+    Compare at the sampling resolution so monthly midpoints and instantaneous
+    daily data both cover their respective periods. CMOR checks validate the
+    cadence between samples; this check also catches missing requested ends.
+
+    Parameters
+    ----------
+    dataset:
+        Requested dataset, including frequency and time range.
+    cube:
+        Selected, concatenated data after metadata fixes.
+    """
+    timerange = dataset.facets.get("timerange")
+    frequency = (
+        str(dataset.facets.get("frequency", "")).lower().removesuffix("pt")
+    )
+    resolution = {"yr": 1, "mon": 2, "mo": 2, "day": 3}.get(frequency)
+    hours = frequency.removesuffix("hr") or "1"
+    if frequency.endswith("hr") and hours.isdigit():
+        resolution = 4
+    if resolution is None or not isinstance(timerange, str):
+        return
+    time = cube.coord("time")
+    dates = time.units.num2date(time.points)
+    start, end = _parse_timerange(timerange)
+    # Construct the exclusive end in the data calendar before subtracting.
+    # For example, a full 360_day year ends on December 30, not December 31.
+    end_month = cf_datetime(
+        end.year,
+        end.month,
+        1,
+        calendar=time.units.calendar,
+    )
+    end = end_month.replace(
+        day=min(end.day, end_month.daysinmonth),
+        hour=end.hour,
+        minute=end.minute,
+        second=end.second,
+    ) - timedelta(microseconds=1)
+
+    def period(date: datetime | cf_datetime) -> tuple[int, ...]:
+        hour = date.hour // int(hours) if resolution == 4 else date.hour
+        return (date.year, date.month, date.day, hour)[:resolution]
+
+    missing_years = set(range(start.year, end.year + 1)) - {
+        date.year for date in dates
+    }
+    if (
+        missing_years
+        or period(dates[0]) > period(start)
+        or period(dates[-1]) < period(end)
+    ):
+        msg = (
+            f"Input data do not cover requested timerange {timerange} "
+            f"for {dataset.summary(True)}. Loaded {dates[0]} to {dates[-1]}."
         )
         raise InputFilesNotFound(msg)
 
