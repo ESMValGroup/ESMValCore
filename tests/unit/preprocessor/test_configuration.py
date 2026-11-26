@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
-import esmvalcore
-import esmvalcore.cmor.table
-from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import (
@@ -167,37 +163,5 @@ def test_get_preprocessor_filename_default(
     dataset.session = session
     result = _get_preprocessor_filename(dataset)
     filename = "TestModel_gn_Amon_TestProject_tas_v20191115_1850-2100.nc"
-    expected = session.preproc_dir / filename
-    assert result == expected
-
-
-def test_get_preprocessor_filename_falls_back_to_config_developer(
-    monkeypatch: pytest.MonkeyPatch,
-    session: Session,
-) -> None:
-    """Test the function `_get_preprocessor_filename`."""
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    session["projects"]["CMIP6"].pop("preprocessor_filename_template")
-    dataset = Dataset(
-        project="CMIP6",
-        mip="Amon",
-        short_name="tas",
-        dataset="GFDL-ESM4",
-        ensemble="r1i1p1f1",
-        exp=["historical", "ssp585"],
-        version="v20191115",
-        grid="gn",
-        timerange="1850/2100",
-    )
-    dataset.session = session
-    result = _get_preprocessor_filename(dataset)
-    filename = (
-        "CMIP6_GFDL-ESM4_Amon_historical-ssp585_r1i1p1f1_tas_gn_1850-2100.nc"
-    )
     expected = session.preproc_dir / filename
     assert result == expected

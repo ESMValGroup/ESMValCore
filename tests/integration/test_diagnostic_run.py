@@ -11,7 +11,6 @@ import yaml
 
 import esmvalcore._task
 from esmvalcore._main import run
-from esmvalcore.config._diagnostics import TAGS
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +18,7 @@ def get_mock_distributed_client(monkeypatch):
     """Mock `get_distributed_client` to avoid starting a Dask cluster."""
 
     @contextlib.contextmanager
-    def get_distributed_client():
+    def get_distributed_client(session):
         yield None
 
     monkeypatch.setattr(
@@ -34,12 +33,6 @@ def write_config_user_file(dirname):
     cfg = {
         "output_dir": str(dirname / "output_dir"),
         "auxiliary_data_dir": str(dirname / "extra_data"),
-        "rootpath": {
-            "default": str(dirname / "input_dir"),
-        },
-        "drs": {
-            "CMIP5": "BADC",
-        },
         "log_level": "debug",
         "profile_diagnostic": False,
     }
@@ -144,6 +137,7 @@ def interpreter_not_installed(script):
         if script_file != "null"
     ],
 )
+@pytest.mark.usefixtures("tags")
 def test_diagnostic_run(tmp_path, script_file, script):
     recipe_file = tmp_path / "recipe_test.yml"
     script_file = tmp_path / script_file
@@ -169,9 +163,6 @@ def test_diagnostic_run(tmp_path, script_file, script):
         """,
     )
     recipe_file.write_text(str(recipe))
-
-    # ensure that tags are cleared
-    TAGS.clear()
 
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)

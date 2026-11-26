@@ -54,8 +54,6 @@ CMIP7
 +----------------------+------------------------------+
 | ``institute``        | ``institution_id``           |
 +----------------------+------------------------------+
-| ``realm``            | ``realm``                    |
-+----------------------+------------------------------+
 | ``region``           | ``region``                   |
 +----------------------+------------------------------+
 | ``project``          | ``project`` / ``mip_era``    |
@@ -69,6 +67,41 @@ CMIP6
 -----
 
 `Official CMIP6 facets <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP6/global_attributes/>`__.
+
++----------------------+---------------------------+
+| ESMValCore facet     | ESGF facet                |
++======================+===========================+
+| ``activity``         | ``activity_id``           |
++----------------------+---------------------------+
+| ``dataset``          | ``source_id``             |
++----------------------+---------------------------+
+| ``ensemble``         | ``member_id``             |
++----------------------+---------------------------+
+| ``exp``              | ``experiment_id``         |
++----------------------+---------------------------+
+| ``frequency``        | ``frequency``             |
++----------------------+---------------------------+
+| ``grid``             | ``grid_label``            |
++----------------------+---------------------------+
+| ``institute``        | ``institution_id``        |
++----------------------+---------------------------+
+| ``mip``              | ``table_id``              |
++----------------------+---------------------------+
+| ``realm``            | ``realm``                 |
++----------------------+---------------------------+
+| ``project``          | ``project`` / ``mip_era`` |
++----------------------+---------------------------+
+| ``short_name``       | ``variable_id``           |
++----------------------+---------------------------+
+
+CMIP6Plus
+---------
+
+`Official CMIP6Plus information <https://wcrp-cmip.org/cmip-phases/cmip6plus/>`__.
+
+The facet mapping is the same as for CMIP6. Note that CMIP6Plus uses updated
+MIP table names (e.g. ``APmon`` instead of ``Amon``); see
+`mip-cmor-tables <https://github.com/PCMDI/mip-cmor-tables>`__.
 
 +----------------------+---------------------------+
 | ESMValCore facet     | ESGF facet                |

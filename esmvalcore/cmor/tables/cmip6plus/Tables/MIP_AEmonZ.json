@@ -1,0 +1,449 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AEmonZ"
+  },
+  "variable_entry": {
+    "bry": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Total family (the sum of all appropriate species in the model) ; list the species in the netCDF header, e.g. Bry = Br + BrO + HOBr + HBr + BrONO2 + BrCl Definition: Total inorganic bromine (e.g., HBr and inorganic bromine oxides and radicals (e.g., BrO, atomic bromine (Br), bromine nitrate (BrONO2)) resulting from degradation of bromine-containing organic source gases (halons, methyl bromide, VSLS), and natural inorganic bromine sources (e.g., volcanoes, sea salt, and other aerosols) add comment attribute with detailed description about how the model calculates these fields",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Total Inorganic Bromine Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "bry",
+      "positive": "",
+      "standard_name": "mole_fraction_of_inorganic_bromine_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ch4": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of CH4",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ch4",
+      "positive": "",
+      "standard_name": "mole_fraction_of_methane_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cly": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Total family (the sum of all appropriate species in the model) ; list the species in the netCDF header, e.g. Cly = HCl + ClONO2 + HOCl + ClO + Cl + 2*Cl2O2 +2Cl2 + OClO + BrCl Definition: Total inorganic stratospheric chlorine (e.g., HCl, ClO) resulting from degradation of chlorine-containing source gases (CFCs, HCFCs, VSLS), and natural inorganic chlorine sources (e.g., sea salt and other aerosols) add comment attribute with detailed description about how the model calculates these fields",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Total Inorganic Chlorine Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cly",
+      "positive": "",
+      "standard_name": "mole_fraction_of_inorganic_chlorine_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "h2o": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "includes all phases of water",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mass Fraction of Water",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "h2o",
+      "positive": "",
+      "standard_name": "mass_fraction_of_water_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hcl": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.  The chemical formula of hydrogen chloride is HCl.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "HCl Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hcl",
+      "positive": "",
+      "standard_name": "mole_fraction_of_hydrogen_chloride_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hno3": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "HNO3 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hno3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitric_acid_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ho2": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.  The chemical formula of hydroperoxyl radical is HO2.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "HO2 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ho2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_hydroperoxyl_radical_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "meanage": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "The mean age of air is defined as the mean time that a stratospheric air mass has been out of contact with the well-mixed troposphere.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mean Age of Stratospheric Air",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "meanage",
+      "positive": "",
+      "standard_name": "age_of_stratospheric_air",
+      "type": "real",
+      "units": "yr",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "n2o": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.   The chemical formula of  nitrous oxide is N2O.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of N2O",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "n2o",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "noy": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Total family (the sum of all appropriate species in the model); list the species in the netCDF header, e.g. NOy = N + NO + NO2 + NO3 + HNO3 + 2N2O5 + HNO4 + ClONO2 + BrONO2 Definition: Total reactive nitrogen; usually includes atomic nitrogen (N), nitric oxide (NO), NO2, nitrogen trioxide (NO3), dinitrogen radical (N2O5), nitric acid (HNO3), peroxynitric acid (HNO4), BrONO2, ClONO2 add comment attribute with detailed description about how the model calculates these fields",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Total Reactive Nitrogen Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "noy",
+      "positive": "",
+      "standard_name": "mole_fraction_of_noy_expressed_as_nitrogen_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "o3": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of O3",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "o3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "oh": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "OH Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "oh",
+      "positive": "",
+      "standard_name": "mole_fraction_of_hydroxyl_radical_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Air Temperature",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tntrl": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of air temperature due to longwave radiative heating",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Tendency of Air Temperature Due to Longwave Radiative Heating",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tntrl",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_longwave_heating",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tntrs": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Tendency of air temperature due to shortwave radiative heating",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Tendency of Air Temperature Due to Shortwave Radiative Heating",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tntrs",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_shortwave_heating",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ua": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Zonal wind (positive in a eastward direction).",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Eastward Wind",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ua",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "va": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Meridional wind (positive in a northward direction).",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Wind",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "va",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vt100": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Zonally averaged eddy temperature flux at 100hPa as monthly means derived from daily (or higher frequency) fields.",
+      "dimensions": [
+        "latitude",
+        "time",
+        "p100"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Eddy Temperature Flux",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vt100",
+      "positive": "",
+      "standard_name": "covariance_over_longitude_of_northward_wind_and_air_temperature",
+      "type": "real",
+      "units": "K m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

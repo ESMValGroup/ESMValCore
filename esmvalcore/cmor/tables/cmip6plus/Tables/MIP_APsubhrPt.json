@@ -1,0 +1,283 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.017361,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "APsubhrPt"
+  },
+  "variable_entry": {
+    "hfls": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'Upward' indicates a vector component which is positive when directed upward (negative downward). The surface latent heat flux is the exchange of heat between the surface and the air on account of evaporation (including sublimation). In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Surface Upward Latent Heat Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfls",
+      "positive": "up",
+      "standard_name": "surface_upward_latent_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "The surface sensible heat flux, also called turbulent heat flux, is the exchange of heat between the surface and the air by motion of air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Surface Upward Sensible Heat Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfss",
+      "positive": "up",
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "huss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Near-surface (usually, 2 meter) specific humidity.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1",
+        "height2m"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Near-Surface Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "huss",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pr": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "includes both liquid and solid phases",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Precipitation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pr",
+      "positive": "",
+      "standard_name": "precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Convective precipitation at surface; includes both liquid and solid phases.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Convective Precipitation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prc",
+      "positive": "",
+      "standard_name": "convective_precipitation_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "vertically integrated through the atmospheric column",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Water Vapor Path",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prw",
+      "positive": "",
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ps": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "surface pressure (not mean sea-level pressure), 2-D field to calculate the 3-D pressure field from hybrid coordinates",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Surface Air Pressure",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ps",
+      "positive": "",
+      "standard_name": "surface_air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "at the top of the atmosphere (to be compared with satellite measurements)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "TOA Outgoing Longwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlut",
+      "positive": "up",
+      "standard_name": "toa_outgoing_longwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdt": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Shortwave radiation incident at the top of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "TOA Incident Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdt",
+      "positive": "down",
+      "standard_name": "toa_incoming_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "at the top of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "TOA Outgoing Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsut",
+      "positive": "up",
+      "standard_name": "toa_outgoing_shortwave_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tas": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "near-surface (usually, 2 meter) air temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1",
+        "height2m"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Near-Surface Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tas",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

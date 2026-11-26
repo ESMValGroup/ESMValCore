@@ -11,7 +11,19 @@ projects:
         '*':
           '*':
             use_standard_grid: true
+      COSMO-crCLIM-v1-1:
+        '*':
+          '*':
+            use_standard_grid: true  # lat/lon coords missing bounds
       HIRHAM5:
         '*':
           '*':
             use_standard_grid: true
+      RACMO22E:
+        '*':
+          '*':
+            use_standard_grid: true  # lat/lon coords missing bounds
+      RCA4:
+        '*':
+          '*':
+            use_standard_grid: true  # lat/lon coords missing bounds

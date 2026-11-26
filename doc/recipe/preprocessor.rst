@@ -11,13 +11,13 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`stat_preprocs`
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
-* :ref:`preprocessors_using_supplementary_variables`
-* :ref:`Vertical interpolation`
+* :ref:`add_supplementary_variables`
+* :ref:`extract_levels`
 * :ref:`Weighting`
-* :ref:`Land/Sea/Ice masking`
+* :ref:`mask_landsea`
 * :ref:`Horizontal regridding`
-* :ref:`Masking of missing values`
-* :ref:`Ensemble statistics`
+* :ref:`mask_fillvalues`
+* :ref:`ensemble_statistics`
 * :ref:`Multi-model statistics`
 * :ref:`Time operations`
 * :ref:`Area operations`
@@ -25,7 +25,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Cycles`
 * :ref:`Trend`
 * :ref:`Detrend`
-* :ref:`Rolling window statistics`
+* :ref:`rolling_window_statistics`
 * :ref:`Unit conversion`
 * :ref:`comparison_with_ref`
 * :ref:`Other`
@@ -110,11 +110,11 @@ supported too if proper keyword arguments are specified:
 
 .. [#f1] The following preprocessor support weighted statistics by default:
     :func:`~esmvalcore.preprocessor.area_statistics`: weighted by grid cell
-    areas (see also :ref:`preprocessors_using_supplementary_variables`);
+    areas (see also :ref:`add_supplementary_variables`);
     :func:`~esmvalcore.preprocessor.climate_statistics`: weighted by lengths of
     time intervals; :func:`~esmvalcore.preprocessor.volume_statistics`:
     weighted by grid cell volumes (see also
-    :ref:`preprocessors_using_supplementary_variables`);
+    :ref:`add_supplementary_variables`);
     :func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
     corresponding coordinate bounds.
 .. [#f2] :const:`iris.analysis.MEDIAN` is not lazy, but much faster than
@@ -186,6 +186,7 @@ Calculate the global non-weighted root mean square:
   strongly recommend to **not** use it!
 
 
+.. _derive:
 .. _Variable derivation:
 
 Variable derivation
@@ -212,11 +213,12 @@ setting the ``force_derivation`` flag.
       derive: true
       force_derivation: false
 
-The required arguments for this module are two boolean switches:
+These are two boolean switches that are set for the variable (or dataset)
+in the ``diagnostics`` section of the recipe, not in a preprocessor:
 
 * ``derive``: activate variable derivation
 * ``force_derivation``: force variable derivation even if the variable is
-  directly available in the input data.
+  directly available in the input data (default: ``false``).
 
 See also :func:`esmvalcore.preprocessor.derive`. To get an overview on
 derivation scripts and how to implement new ones, please go to
@@ -227,6 +229,9 @@ derivation scripts and how to implement new ones, please go to
 
 CMORization and dataset-specific fixes
 ======================================
+
+.. _cmor_check_metadata:
+.. _cmor_check_data:
 
 Data checking
 -------------
@@ -247,6 +252,9 @@ Checks include, but are not limited to:
 
 The most relevant (i.e. a missing coordinate) will raise an error while others
 (i.e an incorrect long name) will be reported as a warning.
+``check_level`` determines how strict the check will be
+:ref:`configuration option <config_options>`, as described in
+:ref:`cmor_check_strictness`.
 
 Some of those issues will be fixed automatically by the tool, including the
 following:
@@ -257,6 +265,10 @@ following:
     - Automatic clipping of longitude to 0 - 360 interval.
     - Minute differences between the required and actual vertical coordinate values
 
+
+.. _fix_file:
+.. _fix_metadata:
+.. _fix_data:
 
 Dataset specific fixes
 ----------------------
@@ -286,7 +298,8 @@ steps:
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
 
-.. _preprocessors_using_supplementary_variables:
+.. _add_supplementary_variables:
+.. _remove_supplementary_variables:
 
 Supplementary variables (ancillary variables and cell measures)
 ===============================================================
@@ -301,10 +314,10 @@ In ESMValCore we call both types of variables "supplementary variables".
 Preprocessor                                                          Variable short name            Variable standard name
 ===================================================================== ============================== =====================================
 :ref:`area_statistics<area_statistics>` [#f4]_                        ``areacella``, ``areacello``   cell_area
-:ref:`mask_landsea<land/sea/ice masking>` [#f4]_                      ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
-:ref:`mask_landseaice<ice masking>` [#f3]_                            ``sftgif``                     land_ice_area_fraction
+:ref:`mask_landsea<mask_landsea>` [#f4]_                              ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+:ref:`mask_landseaice<mask_landseaice>` [#f3]_                        ``sftgif``                     land_ice_area_fraction
 :ref:`volume_statistics<volume_statistics>` [#f4]_                    ``volcello``, ``areacello``    ocean_volume, cell_area
-:ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+:ref:`weighting_landsea_fraction<weighting_landsea_fraction>` [#f3]_  ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
 :ref:`histogram<histogram>` [#f5]_                                    ``areacella``, ``areacello``   cell_area
 :ref:`extract_surface_from_atm<extract_surface_from_atm>` [#f3]_      ``ps``                         surface_air_pressure
@@ -319,8 +332,7 @@ Preprocessor                                                          Variable s
 .. [#f5] This preprocessor optionally takes one of the mentioned supplementary
     variables. If none is defined in the recipe, none is added.
 
-Only one of the listed variables is required. Supplementary variables can be
-defined in the recipe as described in :ref:`supplementary_variables`.
+Only one of the listed variables is required.
 If the automatic selection does not give the desired result, specify the
 supplementary variables in the recipe as described in
 :ref:`supplementary_variables`.
@@ -348,7 +360,7 @@ Compute the global mean surface air temperature, while
       grid: gn
     - dataset: MPI-ESM-MR
       project: CMIP5
-      ensemble: r1i1p1,
+      ensemble: r1i1p1
 
   preprocessors:
     global_mean:
@@ -439,7 +451,7 @@ and cell measure (``areacella``), but do not use ``areacella`` for dataset
           timerange: '1990/2000'
       scripts: null
 
-.. _Vertical interpolation:
+.. _extract_levels:
 
 Vertical interpolation
 ======================
@@ -453,8 +465,8 @@ the data vertically. ESMValCore can perform this vertical interpolation via the
 ways.
 
 Level extraction can be done at specific values passed to ``extract_levels`` as
-``levels:`` with its value a list of levels (note that the units are
-CMOR-standard, Pascals (Pa)):
+``levels:`` with its value a list of levels, with units of the vertical
+coordinate as defined in the CMOR table (e.g., Pa for pressure levels):
 
 .. code-block:: yaml
 
@@ -487,13 +499,13 @@ extract the levels and vertically regrid onto the vertical levels of
       preproc_select_levels_from_dataset:
         extract_levels:
           levels: ERA-Interim
-          # This also works, but allows specifying the pressure coordinate name
-          # levels: {dataset: ERA-Interim, coordinate: air_pressure}
+          # This also works:
+          # levels: {dataset: ERA-Interim}
           scheme: linear_extrapolate
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
-(for example, ``air_pressure``' in variables that are provided in model levels
+(for example, ``air_pressure`` in variables that are provided in model levels
 and not pressure levels) you can override that automatic choice by providing
 the name of the desired coordinate:
 
@@ -508,9 +520,9 @@ the name of the desired coordinate:
 
 If ``coordinate`` is specified, pressure levels (if present) can be converted
 to height levels and vice versa using the US standard atmosphere. E.g.
-``coordinate = altitude`` will convert existing pressure levels
+``coordinate: altitude`` will convert existing pressure levels
 (air_pressure) to height levels (altitude);
-``coordinate = air_pressure`` will convert existing height levels
+``coordinate: air_pressure`` will convert existing height levels
 (altitude) to pressure levels (air_pressure).
 
 If the requested levels are very close to the values in the input data,
@@ -527,7 +539,7 @@ The meaning of 'very close' can be changed by providing the parameters:
     levels. If the levels are sufficiently close, the requested levels
     will be assigned to the vertical coordinate and no interpolation will take place.
     By default, `atol` will be set to 10^-7 times the mean value of
-    of the available levels.
+    the available levels.
 
 .. _Vertical interpolation schemes:
 
@@ -562,7 +574,7 @@ The vertical interpolation currently supports the following schemes:
 Weighting
 =========
 
-.. _land/sea fraction weighting:
+.. _weighting_landsea_fraction:
 
 Land/sea fraction weighting
 ---------------------------
@@ -625,7 +637,7 @@ are used: although these are not model-specific, they represent a good
 approximation since they have a much higher resolution than most of the models
 and they are regularly updated with changing geographical features.
 
-.. _land/sea/ice masking:
+.. _mask_landsea:
 
 Land-sea masking
 ----------------
@@ -654,10 +666,12 @@ preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
 Natural Earth masks are much higher than any typical global model (10m for
 land and glaciated areas and 50m for ocean masks).
+The Natural Earth masks can only be used for data on a regular grid; for data
+on other grids, an ancillary variable is required.
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
 
-.. _ice masking:
+.. _mask_landseaice:
 
 Ice masking
 -----------
@@ -673,13 +687,17 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
       mask_landseaice:
         mask_out: ice
 
-and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
+and requires only one argument: ``mask_out``: either ``landsea``, to mask out
+the areas that are not covered by ice, or ``ice``, to mask out the areas
+covered by ice.
 
 This function requires a land ice area fraction `ancillary variable`_.
 This supplementary variable ``sftgif`` should be attached to the main dataset as
 described in :ref:`supplementary_variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
+
+.. _mask_glaciated:
 
 Glaciated masking
 -----------------
@@ -694,11 +712,12 @@ glaciated areas out, ``mask_glaciated`` can be used:
       mask_glaciated:
         mask_out: glaciated
 
-and it requires only one argument: ``mask_out``: only ``glaciated``.
+and it takes only one optional argument: ``mask_out``, which can only be
+``glaciated`` (the default).
 
-See also :func:`esmvalcore.preprocessor.mask_landseaice`.
+See also :func:`esmvalcore.preprocessor.mask_glaciated`.
 
-.. _masking of missing values:
+.. _mask_fillvalues:
 
 Missing values masks
 --------------------
@@ -715,11 +734,12 @@ The multi-model missing values mask (``mask_fillvalues``) is a preprocessor step
 that usually comes after all the single-model steps (regridding, area selection
 etc) have been performed; in a nutshell, it combines missing values masks from
 individual models into a multi-model missing values mask; the individual model
-masks are built according to common criteria: the user chooses a time window in
-which missing data points are counted, and if the number of missing data points
-relative to the number of total data points in a window is less than a chosen
-fractional threshold, the window is discarded i.e. all the points in the window
-are masked (set to missing).
+masks are built according to common criteria: for each grid point, the time
+series is divided into windows of ``time_window`` consecutive time points and
+the windows without missing values (and, if ``min_value`` is given, with all
+values above ``min_value``) are counted.
+If fewer than a fraction ``threshold_fraction`` of the windows meet these
+criteria, the grid point is masked (set to missing) at all times.
 
 .. code-block:: yaml
 
@@ -728,14 +748,17 @@ are masked (set to missing).
         mask_fillvalues:
           threshold_fraction: 0.95
           min_value: 19.0
-          time_window: 10.0
+          time_window: 10
 
-In the example above, the fractional threshold for missing data vs. total data
-is set to 95% and the time window is set to 10.0 (units of the time coordinate
-units). Optionally, a minimum value threshold can be applied, in this case it
-is set to 19.0 (in units of the variable units).
+In the example above, at least 95% of the windows of 10 time points must be
+complete for a grid point to be kept, and values must be above 19.0 (in the
+units of the variable).
+The arguments ``min_value`` (default: no threshold) and ``time_window``
+(default: 1) are optional.
 
 See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
+
+.. _mask_multimodel:
 
 Common mask for multiple models
 -------------------------------
@@ -746,10 +769,20 @@ datasets combined into a single mask using a logical OR), the preprocessor
 ``mask_multimodel`` does not expect that the datasets have a ``time``
 coordinate, but works on datasets with arbitrary (but identical) coordinates.
 After ``mask_multimodel``, all involved datasets have an identical mask.
+This preprocessor takes no arguments:
+
+.. code-block:: yaml
+
+    preprocessors:
+      common_mask:
+        mask_multimodel:
 
 See also :func:`esmvalcore.preprocessor.mask_multimodel`.
 
-.. _threshold_masking:
+.. _mask_above_threshold:
+.. _mask_below_threshold:
+.. _mask_inside_range:
+.. _mask_outside_range:
 
 Minimum, maximum and interval masking
 -------------------------------------
@@ -760,13 +793,26 @@ interval thresholding and masking can also be performed. These functions are
 ``mask_above_threshold``, ``mask_below_threshold``, ``mask_inside_range``, and
 ``mask_outside_range``.
 
-These functions always take a cube as first argument and either ``threshold``
-for threshold masking or the pair ``minimum``, ``maximum`` for interval masking.
+The functions ``mask_above_threshold`` and ``mask_below_threshold`` take the
+argument ``threshold`` and do not mask values equal to the threshold.
+The functions ``mask_inside_range`` and ``mask_outside_range`` take the
+arguments ``minimum`` and ``maximum``; ``mask_inside_range`` also masks values
+equal to ``minimum`` or ``maximum``.
+The values are in the units of the variable.
+For example, to mask negative precipitation values:
+
+.. code-block:: yaml
+
+    preprocessors:
+      positive_precipitation:
+        mask_below_threshold:
+          threshold: 0.0
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
 
 
+.. _regrid:
 .. _Horizontal regridding:
 
 Horizontal regridding
@@ -803,6 +849,26 @@ or ana4MIPs datasets can be used); in this case the `scheme` is
           target_grid: ERA-Interim
           scheme: linear
 
+Regridding on a CORDEX domain grid
+----------------------------------
+
+It is also possible to regrid to a standard CORDEX domain by using the
+CORDEX domain name as ``target_grid``. For example, to regrid to the
+``EUR-11`` domain:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: EUR-11
+          scheme: linear
+
+Any domain name recognized by the ``cordex`` package can be used, for example
+``EUR-11``. A list of available domains can be found in the
+`cordex introduction <https://py-cordex.readthedocs.io/en/latest/notebooks/introduction.html>`__.
+This creates the target grid from the official CORDEX domain definition.
+
 Regridding on an ``MxN`` grid specification
 -------------------------------------------
 
@@ -824,7 +890,8 @@ In this case the nearest-neighbor interpolation scheme is used (see below
 for scheme definitions).
 
 When using a ``MxN`` type of grid it is possible to offset the grid cell
-centrepoints using the `lat_offset` and ``lon_offset`` arguments:
+centrepoints using the ``lat_offset`` and ``lon_offset`` arguments
+(both ``true`` by default):
 
 * ``lat_offset``: offsets the grid centers of the latitude coordinate w.r.t. the
   pole by half a grid step;
@@ -877,7 +944,7 @@ The arguments are defined below:
   The grid includes this value only if it falls on a grid point.
   Otherwise, it cuts off at the previous value.
 * ``step_latitude``: Latitude distance between the centers of two neighbouring cells.
-* ``start_longitude``: Latitude value of the first grid cell center (start point).
+* ``start_longitude``: Longitude value of the first grid cell center (start point).
   The grid includes this value.
 * ``end_longitude``: Longitude value of the last grid cell center (end point).
   The grid includes this value only if it falls on a grid point.
@@ -1088,7 +1155,7 @@ and in the docstrings :ref:`here <regridding_schemes>`.
 See also :func:`esmvalcore.preprocessor.regrid`
 
 
-.. _ensemble statistics:
+.. _ensemble_statistics:
 
 Ensemble statistics
 ===================
@@ -1126,10 +1193,11 @@ Additional keyword arguments can be given by using a dictionary:
               percent: 20
             - operator: median
 
-This preprocessor function exposes the iris analysis package, and works with all
-(capitalized) statistics from the :mod:`iris.analysis` package
-that can be executed without additional arguments.
 See :ref:`stat_preprocs` for more details on supported statistics.
+As for ``multi_model_statistics``, the optional arguments ``span`` (default:
+``overlap``) and ``ignore_scalar_coords`` (default: ``false``) control how
+ensemble members with different time coordinates or scalar coordinates are
+combined; these are described in :ref:`multi_model_statistics`.
 
 Note that ``ensemble_statistics`` will not return the single model and ensemble files,
 only the requested ensemble statistics results.
@@ -1146,6 +1214,7 @@ the preprocessor chains could be defined as:
       multimodel:
         <<: *everything_else
         ensemble_statistics:
+          statistics: [mean]
 
     variables:
       tas_datasets:
@@ -1160,6 +1229,7 @@ the preprocessor chains could be defined as:
 
 See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
+.. _multi_model_statistics:
 .. _multi-model statistics:
 
 Multi-model statistics
@@ -1185,7 +1255,8 @@ Input datasets may have different time coordinates.
 Apart from that, all dimensions must match.
 Statistics can be computed
 across overlapping times only (``span: overlap``) or across the full time span
-of the combined models (``span: full``). The preprocessor sets a common time
+of the combined models (``span: full``); the arguments ``span`` and
+``statistics`` are required. The preprocessor sets a common time
 coordinate on all datasets. As the number of days in a year may vary between
 calendars, (sub-)daily data with different calendars are not supported.
 The preprocessor saves both the input single model files as well as the multi-model
@@ -1228,7 +1299,8 @@ and `ptop`) are always removed.
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
 also add an arbitrary tag to a dataset definition and then group by that tag. When
-using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
+using this preprocessor in conjunction with the
+:ref:`ensemble statistics <ensemble_statistics>` preprocessor, you
 can group by ``ensemble_statistics`` as well. For example:
 
 .. code-block:: yaml
@@ -2506,7 +2578,7 @@ and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
 
-.. _rolling window statistics:
+.. _rolling_window_statistics:
 
 Rolling window statistics
 =========================
@@ -2569,10 +2641,22 @@ For example, this enables conversions between precipitation fluxes measured in
 versa).
 Currently, the following special conversions are supported:
 
+* ``precipitation_amount`` (``kg m-2``) --
+  ``lwe_thickness_of_precipitation_amount`` (``mm``)
+* ``surface_snow_amount`` (``kg m-2``) --
+  ``lwe_thickness_of_snowfall_amount`` (``mm``)
 * ``precipitation_flux`` (``kg m-2 s-1``) --
   ``lwe_precipitation_rate`` (``mm day-1``)
+* ``water_evaporation_flux`` (``kg m-2 s-1``) --
+  ``lwe_water_evaporation_rate`` (``mm day-1``)
+* ``water_potential_evaporation_flux`` (``kg m-2 s-1``) --
+  ``None`` (``mm day-1``)
+* ``water_evapotranspiration_flux`` (``kg m-2 s-1``) --
+  ``None`` (``mm day-1``)
 * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
   ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
+* ``surface_air_pressure`` (``Pa``) --
+  ``atmosphere_mass_of_air_per_unit_area`` (``kg m-2``)
 
 .. hint::
    Names in the list correspond to ``standard_names`` of the input data.
@@ -2618,8 +2702,11 @@ This module contains the following preprocessor functions:
 
 * ``bias``: Calculate absolute or relative biases with respect to a reference
   dataset.
-* ``distance_metric``: Calculate absolute or relative biases with respect to a
-  reference dataset.
+* ``distance_metric``: Calculate distance metrics with respect to a reference
+  dataset.
+* ``t_test``: Calculate t-test (null hypothesis: 2 independent samples have
+  identical mean) with respect to a reference dataset and attach the
+  corresponding p-value as ancillary variable to the data.
 
 ``bias``
 --------
@@ -2641,7 +2728,7 @@ In the example above, ERA-Interim is used as reference dataset for the bias
 calculation.
 
 It is also possible to use the output from the :ref:`multi-model statistics` or
-:ref:`ensemble statistics` preprocessor as reference dataset.
+:ref:`ensemble_statistics` preprocessor as reference dataset.
 In this case, make sure to use ``reference_for_bias: true`` for each dataset
 that will be used to create the reference dataset and use the option
 ``keep_input_datasets: false`` for the multi-dataset preprocessor.
@@ -2707,7 +2794,7 @@ Example:
       preproc_bias:
         bias:
           bias_type: relative
-          denominator_mask_threshold: 1e-8
+          denominator_mask_threshold: 1.0e-8
           keep_reference_dataset: true
           exclude: [CanESM2]
 
@@ -2736,7 +2823,7 @@ In the example above, ERA-Interim is used as reference dataset for the distance
 metric calculation.
 
 It is also possible to use the output from the :ref:`multi-model statistics` or
-:ref:`ensemble statistics` preprocessor as reference dataset.
+:ref:`ensemble_statistics` preprocessor as reference dataset.
 In this case, make sure to use ``reference_for_metric: true`` for each dataset
 that will be used to create the reference dataset and use the option
 ``keep_input_datasets: false`` for the multi-dataset preprocessor.
@@ -2917,8 +3004,125 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-.. _Other:
+.. _t_test:
 
+``t_test``
+----------
+
+This function runs :func:`t-test <scipy.stats.ttest_ind>` (null hypothesis: 2
+independent samples have identical mean) with respect to a reference dataset.
+By default, a `Welch's t-test
+<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__ is performed, which does
+not assume equal variances between the samples.
+
+This preprocessor attaches the corresponding p-value as ancillary variable to
+the data.
+With `Iris <https://scitools-iris.readthedocs.io/>`__, the p-value can be
+accessed with the following code:
+
+.. code-block:: python
+
+   import iris
+   cube = iris.load_cube("esmvaltool_output/recipe_t_test_20260721_095242/preproc/t-test/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-2005.nc")
+   p_value = cube.ancillary_variable("p-value")
+   print(p_value)
+
+The returned p-value looks like this:
+
+.. code-block::
+
+  AncillaryVariable :  p-value / (1)
+      data: [
+          [0.21600565   , 0.18489039   , ..., 0.3673955    , 0.27788544   ],
+          [0.3407415    , 0.3905643    , ..., --           , 0.58700126   ],
+          ...,
+          [--           , --           , ..., --           , --           ],
+          [--           , --           , ..., --           , --           ]]
+      shape: (18, 36)
+      dtype: float32
+      long_name: 'p-value'
+      var_name: 'pvalue'
+
+For this preprocessor, exactly one input dataset needs to be declared as
+``reference_for_t_test: true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_t_test: true}
+
+In the example above, ERA-Interim is used as reference dataset for the t-test
+calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble_statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_t_test: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_t_test: true}
+    - {dataset: CESM2,   group: ref, reference_for_t_test: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_t_test:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      t_test:
+
+Here, the t-test for MIROC6 is calculated relative to the the multi-model mean
+from the models CanESM5 and CESM2.
+
+All datasets need to have the same shape.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` might
+be helpful.
+
+The ``t_test`` preprocessor supports the following arguments in the recipe:
+
+* ``coords`` (:obj:`list` of :obj:`str`, default: ``None``): Coordinates over
+  which the t-test is calculated.
+  If ``None``, calculate the metric over all coordinates, which results in a
+  scalar cube.
+* Other parameters are passed to :func:`scipy.stats.ttest_ind`.
+  Unlike :func:`scipy.stats.ttest_ind`, ``equal_var: false`` is used by default,
+  which will result in a Welch's t-test.
+  Explicitly set ``equal_var: true`` to get the default behavior of
+  :func:`scipy.stats.ttest_ind`.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      t_test:
+        t_test:
+          coords: [time]
+          # equal_var: true  # uncomment to get default behavior of scipy.stats.ttest_ind
+          nan_policy: omit
+
+This will perform a `Welch's t-test
+<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__ (do not assume equal
+variances between the samples) over the time coordinate.
+In addition, all masked values will be omitted in the t-test calculation (the
+default behavior is to return masked values if at least one input value is
+masked).
+
+See also :func:`esmvalcore.preprocessor.t_test`.
+
+
+.. _Other:
 
 Other
 =====
@@ -2949,11 +3153,10 @@ recipe:
   target metadata is read.
   If not given, use the short names of the corresponding variables defined in
   the recipe.
-* ``target_branding_suffix`` (:obj:`str`; optional): Variable branding suffix from which
-  target metadata is read.
-  If not given, use the branding suffixes of the corresponding variables defined in
-  the recipe.
-* ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
+* ``target_branding_suffix`` (:obj:`str`; optional): Variable branding suffix
+  from which target metadata is read.
+  If not given, the target variable is looked up without a branding suffix.
+* ``strict`` (:obj:`bool`; optional, default: ``True``): If ``True``, raise an
   error if desired metadata cannot be read for variable ``target_short_name``
   of MIP table ``target_mip`` and project ``target_project``.
   If ``False``, no error is raised.
@@ -3098,6 +3301,42 @@ Example:
           normalization: sum
 
 See also :func:`esmvalcore.preprocessor.histogram`.
+
+.. _save:
+
+``save``
+--------
+
+This function saves the preprocessed data to a NetCDF file.
+It is always applied as the last step, but its settings can be changed in the
+recipe.
+
+The ``save`` preprocessor supports the following arguments in the recipe:
+
+* ``compress`` (:obj:`bool`; optional): Use NetCDF compression.
+  If not given, use the :ref:`configuration option <config_options>`
+  ``compress_netcdf``.
+* ``optimize_access`` (:obj:`str`; optional): Set the NetCDF chunk sizes to
+  make reading the file faster.
+  Use ``map`` to read one map at a time, ``timeseries`` to read one time series
+  at a time, or the names of one or more coordinates separated by spaces, e.g.
+  ``time latitude``, to read all values along those coordinates at a time.
+* ``alias`` (:obj:`str`; optional): Variable name to use in the file.
+  If given, the main variable will be renamed to the value provided here before saving.
+* Further arguments are passed to
+  :func:`iris.fileformats.netcdf.saver.save`, for example ``complevel``.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      compressed_maps:
+        save:
+          compress: true
+          optimize_access: map
+
+See also :func:`esmvalcore.preprocessor.save`.
 
 
 .. _Memory use:

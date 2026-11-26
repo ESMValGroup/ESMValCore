@@ -124,6 +124,18 @@ def test_to_iris_rejects_multiple_members(mocker: MockerFixture) -> None:
         dataset.to_iris()
 
 
+def test_searchable_facets() -> None:
+    """Advertise ESMValCore facet names through the data source protocol."""
+    source = IntakeEsmDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        facets={"dataset": "source_id", "short_name": "variable_id"},
+        catalog=intake.open_esm_datastore(esm_ds_fhandle.as_posix()),
+    )
+    assert source.searchable_facets == {"dataset", "short_name"}
+
+
 def test_find_data_no_results_sets_debug_info() -> None:
     """When catalog.search returns empty results, find_data should return empty list and set debug_info."""
     cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())

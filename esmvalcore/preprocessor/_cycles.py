@@ -1,16 +1,22 @@
 """Operations related to cycles (annual cycle, diurnal cycle, etc.)."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import iris
 import iris.coord_categorisation
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
+if TYPE_CHECKING:
+    from iris.cube import Cube
+
 logger = logging.getLogger(__name__)
 
 
-def amplitude(cube, coords):
+def amplitude(cube: Cube, coords: str | list[str]) -> Cube:
     """Calculate amplitude of cycles by aggregating over coordinates.
 
     Note

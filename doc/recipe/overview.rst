@@ -30,8 +30,11 @@ The documentation section includes:
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
   the :ref:`config-ref`)
-- the project or projects associated with the recipe (``projects``, matching
-  the definitions in the :ref:`config-ref`)
+- The research projects that funded the development of the recipe
+  (``projects``, matching the definitions in the :ref:`config-ref`).
+  These are not the same as the ``project`` facet of a dataset, which
+  describes the project that provides the data, such as ``CMIP6``
+  (refer to :ref:`Datasets`).
 
 For example, the documentation section of ``recipes/recipe_ocean_amoc.yml`` is
 the following:
@@ -60,9 +63,12 @@ the following:
 
 .. note::
 
-   Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the (locally installed copy of the) file
-   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
+   Note that all authors, maintainers, and projects mentioned in the
+   documentation section of the recipe need to be included in the (locally
+   installed copy of the) file
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_
+   and that each reference should have a bibtex file in the directory
+   `esmvaltool/references <https://github.com/ESMValGroup/ESMValTool/tree/main/esmvaltool/references>`_,
    see :ref:`config-ref`.
    The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
@@ -77,8 +83,9 @@ The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
 define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
-- project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
-  ``OBS`` for observational data, ``ana4MIPs`` for ana4MIPs data,
+- project that provides the data (key ``project``, value e.g. ``CMIP7`` or
+  ``CMIP6`` for CMIP data,
+  ``OBS`` or ``OBS6`` for observational data, ``ana4MIPs`` for ana4MIPs data,
   ``obs4MIPs`` for obs4MIPs data, ``ICON`` for ICON data).
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``rcp85``).
@@ -248,7 +255,7 @@ Automatic definition of supplementary variables
 -----------------------------------------------
 
 If an ancillary variable or cell measure is
-:ref:`needed by a preprocessor function <preprocessors_using_supplementary_variables>`,
+:ref:`needed by a preprocessor function <add_supplementary_variables>`,
 but it is not specified in the recipe, the tool will automatically make a best
 guess using the syntax above.
 Usually this will work fine, but if it does not, it is recommended to explicitly
@@ -256,7 +263,7 @@ define the supplementary variables in the recipe.
 
 To disable this automatic addition, define the supplementary variable as usual,
 but add the special facet ``skip`` with value ``true``.
-See :ref:`preprocessors_using_supplementary_variables` for an example recipe.
+See :ref:`add_supplementary_variables` for an example recipe.
 
 Saving ancillary variables and cell measures
 --------------------------------------------
@@ -378,6 +385,29 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
+
+.. _dataset_alias:
+
+Dataset aliases
+---------------
+
+Each dataset has an alias: a short name that diagnostic scripts can use, for
+example in the legend of a plot.
+By default, ESMValCore creates the alias from the facets that differ between
+the datasets of a diagnostic, such as ``project``, ``exp``, ``dataset``, and
+``ensemble``.
+Use the ``alias`` key to choose the alias of a dataset yourself.
+For example, the aliases of the following datasets are ``example`` (manually set),
+``MPI-ESM1-2-LR_r1i1p1f1``, and ``MPI-ESM1-2-LR_r2i1p1f1`` (automatically generated):
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: CanESM5, alias: example, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r2i1p1f1, grid: gn}
+
+.. _cordex_datasets:
 
 CORDEX datasets
 ---------------
@@ -521,7 +551,9 @@ section will include:
 
 - the :ref:`variable(s) <cmor_tables>` to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
-- a description of the diagnostic and lists of themes and realms that it applies to;
+- a description of the diagnostic and lists of themes and realms that it applies to,
+  as defined in :ref:`config-ref`. These are passed on to the diagnostic
+  scripts, which can use them to record provenance;
 - an optional ``additional_datasets`` section.
 - an optional ``title`` and ``description``, used to generate the title and description
   in the ``index.html`` output file.
@@ -779,6 +811,8 @@ the absolute path to the diagnostic:
 This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
+.. _recipe_reuse_parameters:
+
 Reusing parameters from one ``script`` to another
 -------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
@@ -799,3 +833,7 @@ for use with other diagnostics. Here is an example:
 
 In this example the hook ``&cycle_settings`` can be used to pass the ``cycle:``
 parameters to ``grading:`` via the shortcut ``<<: *cycle_settings``.
+
+To merge several mappings, use a single merge key with a list of mappings, for
+example ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
+Note that the first mapping in the list has priority.

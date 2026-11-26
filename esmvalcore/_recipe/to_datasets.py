@@ -33,12 +33,13 @@ logger = logging.getLogger(__name__)
 
 _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
-    "activity",
-    "driver",
-    "dataset",
     "exp",
-    "sub_experiment",
+    "dataset",
+    "rcm_version",
+    "driver",
     "ensemble",
+    "sub_experiment",
+    "grid",
     "version",
 )
 """List of keys to be used to compose the alias, ordered by priority."""
@@ -301,16 +302,6 @@ def _get_dataset_facets_from_recipe(
 
     # Legacy: support start_year and end_year instead of timerange
     _replace_years_with_timerange(facets)
-
-    # Legacy: support wrong capitalization of obs4MIPs and ana4MIPs
-    if (lower_case_project := facets["project"]) in ("obs4mips", "ana4mips"):
-        facets["project"] = f"{lower_case_project[:3]}4MIPs"
-        logger.warning(
-            "Corrected capitalization, project '%s' should be written as '%s'."
-            "Support for automatically correcting this will be removed in v2.16.0.",
-            lower_case_project,
-            facets["project"],
-        )
 
     check.variable(
         facets,

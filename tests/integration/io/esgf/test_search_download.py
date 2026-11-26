@@ -236,10 +236,14 @@ def test_real_search_many():
             "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
         ],
         [
-            "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1"
-            "_KNMI-RACMO22E_v2_mon_195001-195012.nc",
-            "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1"
-            "_KNMI-RACMO22E_v2_mon_195101-196012.nc",
+            (
+                "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1"
+                "_KNMI-RACMO22E_v2_mon_195001-195012.nc"
+            ),
+            (
+                "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1"
+                "_KNMI-RACMO22E_v2_mon_195101-196012.nc"
+            ),
         ],
         [
             "rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc",
@@ -253,40 +257,60 @@ def test_real_search_many():
             "cmip3.CCCma.cccma_cgcm3_1.historical.mon.atmos.run1.tas.v1",
         ],
         [
-            "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1"
-            ".v20130207",
+            (
+                "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1"
+                ".v20130207"
+            ),
             "cmip5.output1.INM.inmcm4.rcp85.mon.atmos.Amon.r1i1p1.v20130207",
         ],
         [
-            "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1"
-            ".v20121010",
+            (
+                "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1"
+                ".v20121010"
+            ),
         ],
         [
-            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
-            ".v20120531",
-            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
-            ".v20120531",
-            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
-            ".v20120531",
+            (
+                "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+                ".v20120531"
+            ),
+            (
+                "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+                ".v20120531"
+            ),
+            (
+                "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+                ".v20120531"
+            ),
         ],
         [
-            "cmip5.output1.ICHEC.EC-EARTH.historical.mon.atmos.Amon.r1i1p1"
-            ".v20131231",
+            (
+                "cmip5.output1.ICHEC.EC-EARTH.historical.mon.atmos.Amon.r1i1p1"
+                ".v20131231"
+            ),
         ],
         [
-            "CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn"
-            ".v20200212",
-            "CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn"
-            ".v20200212",
+            (
+                "CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn"
+                ".v20200212"
+            ),
+            (
+                "CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn"
+                ".v20200212"
+            ),
         ],
         [
             "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308",
         ],
         [
-            "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1"
-            ".RACMO22E.v2.mon.tas.v20160620",
-            "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1"
-            ".RACMO22E.v2.mon.tas.v20160620",
+            (
+                "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1"
+                ".RACMO22E.v2.mon.tas.v20160620"
+            ),
+            (
+                "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1"
+                ".RACMO22E.v2.mon.tas.v20160620"
+            ),
         ],
         [
             "obs4MIPs.CERES-EBAF.v20160610",

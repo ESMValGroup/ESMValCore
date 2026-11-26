@@ -1,6 +1,6 @@
 """Tests for :mod:`esmvalcore.iris_helpers`."""
 
-import datetime
+import datetime as dt
 import warnings
 from copy import deepcopy
 from itertools import permutations
@@ -144,9 +144,9 @@ def test_add_leading_dim_to_cube_non_1d():
 @pytest.mark.parametrize(
     ("date", "dtype", "expected"),
     [
-        (datetime.datetime(1, 1, 1), np.float64, 0.0),
-        (datetime.datetime(1, 1, 1), int, 0.0),
-        (datetime.datetime(1, 1, 2, 12), np.float64, 1.5),
+        (dt.datetime(1, 1, 1), np.float64, 0.0),
+        (dt.datetime(1, 1, 1), int, 0.0),
+        (dt.datetime(1, 1, 2, 12), np.float64, 1.5),
     ],
 )
 def test_date2num_scalar(date, dtype, expected, units):
@@ -620,9 +620,11 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
             "mm day-1",
             "precipitation_flux",
             ValueError,
-            r"Cannot safely convert units from 'kg m-2 s-1' to 'mm day-1'; "
-            r"standard_name changed from 'precipitation_flux' to "
-            r"'lwe_precipitation_rate'",
+            (
+                r"Cannot safely convert units from 'kg m-2 s-1' to 'mm day-1'; "
+                r"standard_name changed from 'precipitation_flux' to "
+                r"'lwe_precipitation_rate'"
+            ),
         ),
     ],
 )

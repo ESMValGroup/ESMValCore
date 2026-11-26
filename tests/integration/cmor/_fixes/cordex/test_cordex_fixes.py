@@ -18,13 +18,14 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     TimeLongName,
 )
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 if TYPE_CHECKING:
     import pytest_mock
 
 
 @pytest.fixture
-def cubes():
+def cubes() -> iris.cube.CubeList:
     correct_time_coord = iris.coords.DimCoord(
         [0.0],
         var_name="time",
@@ -83,7 +84,7 @@ def cubes():
 
 
 @pytest.fixture
-def cordex_cubes():
+def cordex_cubes() -> iris.cube.CubeList:
     coord_system = iris.coord_systems.RotatedGeogCS(
         grid_north_pole_latitude=39.25,
         grid_north_pole_longitude=-162,
@@ -134,8 +135,15 @@ def cordex_cubes():
         ("longitude", "lon", "longitude"),
     ],
 )
-def test_mohchadrem3ga705_fix_metadata(cubes, coord, var_name, long_name):
-    fix = MOHCHadREM3GA705(None)
+def test_mohchadrem3ga705_fix_metadata(
+    cubes: iris.cube.CubeList,
+    coord: str,
+    var_name: str,
+    long_name: str,
+) -> None:
+    vardef = get_var_info("CORDEX", "day", "ts")
+    assert vardef is not None
+    fix = MOHCHadREM3GA705(vardef)
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
@@ -148,7 +156,9 @@ def test_mohchadrem3ga705_fix_metadata_no_time_coord(
 ) -> None:
     for cube in cubes:
         cube.remove_coord("time")
-    fix = MOHCHadREM3GA705(None)  # type: ignore[arg-type]
+    vardef = get_var_info("CORDEX", "day", "ts")
+    assert vardef is not None
+    fix = MOHCHadREM3GA705(vardef)
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
@@ -298,8 +308,12 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
                 ),
                 1,
             ),
+        ],
+        aux_coords_and_dims=[
+            # If the x coordinate is not monotonic, it may be demoted to an
+            # auxiliary coordinate on load.
             (
-                iris.coords.DimCoord(
+                iris.coords.AuxCoord(
                     np.arange(0, 453),
                     var_name="projection_x_coordinate",
                     standard_name="projection_x_coordinate",
@@ -308,8 +322,6 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
                 ),
                 2,
             ),
-        ],
-        aux_coords_and_dims=[
             (
                 iris.coords.AuxCoord(
                     np.ones((453, 453)),
@@ -344,8 +356,8 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
     ]:
         assert len(result.coords(coord_name)) == 1
 
-    x_coord = result.coord("projection_x_coordinate")
-    y_coord = result.coord("projection_y_coordinate")
+    x_coord = result.coord("projection_x_coordinate", dim_coords=True)
+    y_coord = result.coord("projection_y_coordinate", dim_coords=True)
     assert x_coord.units == "m"
     assert y_coord.units == "m"
     assert x_coord.points.dtype == np.float64

@@ -968,8 +968,8 @@ def test_ensemble_products():
     output1 = PreprocessorFile()
     output2 = PreprocessorFile()
     output_products = {
-        "project_dataset_exp": {"mean": output1},
-        "project_dataset2_exp": {"mean": output2},
+        "project_exp_dataset": {"mean": output1},
+        "project_exp_dataset2": {"mean": output2},
     }
 
     kwargs = {
@@ -1625,7 +1625,7 @@ def test_single_input_ensemble_statistics(products, stat):
     }
     products = {PreprocessorFile(cube, attributes=attributes)}
     output = PreprocessorFile()
-    output_products = {"project_dataset_exp": {stat_id: output}}
+    output_products = {"project_exp_dataset": {stat_id: output}}
     kwargs = {
         "statistics": [stat],
         "output_products": output_products,

@@ -1,0 +1,139 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.125,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AE3hrPt"
+  },
+  "variable_entry": {
+    "rsdscsaf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated in the absence of aerosols and clouds.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Surface Downwelling Clear-Sky, Aerosol-Free Shortwave Radiation",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdscsaf",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdscsafbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: point",
+      "comment": "Calculated in the absence of aerosols and clouds, following Ghan (2013, ACP). This requires a double-call in the radiation code with precisely the same meteorology.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Surface Downwelling Clear-Sky, Aerosol-Free Shortwave Radiation in Bands",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdscsafbnd",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsuscsaf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Surface Upwelling Clear-sky, Aerosol Free Shortwave Radiation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Surface Upwelling Clean Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsuscsaf",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsuscsafbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "time: point",
+      "comment": "Calculated in the absence of aerosols and clouds, following Ghan (ACP, 2013). This requires a double-call in the radiation code with precisely the same meteorology.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Surface Upwelling Clear-Sky, Aerosol-Free Shortwave Radiation in Bands",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsuscsafbnd",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsutcsaf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Flux corresponding to rsutcs resulting from aerosol-free call to radiation, following Ghan (ACP, 2013)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "TOA Outgoing Clear-Sky, Aerosol-Free Shortwave Radiation",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsutcsaf",
+      "positive": "up",
+      "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

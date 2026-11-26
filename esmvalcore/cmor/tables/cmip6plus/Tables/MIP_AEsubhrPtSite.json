@@ -1,0 +1,65 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.017361,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AEsubhrPtSite"
+  },
+  "variable_entry": {
+    "tntrl": {
+      "cell_measures": "",
+      "cell_methods": "area: point time: point",
+      "comment": "Tendency of air temperature due to longwave radiative heating",
+      "dimensions": [
+        "alevel",
+        "site",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Tendency of Air Temperature Due to Longwave Radiative Heating",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tntrl",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_longwave_heating",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tntrs": {
+      "cell_measures": "",
+      "cell_methods": "area: point time: point",
+      "comment": "Tendency of air temperature due to shortwave radiative heating",
+      "dimensions": [
+        "alevel",
+        "site",
+        "time1"
+      ],
+      "frequency": "subhrPt",
+      "long_name": "Tendency of Air Temperature Due to Shortwave Radiative Heating",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tntrs",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_shortwave_heating",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}
