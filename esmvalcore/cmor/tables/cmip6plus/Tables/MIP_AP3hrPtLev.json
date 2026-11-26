@@ -1,0 +1,1075 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.125,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "alevel",
+      "alevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AP3hrPtLev"
+  },
+  "variable_entry": {
+    "aerasymbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "The asymmetry factor is the angular integral of the aerosol scattering phase function weighted by the cosine of the angle with the incident radiation flux. The asymmetry coefficient is here an integral over all wavelength bands.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Aerosol Level Asymmetry Parameter for Each Band",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "aerasymbnd",
+      "positive": "",
+      "standard_name": "asymmetry_factor_of_ambient_aerosol_particles",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "aeroptbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Optical thickness of atmospheric aerosols in wavelength bands.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Aerosol Level Absorption Optical Thickness for Each Band",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "aeroptbnd",
+      "positive": "",
+      "standard_name": "atmosphere_absorption_optical_thickness_due_to_ambient_aerosol_particles",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "aerssabnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "The single scattering albedo is the fraction of radiation in an incident light beam scattered by the particles of an aerosol reference volume for a given wavelength. It is the ratio of the scattering and the extinction coefficients of the aerosol particles in the reference volume. ",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Aerosol Level Single Scattering Albedo for Each Band",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "aerssabnd",
+      "positive": "",
+      "standard_name": "single_scattering_albedo_in_air_due_to_ambient_aerosol_particles",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ch4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mole Fraction of CH4",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ch4",
+      "positive": "",
+      "standard_name": "mole_fraction_of_methane_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Include only convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Convective Cloud Area Percentage",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clc",
+      "positive": "",
+      "standard_name": "convective_cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clic": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated as the mass of convective cloud ice  in the grid cell divided by the mass of air (including the water in all phases) in the grid cell.  This includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mass Fraction of Convective Cloud Ice",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clic",
+      "positive": "",
+      "standard_name": "mass_fraction_of_convective_cloud_ice_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clis": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated as the mass of stratiform cloud ice  in the grid cell divided by the mass of air (including the water in all phases) in the grid cell.  This includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mass Fraction of Stratiform Cloud Ice",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clis",
+      "positive": "",
+      "standard_name": "mass_fraction_of_stratiform_cloud_ice_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cls": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Cloud area fraction (reported as a percentage) for the whole atmospheric column due to stratiform clouds, as seen from the surface or the top of the atmosphere. Includes both large-scale and convective cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Percentage Cover of Stratiform Cloud",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cls",
+      "positive": "",
+      "standard_name": "stratiform_cloud_area_fraction_in_atmosphere_layer",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clwc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated as the mass of convective cloud liquid water in the grid cell divided by the mass of air (including the water in all phases) in the grid cell.  This includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mass Fraction of Convective Cloud Liquid Water",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clwc",
+      "positive": "",
+      "standard_name": "mass_fraction_of_convective_cloud_liquid_water_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "clws": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated as the mass of stratiform cloud liquid water in the grid cell divided by the mass of air (including the water in all phases) in the grid cell.  This includes precipitating hydrometeors ONLY if the precipitating hydrometeors affect the calculation of radiative transfer in model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mass Fraction of Stratiform Cloud Liquid Water",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "clws",
+      "positive": "",
+      "standard_name": "mass_fraction_of_stratiform_cloud_liquid_water_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "co2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mole Fraction of CO2",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "co2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_carbon_dioxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "demc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is the in-cloud emissivity obtained by considering only the cloudy portion of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Convective Cloud Emissivity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "demc",
+      "positive": "",
+      "standard_name": "convective_cloud_longwave_emissivity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dems": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is the in-cloud emissivity obtained by considering only the cloudy portion of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Stratiform Cloud Emissivity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dems",
+      "positive": "",
+      "standard_name": "stratiform_cloud_longwave_emissivity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dtauc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is the in-cloud optical depth obtained by considering only the cloudy portion of the grid cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Convective Cloud Optical Depth",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dtauc",
+      "positive": "",
+      "standard_name": "atmosphere_optical_thickness_due_to_convective_cloud",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dtaus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is the in-cloud optical depth obtained by considering only the cloudy portion of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Stratiform Cloud Optical Depth",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dtaus",
+      "positive": "",
+      "standard_name": "atmosphere_optical_thickness_due_to_stratiform_cloud",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "grpllsprof": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics. Stratiform precipitation, whether liquid or frozen, is precipitation that formed in stratiform cloud. Graupel consists of heavily rimed snow particles, often called snow pellets; often indistinguishable from very small soft hail except when the size convention that hail must have a diameter greater than 5 mm is adopted. Reference: American Meteorological Society Glossary http://glossary.ametsoc.org/wiki/Graupel. There are also separate standard names for hail. Standard names for 'graupel_and_hail' should be used to describe data produced by models that do not distinguish between hail and graupel.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Stratiform Graupel Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "grpllsprof",
+      "positive": "",
+      "standard_name": "stratiform_graupel_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "h2o": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "includes all phases of water",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mass Fraction of Water",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "h2o",
+      "positive": "",
+      "standard_name": "mass_fraction_of_water_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hus": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Specific humidity is the mass fraction of water vapor in (moist) air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Specific Humidity",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hus",
+      "positive": "",
+      "standard_name": "specific_humidity",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "n2o": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.   The chemical formula of  nitrous oxide is N2O.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mole Fraction of N2O",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "n2o",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "o3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Mole Fraction of O3",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "o3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pfull": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Air pressure on model levels",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Pressure at Model Full-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pfull",
+      "positive": "",
+      "standard_name": "air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "phalf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Air pressure on model half-levels",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Pressure on Model Half-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "phalf",
+      "positive": "",
+      "standard_name": "air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prcprof": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Convective Rainfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prcprof",
+      "positive": "",
+      "standard_name": "convective_rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prlsns": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "large-scale precipitation of all forms of water in the solid phase.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Stratiform Snowfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prlsns",
+      "positive": "",
+      "standard_name": "stratiform_snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prlsprof": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.  Stratiform precipitation, whether liquid or frozen, is precipitation that formed in stratiform cloud.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Stratiform Rainfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prlsprof",
+      "positive": "",
+      "standard_name": "stratiform_rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsnc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "convective precipitation of all forms of water in the solid phase.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Convective Snowfall Flux",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsnc",
+      "positive": "",
+      "standard_name": "convective_snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffclic": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Convective Cloud Ice",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffclic",
+      "positive": "",
+      "standard_name": "effective_radius_of_convective_cloud_ice_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffclis": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Stratiform Cloud Ice",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffclis",
+      "positive": "",
+      "standard_name": "effective_radius_of_stratiform_cloud_ice_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffclwc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Droplets are liquid.  The effective radius is defined as the ratio of the third moment over the second moment of the particle size distribution and the time-mean should be calculated, weighting the individual samples by the cloudy fraction of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Convective Cloud Liquid Droplet Effective Radius",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffclwc",
+      "positive": "",
+      "standard_name": "effective_radius_of_convective_cloud_liquid_water_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffclws": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Droplets are liquid.  The effective radius is defined as the ratio of the third moment over the second moment of the particle size distribution and the time-mean should be calculated, weighting the individual samples by the cloudy fraction of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Stratiform Cloud Liquid Droplet Effective Radius",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffclws",
+      "positive": "",
+      "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffgrpls": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Stratiform Graupel",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffgrpls",
+      "positive": "",
+      "standard_name": "effective_radius_of_stratiform_cloud_graupel_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffrainc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Convective Rainfall",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffrainc",
+      "positive": "",
+      "standard_name": "effective_radius_of_convective_cloud_rain_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffrains": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Stratiform Rainfall",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffrains",
+      "positive": "",
+      "standard_name": "effective_radius_of_stratiform_cloud_rain_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffsnowc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Convective Snowfall",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffsnowc",
+      "positive": "",
+      "standard_name": "effective_radius_of_convective_cloud_snow_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "reffsnows": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "This is defined as the in-cloud ratio of the third moment over the second moment of the particle size distribution (obtained by considering only the cloudy portion of the grid cell).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Hydrometeor Effective Radius of Stratiform Snowfall",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "reffsnows",
+      "positive": "",
+      "standard_name": "effective_radius_of_stratiform_cloud_snow_particles",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdcs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Downwelling clear-sky shortwave radiation (includes the fluxes at the surface and top-of-atmosphere)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Downwelling Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdcs",
+      "positive": "down",
+      "standard_name": "downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdcsbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated with aerosols but without clouds. This is a standard clear-sky calculation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Downwelling Clear-Sky Shortwave Radiation at Each Level for Each Band",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdcsbnd",
+      "positive": "down",
+      "standard_name": "downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsucs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Upwelling clear-sky shortwave radiation  (includes the fluxes at the surface and TOA)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Upwelling Clear-Sky Shortwave Radiation",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsucs",
+      "positive": "up",
+      "standard_name": "upwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsucsbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated with aerosols but without clouds. This is a standard clear-sky calculation",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Upwelling Clear-Sky Shortwave Radiation at Each Level for Each Band",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsucsbnd",
+      "positive": "up",
+      "standard_name": "upwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ta": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Air Temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Air Temperature",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ta",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zfull": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Height of full model levels above a reference ellipsoid. A reference ellipsoid is a mathematical figure that approximates the geoid. The geoid is a surface of constant geopotential with which mean sea level would coincide if the ocean were at rest. The ellipsoid is an approximation because the geoid is an irregular shape. A number of reference ellipsoids are defined for use in the field of geodesy. To specify which reference ellipsoid is being used, a grid_mapping variable should be attached to the data variable as described in Chapter 5.6 of the CF Convention.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Altitude of Model Full-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zfull",
+      "positive": "",
+      "standard_name": "height_above_reference_ellipsoid",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zhalf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Height of model half-levels above a reference ellipsoid. A reference ellipsoid is a mathematical figure that approximates the geoid. The geoid is a surface of constant geopotential with which mean sea level would coincide if the ocean were at rest. The ellipsoid is an approximation because the geoid is an irregular shape. A number of reference ellipsoids are defined for use in the field of geodesy. To specify which reference ellipsoid is being used, a grid_mapping variable should be attached to the data variable as described in Chapter 5.6 of the CF Convention.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Altitude of Model Half-Levels",
+      "modeling_realm": [
+        "atmos"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zhalf",
+      "positive": "",
+      "standard_name": "height_above_reference_ellipsoid",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

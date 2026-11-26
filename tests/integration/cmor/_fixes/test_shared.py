@@ -1,5 +1,9 @@
 """Tests for shared functions for fixes."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import dask.array as da
 import iris
 import iris.coords
@@ -15,13 +19,12 @@ from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
+    add_scalar_areatype_coord,
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
-    add_scalar_typeland_coord,
-    add_scalar_typesea_coord,
-    add_scalar_typesi_coord,
     cube_to_aux_coord,
+    ensure_c_contiguous_and_aligned_input,
     fix_bounds,
     fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
@@ -30,6 +33,9 @@ from esmvalcore.cmor._fixes.shared import (
     get_time_bounds,
     round_coordinates,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def test_altitude_to_pressure_func():
@@ -400,6 +406,56 @@ TEST_ADD_SCALAR_COORD = [
 TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
 
 
+@pytest.mark.parametrize(
+    ("cube_in", "var_name", "long_name", "value"),
+    [
+        (CUBE_1.copy(), None, None, None),
+        (CUBE_1.copy(), "type", "Land area type", "default"),
+        (CUBE_2.copy(), "typetree", "Tree area type", "trees"),
+        (CUBE_2.copy(), "type", "Sea Ice area type", "sea_ice"),
+    ],
+)
+def test_add_scalar_areatype_coord(cube_in, var_name, long_name, value):
+    """Test adding of scalar typeland coordinate."""
+    cube_in = cube_in.copy()
+    if var_name is None:
+        var_name = "type"
+    if long_name is None:
+        long_name = "area type"
+    if value is None:
+        value = "default"
+    areatype_coord = iris.coords.AuxCoord(
+        value,
+        var_name=var_name,
+        standard_name="area_type",
+        long_name=long_name,
+        units=Unit("no unit"),
+    )
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord("area_type")
+    if var_name == "type" and long_name == "area type" and value == "default":
+        cube_out = add_scalar_areatype_coord(cube_in)
+    else:
+        cube_out = add_scalar_areatype_coord(
+            cube_in,
+            var_name=var_name,
+            long_name=long_name,
+            value=value,
+        )
+    assert cube_out is cube_in
+    coord = cube_in.coord("area_type")
+    assert coord == areatype_coord
+    cube_out_2 = add_scalar_areatype_coord(
+        cube_out,
+        var_name,
+        long_name,
+        value,
+    )
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord("area_type")
+    assert coord == areatype_coord
+
+
 @pytest.mark.parametrize(("cube_in", "depth"), TEST_ADD_SCALAR_COORD)
 def test_add_scalar_depth_coord(cube_in, depth):
     """Test adding of scalar depth coordinate."""
@@ -479,90 +535,6 @@ def test_add_scalar_lambda550nm_coord(cube_in):
     assert cube_out_2 is cube_out
     coord = cube_in.coord("radiation_wavelength")
     assert coord == lambda550nm_coord
-
-
-@pytest.mark.parametrize(("cube_in", "typeland"), TEST_ADD_SCALAR_COORD)
-def test_add_scalar_typeland_coord(cube_in, typeland):
-    """Test adding of scalar typeland coordinate."""
-    cube_in = cube_in.copy()
-    if typeland is None:
-        typeland = "default"
-    typeland_coord = iris.coords.AuxCoord(
-        typeland,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Land area type",
-        units=Unit("no unit"),
-    )
-    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-        cube_in.coord("area_type")
-    if typeland == "default":
-        cube_out = add_scalar_typeland_coord(cube_in)
-    else:
-        cube_out = add_scalar_typeland_coord(cube_in, typeland)
-    assert cube_out is cube_in
-    coord = cube_in.coord("area_type")
-    assert coord == typeland_coord
-    cube_out_2 = add_scalar_typeland_coord(cube_out)
-    assert cube_out_2 is cube_out
-    coord = cube_in.coord("area_type")
-    assert coord == typeland_coord
-
-
-@pytest.mark.parametrize(("cube_in", "typesea"), TEST_ADD_SCALAR_COORD)
-def test_add_scalar_typesea_coord(cube_in, typesea):
-    """Test adding of scalar typesea coordinate."""
-    cube_in = cube_in.copy()
-    if typesea is None:
-        typesea = "default"
-    typesea_coord = iris.coords.AuxCoord(
-        typesea,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Ocean area type",
-        units=Unit("no unit"),
-    )
-    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-        cube_in.coord("area_type")
-    if typesea == "default":
-        cube_out = add_scalar_typesea_coord(cube_in)
-    else:
-        cube_out = add_scalar_typesea_coord(cube_in, typesea)
-    assert cube_out is cube_in
-    coord = cube_in.coord("area_type")
-    assert coord == typesea_coord
-    cube_out_2 = add_scalar_typesea_coord(cube_out)
-    assert cube_out_2 is cube_out
-    coord = cube_in.coord("area_type")
-    assert coord == typesea_coord
-
-
-@pytest.mark.parametrize(("cube_in", "typesi"), TEST_ADD_SCALAR_COORD)
-def test_add_scalar_typesi_coord(cube_in, typesi):
-    """Test adding of scalar typesi coordinate."""
-    cube_in = cube_in.copy()
-    if typesi is None:
-        typesi = "sea_ice"
-    typesi_coord = iris.coords.AuxCoord(
-        typesi,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Sea Ice area type",
-        units=Unit("no unit"),
-    )
-    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-        cube_in.coord("area_type")
-    if typesi == "sea_ice":
-        cube_out = add_scalar_typesi_coord(cube_in)
-    else:
-        cube_out = add_scalar_typesi_coord(cube_in, typesi)
-    assert cube_out is cube_in
-    coord = cube_in.coord("area_type")
-    assert coord == typesi_coord
-    cube_out_2 = add_scalar_typesi_coord(cube_out)
-    assert cube_out_2 is cube_out
-    coord = cube_in.coord("area_type")
-    assert coord == typesi_coord
 
 
 def test_cube_to_aux_coord():
@@ -786,3 +758,57 @@ def test_get_time_bounds_invalid_hr_fail(time_coord, freq):
     msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
     with pytest.raises(NotImplementedError, match=msg):
         get_time_bounds(time_coord, freq)
+
+
+def test_ensure_c_contiguous_and_aligned_input() -> None:
+    def identity[T](x: T) -> T:
+        return x
+
+    wrapped_identity = ensure_c_contiguous_and_aligned_input(identity)
+
+    f_arr = np.ones((2, 3), order="F")
+    assert f_arr.flags["C_CONTIGUOUS"] is False
+
+    c_arr = wrapped_identity(f_arr)
+    assert c_arr.flags["C_CONTIGUOUS"] is True
+
+
+def _unaligned_array() -> np.ndarray:
+    """Create a C-contiguous float64 array that is not aligned."""
+    values = np.array([[0.0, 100.0], [1000.0, 10000.0]])
+    buffer = bytearray(values.nbytes + 4)
+    arr = np.frombuffer(
+        buffer,
+        dtype=np.float64,
+        offset=4,
+        count=values.size,
+    ).reshape(values.shape)
+    arr[...] = values
+    assert arr.flags["C_CONTIGUOUS"] is True
+    assert arr.flags["ALIGNED"] is False
+    return arr
+
+
+def test_ensure_c_contiguous_and_aligned_input_aligned() -> None:
+    def identity[T](x: T) -> T:
+        return x
+
+    wrapped_identity = ensure_c_contiguous_and_aligned_input(identity)
+
+    result = wrapped_identity(_unaligned_array())
+    assert result.flags["C_CONTIGUOUS"] is True
+    assert result.flags["ALIGNED"] is True
+
+
+@pytest.mark.parametrize(
+    "get_func",
+    [get_altitude_to_pressure_func, get_pressure_to_altitude_func],
+)
+def test_unaligned_input(get_func: Callable[[], Callable]) -> None:
+    """Test that unaligned input works (e.g. from other Dask workers)."""
+    unaligned_arr = _unaligned_array()
+    aligned_arr = unaligned_arr.copy()
+    assert unaligned_arr.flags["ALIGNED"] is False
+    assert aligned_arr.flags["ALIGNED"] is True
+    func = get_func()
+    np.testing.assert_allclose(func(unaligned_arr), func(aligned_arr))

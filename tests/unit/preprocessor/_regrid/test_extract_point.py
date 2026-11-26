@@ -3,11 +3,39 @@
 import unittest
 from unittest import mock
 
-from iris.tests.stock import lat_lon_cube
+import numpy as np
+from iris.coord_systems import GeogCS
+from iris.coords import DimCoord
+from iris.cube import Cube
 
 import tests
 from esmvalcore.preprocessor import extract_point
 from esmvalcore.preprocessor._regrid import POINT_INTERPOLATION_SCHEMES
+
+
+def lat_lon_cube():
+    """Create a cube with latitude and longitude coordinates.
+
+    Copied from :func:`iris.tests.stock.lat_lon_cube` to avoid importing
+    :mod:`iris.tests`, which requires internet access.
+    """
+    cs = GeogCS(6371229)
+    lat = DimCoord(
+        np.array([-1, 0, 1], dtype=np.int32),
+        standard_name="latitude",
+        units="degrees",
+        coord_system=cs,
+    )
+    lon = DimCoord(
+        np.array([-1, 0, 1, 2], dtype=np.int32),
+        standard_name="longitude",
+        units="degrees",
+        coord_system=cs,
+    )
+    return Cube(
+        np.arange(12, dtype=np.int32).reshape((3, 4)),
+        dim_coords_and_dims=[(lat, 0), (lon, 1)],
+    )
 
 
 class Test(tests.Test):

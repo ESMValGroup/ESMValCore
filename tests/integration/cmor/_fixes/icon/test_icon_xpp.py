@@ -17,6 +17,7 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
     Clwvi,
     Evspsbl,
     Gpp,
+    Hfbasin,
     Hfls,
     Hfss,
     Msftmz,
@@ -639,10 +640,58 @@ def test_gpp_fix(cubes_regular_grid):
         fixed_cube.data,
         [
             [
-                [0.0, 1.0 * 44.0095 / 1000],
-                [2.0 * 44.0095 / 1000, 3.0 * 44.0095 / 1000],
+                [0.0, 1.0 * 12.011 / 1000],
+                [2.0 * 12.011 / 1000, 3.0 * 12.011 / 1000],
             ],
         ],
+    )
+
+
+# Test hfbasin (for extra fix)
+
+
+def test_get_hfbasin_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Omon", "hfbasin")
+    assert fix == [Hfbasin(None), AllVars(None), GenericFix(None)]
+
+
+def test_hfbasin_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0][..., [0]]
+    cube.coord("latitude").var_name = "lat"
+    cubes = CubeList([cube.copy() * 0.0, cube.copy() * 1.0, cube.copy() * 2.0])
+    cubes[0].var_name = "atlantic_hfbasin"
+    cubes[0].long_name = "atlantic northward ocean heat transport"
+    cubes[0].units = "W"
+    cubes[1].var_name = "global_hfbasin"
+    cubes[1].long_name = "global northward ocean heat transport"
+    cubes[1].units = "W"
+    cubes[2].var_name = "pacific_hfbasin"
+    cubes[2].long_name = "indopacific northward ocean heat transport"
+    cubes[2].units = "W"
+
+    fixed_cubes = fix_metadata(cubes, "Omon", "hfbasin")
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "hfbasin"
+    assert cube.standard_name == "northward_ocean_heat_transport"
+    assert cube.long_name == "Northward Ocean Heat Transport"
+
+    assert cube.units == "W"
+    assert "positive" not in cube.attributes
+    assert "invalid_units" not in cube.attributes
+
+    np.testing.assert_equal(
+        cube.coord("region").points,
+        ["atlantic_arctic_ocean", "indian_pacific_ocean", "global_ocean"],
+    )
+
+    assert cube.shape == (1, 3, 2)
+    np.testing.assert_allclose(
+        cube.data,
+        [[[0.0, 0.0], [0.0, 4.0], [0.0, 2.0]]],
     )
 
 
@@ -1313,3 +1362,78 @@ def test_zg_fix(cubes_regular_grid):
         cube.data,
         [[[0.0, 0.10197162], [0.20394324, 0.30591486]]],
     )
+
+
+# Test landfraction fixes
+
+
+def check_lfrac_auxcoord(cube, long_name):
+    assert cube.coords("area_type")
+    typelfrac = cube.coord("area_type")
+    assert typelfrac.standard_name == "area_type"
+    assert typelfrac.long_name == long_name
+
+
+def test_grassfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_grass_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "grassFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "grassFrac"
+    check_lfrac_auxcoord(fixed_cube, "Natural grass area type")
+
+
+def test_shrubfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_shrub_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "shrubFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "shrubFrac"
+    check_lfrac_auxcoord(fixed_cube, "Shrub area type")
+
+
+def test_baresoilfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_baresoil_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "baresoilFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "baresoilFrac"
+    check_lfrac_auxcoord(fixed_cube, "surface type")
+
+
+def test_treefrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_tree_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "treeFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "treeFrac"
+    check_lfrac_auxcoord(fixed_cube, "Tree area type")
+
+
+def test_cropfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_crop_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "cropFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "cropFrac"
+    check_lfrac_auxcoord(fixed_cube, "Crop area type")

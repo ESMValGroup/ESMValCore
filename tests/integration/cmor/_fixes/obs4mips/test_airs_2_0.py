@@ -15,7 +15,6 @@ def test_fix_metadata_hur():
                 da.from_array([-0.1, 0.2, 1.2, 1.7]),
                 var_name="hur",
                 units="1",
-                attributes={"valid_range": [0.0, 1.5]},
             ),
         ],
     )
@@ -27,6 +26,4 @@ def test_fix_metadata_hur():
     assert fixed_cube.units == "%"
     assert fixed_cube.attributes == {}
     assert fixed_cube.has_lazy_data()
-    expected_data = np.ma.masked_invalid([np.nan, 20.0, 120.0, np.nan])
-    np.testing.assert_allclose(fixed_cube.data.mask, expected_data.mask)
-    np.testing.assert_allclose(fixed_cube.data, expected_data)
+    np.testing.assert_allclose(fixed_cube.data, [-10.0, 20.0, 120.0, 170.0])

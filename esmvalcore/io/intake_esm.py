@@ -179,6 +179,11 @@ class IntakeEsmDataSource(DataSource):
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
+    @property
+    def searchable_facets(self) -> frozenset[str]:
+        """Facets mapped to searchable catalog columns."""
+        return frozenset(self.facets)
+
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:
         """Find data.
 

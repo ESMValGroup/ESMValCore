@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Self
 import iris
 import xarray as xr
 
-from esmvalcore.config._config import TASKSEP
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.experimental.recipe_info import RecipeInfo
 from esmvalcore.experimental.recipe_metadata import Contributor, Reference
 from esmvalcore.experimental.templates import get_template

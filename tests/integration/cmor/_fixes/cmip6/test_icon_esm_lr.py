@@ -1,5 +1,6 @@
 """Tests for the fixes of ICON-ESM-LR."""
 
+import numpy as np
 import pytest
 from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
@@ -95,3 +96,63 @@ def test_allvars_fix_metadata_no_lat_lon(cubes):
     fix = AllVars(None)
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
+
+
+def test_allvars_fix_metadata_adds_mesh():
+    lat = AuxCoord(
+        [0.5, 0.5],
+        standard_name="latitude",
+        var_name="latitude",
+        units="degrees_north",
+        bounds=[[0.0, 0.0, 1.0], [0.0, 1.0, 1.0]],
+    )
+    lon = AuxCoord(
+        [0.5, 0.5],
+        standard_name="longitude",
+        var_name="longitude",
+        units="degrees_east",
+        bounds=[[0.0, 1.0, 0.0], [1.0, 1.0, 0.0]],
+    )
+    cube = Cube(
+        np.array([1.0, 2.0]),
+        var_name="tas",
+        aux_coords_and_dims=[(lat, 0), (lon, 0)],
+    )
+
+    AllVars(None).fix_metadata(CubeList([cube]))
+
+    assert cube.mesh is not None
+    assert cube.coords("latitude", mesh_coords=True)
+    assert cube.coords("longitude", mesh_coords=True)
+    assert cube.mesh.connectivity().shape == (2, 3)
+
+
+def test_allvars_fix_metadata_merges_pole_vertices():
+    """Ensure pole vertices are merged into a single mesh node.
+
+    there must be 4 nodes: North Pole, (0,0), (0,120), (0,240)
+    """
+    lat = AuxCoord(
+        [60.0, 60.0],
+        standard_name="latitude",
+        var_name="latitude",
+        units="degrees_north",
+        bounds=[[90.0, 0.0, 0.0], [90.0, 0.0, 0.0]],
+    )
+    lon = AuxCoord(
+        [60.0, 180.0],
+        standard_name="longitude",
+        var_name="longitude",
+        units="degrees_east",
+        bounds=[[0.0, 0.0, 120.0], [240.0, 120.0, 240.0]],
+    )
+    cube = Cube(
+        np.array([1.0, 2.0]),
+        var_name="tas",
+        aux_coords_and_dims=[(lat, 0), (lon, 0)],
+    )
+
+    AllVars(None).fix_metadata(CubeList([cube]))
+
+    node_lat = cube.mesh.coord(location="node", axis="y")
+    assert len(node_lat.points) == 4

@@ -1,0 +1,295 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 3650.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "olevel",
+      "olevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "OPdecLev"
+  },
+  "variable_entry": {
+    "agessc": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Time elapsed since water was last in surface layer of the ocean.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water Age Since Surface Contact",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "agessc",
+      "positive": "",
+      "standard_name": "sea_water_age_since_surface_contact",
+      "type": "real",
+      "units": "yr",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "bigthetao": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Sea water conservative temperature (this should be contributed only for models using conservative temperature as prognostic field)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water Conservative Temperature",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "bigthetao",
+      "positive": "",
+      "standard_name": "sea_water_conservative_temperature",
+      "type": "real",
+      "units": "degC",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "masscello": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: sum where sea time: mean",
+      "comment": "Tracer grid-cell mass per unit area used for computing tracer budgets. For Boussinesq models with static ocean grid cell thickness, masscello = rhozero*thickcello, where thickcello is static cell thickness and rhozero is constant Boussinesq reference density. More generally, masscello is time dependent and reported as part of Omon.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Ocean Grid-Cell Mass per Area",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "masscello",
+      "positive": "",
+      "standard_name": "sea_water_mass_per_unit_area",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftyz": {
+      "cell_measures": "",
+      "cell_methods": "time: mean grid_longitude: mean",
+      "comment": "Overturning mass streamfunction arising from all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "gridlatitude",
+        "olevel",
+        "basin",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Ocean Y Overturning Mass Streamfunction",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftyz",
+      "positive": "",
+      "standard_name": "ocean_y_overturning_mass_streamfunction",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "so": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Sea water salinity is the salt content of sea water, often on the Practical Salinity Scale of 1978. However, the unqualified term 'salinity' is generic and does not necessarily imply any particular method of calculation. The units of salinity are dimensionless and the units attribute should normally be given as 1e-3 or 0.001 i.e. parts per thousand. ",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water Salinity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "so",
+      "positive": "",
+      "standard_name": "sea_water_salinity",
+      "type": "real",
+      "units": "0.001",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "thetao": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Diagnostic should be contributed even for models using conservative temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water Potential Temperature",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "thetao",
+      "positive": "",
+      "standard_name": "sea_water_potential_temperature",
+      "type": "real",
+      "units": "degC",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "thkcello": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "'Thickness' means the vertical extent of a layer. 'Cell' refers to a model grid-cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Ocean Model Cell Thickness",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "thkcello",
+      "positive": "",
+      "standard_name": "cell_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "uo": {
+      "cell_measures": "--OPT",
+      "cell_methods": "time: mean",
+      "comment": "Prognostic x-ward velocity component resolved by the model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water X Velocity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "uo",
+      "positive": "",
+      "standard_name": "sea_water_x_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vo": {
+      "cell_measures": "--OPT",
+      "cell_methods": "time: mean",
+      "comment": "Prognostic y-ward velocity component resolved by the model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water Y Velocity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vo",
+      "positive": "",
+      "standard_name": "sea_water_y_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "volcello": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: sum where sea time: mean",
+      "comment": "grid-cell volume ca. 2000.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Ocean Grid-Cell Volume",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "volcello",
+      "positive": "",
+      "standard_name": "ocean_volume",
+      "type": "real",
+      "units": "m3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wo": {
+      "cell_measures": "--OPT",
+      "cell_methods": "time: mean",
+      "comment": "A velocity is a vector quantity. 'Upward' indicates a vector component which is positive when directed upward (negative downward).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "dec",
+      "long_name": "Sea Water Vertical Velocity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wo",
+      "positive": "",
+      "standard_name": "upward_sea_water_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

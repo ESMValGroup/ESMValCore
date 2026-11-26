@@ -18,6 +18,8 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Msftmz,
     Omon,
     Pr,
+    Sftlf,
+    Sftof,
     Siconc,
     Tas,
     Tasmax,
@@ -740,3 +742,78 @@ def test_msftmz_fix_metadata(msftmz_cubes):
     )
 
     assert cubes[0].coord("region") == aux_coord
+
+
+@pytest.fixture
+def cubes_regular_grid():
+    """Cube with regular grid."""
+    time_coord = iris.coords.DimCoord(
+        [0],
+        var_name="time",
+        standard_name="time",
+        units="days since 1850-01-01",
+    )
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0],
+        var_name="clat",
+        standard_name="latitude",
+        long_name="latitude",
+        units="degrees_north",
+    )
+    lon_coord = iris.coords.DimCoord(
+        [-1.0, 1.0],
+        var_name="clon",
+        standard_name="longitude",
+        long_name="longitude",
+        units="degrees_east",
+    )
+    cube = iris.cube.Cube(
+        [[[0.0, 1.0], [2.0, 3.0]]],
+        var_name="t_2m",
+        units="K",
+        dim_coords_and_dims=[(time_coord, 0), (lat_coord, 1), (lon_coord, 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def check_lfrac_auxcoord(cube, long_name):
+    assert cube.coords("area_type")
+    typelfrac = cube.coord("area_type")
+    assert typelfrac.standard_name == "area_type"
+    assert typelfrac.long_name == long_name
+
+
+def test_get_sftlf_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2", "fx", "sftlf")
+    assert fix == [Sftlf(None), GenericFix(None)]
+
+
+def test_sftlf_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "sftlf"
+    vardef = get_var_info("CMIP6", "fx", "sftlf")
+    fix = Sftlf(vardef)
+    fixed_cubes = fix.fix_metadata(cubes)
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "sftlf"
+    check_lfrac_auxcoord(fixed_cube, "Land area type")
+
+
+def test_get_sftof_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2", "fx", "sftof")
+    assert fix == [Sftof(None), GenericFix(None)]
+
+
+def test_sftof_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "sftof"
+    vardef = get_var_info("CMIP6", "Ofx", "sftof")
+    fix = Sftof(vardef)
+    fixed_cubes = fix.fix_metadata(cubes)
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "sftof"
+    check_lfrac_auxcoord(fixed_cube, "Ocean area type")

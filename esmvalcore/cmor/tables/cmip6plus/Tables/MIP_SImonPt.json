@@ -1,0 +1,113 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "SImonPt"
+  },
+  "variable_entry": {
+    "sidivvel": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea_ice (comment: mask=siconc) time: point",
+      "comment": "Divergence of sea-ice velocity field (first shear strain invariant)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "monPt",
+      "long_name": "Divergence of the Sea-Ice Velocity Field",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sidivvel",
+      "positive": "",
+      "standard_name": "divergence_of_sea_ice_velocity",
+      "type": "real",
+      "units": "s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sishevel": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea_ice (comment: mask=siconc) time: point",
+      "comment": "Maximum shear of sea-ice velocity field (second shear strain invariant)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "monPt",
+      "long_name": "Maximum Shear of Sea-Ice Velocity Field",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sishevel",
+      "positive": "",
+      "standard_name": "maximum_over_coordinate_rotation_of_sea_ice_horizontal_shear_strain_rate",
+      "type": "real",
+      "units": "s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sistremax": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea_ice (comment: mask=siconc) time: point",
+      "comment": "Maximum shear stress in sea ice (second stress invariant)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "monPt",
+      "long_name": "Maximum Shear Stress in Sea Ice",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sistremax",
+      "positive": "",
+      "standard_name": "maximum_over_coordinate_rotation_of_sea_ice_horizontal_shear_stress",
+      "type": "real",
+      "units": "N m-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sistresave": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea_ice (comment: mask=siconc) time: point",
+      "comment": "Average normal stress in sea ice (first stress invariant)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "monPt",
+      "long_name": "Average Normal Stress in Sea Ice",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sistresave",
+      "positive": "",
+      "standard_name": "sea_ice_average_normal_horizontal_stress",
+      "type": "real",
+      "units": "N m-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

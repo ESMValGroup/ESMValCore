@@ -1,0 +1,7 @@
+organization:
+    id: 8d112a53-6ec2-4bdf-90a4-b4c02a7ba114
+    name: ESMValGroup
+project:
+    id: a6d4c483-4b06-42d4-b058-0d49a4bc5e53
+    slug: gh/ESMValGroup/ESMValCore
+    name: ESMValCore

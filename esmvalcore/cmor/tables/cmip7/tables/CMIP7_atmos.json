@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12",
-        "checksum": "md5: 07739ee9ff9d5bb7497e4cdcd9129750",
-        "cmor_version": "3.13",
+        "checksum": "md5: 3d9637b2b885d6a0839a694e17119dcd",
+        "cmor_version": "3.15",
         "generic_levels": "alevel alevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "atmos",
-        "table_date": "2026-04-21 15:01:29",
+        "table_date": "2026-07-09 13:08:05",
         "table_id": "atmos",
         "type": "real",
         "valid_max": "",
@@ -1445,6 +1445,22 @@
             "positive": "",
             "standard_name": "atmosphere_momentum_diffusivity",
             "units": "m2 s-1"
+        },
+        "fco2all_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to All Emissions of CO2 from All Sources [kgC m-2 s-1]",
+            "modeling_realm": "atmos",
+            "out_name": "fco2all",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_carbon_dioxide_expressed_as_carbon_due_to_emissions_and_surface_fluxes",
+            "units": "kg m-2 s-1"
         },
         "fco2antt_tavg-u-hxy-u": {
             "cell_measures": "",

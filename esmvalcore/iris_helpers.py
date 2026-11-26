@@ -11,6 +11,7 @@ import iris
 import iris.cube
 import iris.util
 import ncdata
+import ncdata.dataset_like
 import ncdata.iris
 import ncdata.iris_xarray
 import ncdata.threadlock_sharing
@@ -402,12 +403,24 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # mm s-1 for precipitation
 _SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
     [
+        ("precipitation_amount", "kg m-2"),
+        ("lwe_thickness_of_precipitation_amount", "mm"),
+    ],
+    [
+        ("surface_snow_amount", "kg m-2"),
+        ("lwe_thickness_of_snowfall_amount", "mm"),
+    ],
+    [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
     ],
     [
         ("water_evaporation_flux", "kg m-2 s-1"),
         ("lwe_water_evaporation_rate", "mm s-1"),
+    ],
+    [
+        ("water_evapotranspiration_flux", "kg m-2 s-1"),
+        (None, "mm s-1"),  # no standard_name for evapotranspiration
     ],
     [
         ("water_potential_evaporation_flux", "kg m-2 s-1"),
@@ -424,7 +437,10 @@ _SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
 ]
 
 
-def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
+def _try_special_unit_conversions(
+    cube: Cube,
+    units: str | float | Unit,
+) -> bool:
     """Try special unit conversion (in-place).
 
     Parameters
@@ -478,7 +494,7 @@ def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
     return False
 
 
-def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
+def safe_convert_units(cube: Cube, units: str | float | Unit) -> Cube:
     """Safe unit conversion (change of `standard_name` not allowed; in-place).
 
     This is a safe version of :func:`esmvalcore.preprocessor.convert_units`
@@ -612,10 +628,10 @@ def dataset_to_iris(
 
     """
     if isinstance(dataset, xr.Dataset):
-        conversion_func = ncdata.iris_xarray.cubes_from_xarray
+        ds = ncdata.xarray.from_xarray(dataset)
         ds_coords = dataset.coords
     elif isinstance(dataset, ncdata.NcData):
-        conversion_func = ncdata.iris.to_iris
+        ds = dataset
         ds_coords = dataset.variables
     else:
         msg = (
@@ -623,9 +639,8 @@ def dataset_to_iris(
             f"type {type(dataset)}"
         )
         raise TypeError(msg)
-
     with ignore_warnings_context(ignore_warnings):
-        cubes = conversion_func(dataset)
+        cubes = iris.load_raw(ncdata.dataset_like.Nc4DatasetLike(ds))
 
     # Restore the lat/lon coordinate units that iris changes to degrees
     for coord_name in ["latitude", "longitude"]:

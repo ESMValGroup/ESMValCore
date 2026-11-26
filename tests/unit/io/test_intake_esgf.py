@@ -106,7 +106,7 @@ def test_to_iris_online():
         project="CMIP6",
         priority=1,
         facets={
-            "activity": "activity_drs",
+            "activity": "activity_id",
             "dataset": "source_id",
             "ensemble": "member_id",
             "exp": "experiment_id",
@@ -136,6 +136,17 @@ def test_to_iris_online():
     # Check that the "source_file" attributes is present for debugging.
     assert "source_file" in dataset.attributes
     assert dataset.attributes["source_file"].endswith(".nc")
+
+
+def test_searchable_facets() -> None:
+    """Test that the facets in the mapping can be searched for."""
+    data_source = IntakeESGFDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        facets={"dataset": "source_id", "short_name": "variable_id"},
+    )
+    assert data_source.searchable_facets == {"dataset", "short_name"}
 
 
 def test_find_data_no_results_sets_debug_info(mocker: MockerFixture) -> None:
@@ -171,7 +182,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         {
             "project": ["CMIP6", "CMIP6"],
             "mip_era": ["CMIP6", "CMIP6"],
-            "activity_drs": ["CMIP", "ScenarioMIP"],
+            "activity_id": ["CMIP", "ScenarioMIP"],
             "institution_id": ["CCCma", "CCCma"],
             "source_id": ["CanESM5", "CanESM5"],
             "experiment_id": ["historical", "ssp585"],
@@ -208,7 +219,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         project="CMIP6",
         priority=1,
         facets={
-            "activity": "activity_drs",
+            "activity": "activity_id",
             "dataset": "source_id",
             "ensemble": "member_id",
             "exp": "experiment_id",
@@ -285,6 +296,25 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
     [
         pytest.param(
             {
+                "branding_suffix": "tavg-h2m-hxy-u",
+                "dataset": "CanESM6-0-MR",
+                "ensemble": "r1i1p1f1",
+                "exp": "historical",
+                "frequency": "mon",
+                "grid": "g150",
+                "mip": "atmos",
+                "project": "CMIP7",
+                "region": "glb",
+                "short_name": "tas",
+                "timerange": "1850/2100",
+            },
+            {
+                "MIP-DRS7.CMIP7.CMIP.CCCma.CanESM6-0-MR.historical.r1i1p1f1.glb.mon.tas.tavg-h2m-hxy-u.g150",
+            },
+            id="CMIP7",
+        ),
+        pytest.param(
+            {
                 "dataset": "CanESM5",
                 "ensemble": "r1i1p1f1",
                 "exp": ["historical", "ssp585"],
@@ -347,6 +377,22 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
                 "CMIP3.CCCMA.cccma_cgcm3_1.historical.mon.atmos.run1.tas",
             },
             id="CMIP3",
+        ),
+        pytest.param(
+            {
+                "dataset": "CRCM5-SN",
+                "driver": "CNRM-ESM2-1",
+                "domain": "NAM-12",
+                "ensemble": "r1i1p1f2",
+                "exp": "historical",
+                "frequency": "mon",
+                "project": "CORDEX-CMIP6",
+                "short_name": "tas",
+            },
+            {
+                "CORDEX-CMIP6.DD.NAM-12.OURANOS.CNRM-ESM2-1.historical.r1i1p1f2.CRCM5-SN.v2-r1.mon.tas",
+            },
+            id="CORDEX-CMIP6",
         ),
         pytest.param(
             {

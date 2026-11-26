@@ -1,0 +1,137 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 365.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "OByr"
+  },
+  "variable_entry": {
+    "fg13co2": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Gas exchange flux of carbon-13 as CO2 (positive into ocean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Surface Downward Mass Flux of Carbon-13 as 13CO2 [kgC m-2 s-1]",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fg13co2",
+      "positive": "down",
+      "standard_name": "surface_downward_mass_flux_of_13C_dioxide_abiotic_analogue_expressed_as_13C",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fg14co2abio": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Gas exchange flux of abiotic 14CO2 (positive into ocean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Surface Downward Mass Flux of Carbon-14 as Abiotic 14CO2 [kgC m-2 s-1]",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fg14co2abio",
+      "positive": "down",
+      "standard_name": "surface_downward_mass_flux_of_14C_dioxide_abiotic_analogue_expressed_as_carbon",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fgco2": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Gas exchange flux of CO2 (positive into ocean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Surface Downward Mass Flux of Carbon as CO2 [kgC m-2 s-1]",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fgco2",
+      "positive": "down",
+      "standard_name": "surface_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fgco2abio": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Gas exchange flux of abiotic CO2 (positive into ocean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Surface Downward Mass Flux of Carbon as Abiotic CO2 [kgC m-2 s-1]",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fgco2abio",
+      "positive": "down",
+      "standard_name": "surface_downward_mass_flux_of_carbon_dioxide_abiotic_analogue_expressed_as_carbon",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fgco2nat": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Gas exchange flux of natural CO2 (positive into ocean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Surface Downward Mass Flux of Carbon as Natural CO2 [kgC m-2 s-1]",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fgco2nat",
+      "positive": "down",
+      "standard_name": "surface_downward_mass_flux_of_carbon_dioxide_natural_analogue_expressed_as_carbon",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}
