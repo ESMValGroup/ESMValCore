@@ -252,6 +252,10 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Caspers
     given-names: Laura
+  -
+    family-names: Turner
+    given-names: Charles
+    orcid: "https://orcid.org/0000-0002-3262-4972"
 
 cff-version: 1.2.0
 date-released: 2026-07-15
