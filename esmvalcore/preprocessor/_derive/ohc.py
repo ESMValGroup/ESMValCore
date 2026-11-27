@@ -28,9 +28,23 @@ class DerivedVariable(DerivedVariableBase):
         project = facets["project"]
         if project == "CMIP5":
             volcello["ensemble"] = "r0i0p0"
+            return [{"short_name": "thetao"}, volcello]
         elif project == "CMIP6":
             volcello["mip"] = "Ofx"
-        return [{"short_name": "thetao"}, volcello]
+            return [{"short_name": "thetao"}, volcello]
+        elif project == "CMIP7":
+            return [
+                {
+                    "short_name": "thetao",
+                    "branding_suffix": "tavg-ol-hxy-sea",
+                    "mip": "ocean",
+                },
+                {
+                    "short_name": "volcello",
+                    "branding_suffix": "tavg-ol-hxy-sea",
+                    "mip": "ocean",
+                },
+            ]
 
     @staticmethod
     def calculate(cubes: CubeList) -> Cube:
