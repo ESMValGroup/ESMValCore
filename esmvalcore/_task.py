@@ -577,7 +577,7 @@ class DiagnosticTask(BaseTask):
 
     def _start_diagnostic_script(self, cmd, env):
         """Start the diagnostic script."""
-        logger.info("Running command {}", cmd)
+        logger.debug("Running command {}", cmd)
         logger.debug("in environment\n{}", pprint.pformat(env))
         cwd = self.settings["run_dir"]
         logger.debug("in current working directory: {}", cwd)
