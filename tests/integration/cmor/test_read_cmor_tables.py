@@ -75,6 +75,33 @@ def test_get_tables(
     assert isinstance(vardef, VariableInfo)
     assert vardef.short_name
     assert vardef.units
+    assert info.project == project
+    assert vardef.project == project
+
+
+def test_get_tables_same_configuration(session: Session) -> None:
+    """Test that projects with the same table configuration get separate tables."""
+    native6_info = get_tables(session, "native6")
+    obs6_info = get_tables(session, "OBS6")
+    assert native6_info is not obs6_info
+    native6_vardef = native6_info.get_variable("Amon", "tas")
+    obs6_vardef = obs6_info.get_variable("Amon", "tas")
+    assert isinstance(native6_vardef, VariableInfo)
+    assert isinstance(obs6_vardef, VariableInfo)
+    assert native6_vardef.project == "native6"
+    assert obs6_vardef.project == "OBS6"
+
+
+def test_get_tables_no_info(session: Session) -> None:
+    """Test that the project is set for projects without CMOR tables."""
+    session["projects"]["test"] = {
+        "cmor_table": {"type": "esmvalcore.cmor.table.NoInfo"},
+    }
+    info = get_tables(session, "test")
+    assert info.project == "test"
+    vardef = info.get_variable("Amon", "tas")
+    assert isinstance(vardef, VariableInfo)
+    assert vardef.project == "test"
 
 
 def test_get_tables_unknown_project(
