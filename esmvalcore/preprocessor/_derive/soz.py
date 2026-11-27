@@ -30,6 +30,26 @@ class DerivedVariable(DerivedVariableBase):
         required: list[Facets]
         if project == "CMIP6":
             required = [{"short_name": "o3"}]
+        elif project == "CMIP7":
+            # For CMIP7, there are three options for the branding_suffix of the
+            # 3-dim variable o3: tavg-p19-hxy-air, tavg-p39-hy-air and tavg-al-hxy-u.
+            # Here, we need o3 on pressure levels.
+            valid_options = ["tavg-p19-hxy-air", "tavg-p39-hy-u"]
+
+            # check if branding_suffix was set in recipe
+            # if not, we use the 19-level suffix ("p19")
+            if "branding_suffix" in facets:
+                o3suffix = facets["branding_suffix"]
+            else:
+                o3suffix = valid_options[0]
+
+            # make sure branding_suffix is one of the valid options
+            if o3suffix not in valid_options:
+               o3suffix = valid_options[0]
+
+            required = [
+                {"short_name": "o3", "branding_suffix": o3suffix, "mip": "atmosChem"},
+            ]
         else:
             required = [{"short_name": "tro3"}]
         return required
