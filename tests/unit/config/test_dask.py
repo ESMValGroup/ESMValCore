@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import dask.config
 import pytest
 import xarray as xr
+from loguru import logger
 
 from esmvalcore.config import _dask
 from esmvalcore.exceptions import (
@@ -426,3 +427,39 @@ def test_invalid_dask_config_worker_xarray_options(
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client(session):
             pass
+
+
+def test_forward_logs_plugin_setup_teardown(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    """Test that the plugin stops sending messages after teardown."""
+    # Keep the default handler of the test process.
+    remove = logger.remove
+    mocker.patch.object(
+        logger,
+        "remove",
+        side_effect=lambda handler_id: (
+            None if handler_id == 0 else remove(handler_id)
+        ),
+    )
+    worker = mocker.Mock()
+    plugin = _dask._ForwardLogsPlugin()
+    # Pretend that the worker runs in a different process than the client.
+    plugin._client_pid = -1
+    test_logger = logger.patch(lambda r: r.update(name="esmvalcore.test"))
+
+    plugin.setup(worker)
+    test_logger.debug("before teardown")
+    plugin.teardown(worker)
+    test_logger.debug("after teardown")
+
+    worker.log_event.assert_called_once()
+    topic, msg = worker.log_event.call_args.args
+    assert topic == _dask._WORKER_LOG_TOPIC
+    assert msg["name"] == "esmvalcore.test"
+    assert msg["level"] == "DEBUG"
+    assert msg["message"] == "before teardown"
+    assert plugin._handler_id is None
+
+    # A second teardown does nothing.
+    plugin.teardown(worker)

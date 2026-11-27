@@ -14,6 +14,7 @@ from loguru import logger
 from esmvalcore.config._logging import (
     _WARNINGS_SHOWN_IN_MAIN_LOG,
     _has_name,
+    _InterceptHandler,
     _is_external_warning,
     configure_logging,
 )
@@ -75,6 +76,30 @@ def test_log_files_content(tmp_path):
     assert "from other package" not in debug_log
 
     assert cmor_log.strip().endswith(" c")
+
+
+def test_intercept_handler_unknown_level():
+    """Test that records with a level unknown to loguru are forwarded."""
+    records = []
+    handler_id = logger.add(records.append, level=0)
+    record = logging.LogRecord(
+        name="esmvalcore.test",
+        level=15,
+        pathname=__file__,
+        lineno=42,
+        msg="custom %s",
+        args=("level",),
+        exc_info=None,
+    )
+    try:
+        _InterceptHandler().emit(record)
+    finally:
+        logger.remove(handler_id)
+    (message,) = records
+    assert message.record["level"].no == 15
+    assert message.record["name"] == "esmvalcore.test"
+    assert message.record["line"] == 42
+    assert message.record["message"] == "custom level"
 
 
 @pytest.mark.parametrize(
