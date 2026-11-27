@@ -6,6 +6,7 @@ import os
 import time
 from typing import TYPE_CHECKING
 
+import dask.config
 import pytest
 from loguru import logger
 
@@ -62,7 +63,13 @@ def test_worker_messages_logged(
         },
     }
     configure_logging(output_dir=tmp_path, console_log_level="info")
-    with get_distributed_client(session) as client:
+    with (
+        # `get_distributed_client` stores the scheduler address in the global
+        # Dask configuration, so restore it afterwards to avoid affecting
+        # other tests.
+        dask.config.set({"scheduler_address": None}),
+        get_distributed_client(session) as client,
+    ):
         assert client is not None
         pid = client.submit(_log_on_worker, pure=False).result()
         warning = f"warning from worker {pid}"
