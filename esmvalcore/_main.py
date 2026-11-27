@@ -29,6 +29,7 @@ Have fun!
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
@@ -175,7 +176,10 @@ class Config:
 
     def show(
         self,
-        filter: tuple[str] | None = ("extra_facets",),  # noqa: A002
+        filter: tuple[str, ...] | None = (  # noqa: A002
+            "extra_facets",
+            "required_facets",
+        ),
         project: str | None = None,
     ) -> None:
         """Show the current configuration.
@@ -183,10 +187,11 @@ class Config:
         Parameters
         ----------
         filter:
-            Filter this list of keys. By default, the `extra_facets`
-            key is filtered out, as it can be very large. For example, to show
-            the full configuration, use `--filter=` and to filter out both
-            the `data` and `extra_facets` keys use `--filter=data,extra_facets`.
+            Filter this list of keys. By default, the `extra_facets` and
+            `required_facets` keys are filtered out, as they make the output
+            long. For example, to show the full configuration, use `--filter=`
+            and to filter out both the `data` and `extra_facets` keys use
+            `--filter=data,extra_facets`.
         project:
             Only show configuration for this project. For example, to only show
             the configuration for the CMIP7 project, use `--project=CMIP7`.
@@ -470,6 +475,30 @@ class Recipes:
                 background_color="default",
             ),
         )
+
+    @staticmethod
+    def schema(output: str = "recipe_schema.json") -> None:
+        """Write a JSON Schema for recipes to a file.
+
+        Use this command to get a JSON Schema that describes recipes and the
+        preprocessor functions available in your installation. Editors can
+        use it to validate recipes and to offer completion and documentation
+        while writing a recipe.
+
+        Parameters
+        ----------
+        output: str
+            Path to the file where the schema will be written.
+        """
+        from .config._logging import configure_logging
+        from .recipe import generate_recipe_schema
+
+        configure_logging(console_log_level="info")
+        Path(output).write_text(
+            json.dumps(generate_recipe_schema(), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        logger.info("Recipe schema written to %s", output)
 
 
 class ESMValTool:

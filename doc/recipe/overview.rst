@@ -15,6 +15,22 @@ over the preprocessed data. This information is provided to ESMValTool in four
 main recipe sections: :ref:`Documentation <recipe_documentation>`, Datasets_,
 Preprocessors_, and Diagnostics_, respectively.
 
+.. _recipe_editor_support:
+
+Editor support
+==============
+
+The `ESMValTool language server
+<https://github.com/ESMValGroup/esmvaltool-language-server>`__ helps you write
+recipes in editors such as Visual Studio Code, Neovim, and Emacs.
+It checks recipes while you write them, with many of the same checks that
+ESMValCore runs before running a recipe, and offers completion and
+documentation.
+Refer to its documentation for installation instructions and the supported
+editors.
+If you cannot use the language server, the
+:ref:`recipe JSON Schema <recipe_validation>` offers more limited support.
+
 .. _recipe_documentation:
 
 Recipe section: ``documentation``
@@ -71,8 +87,11 @@ the following:
    `esmvaltool/references <https://github.com/ESMValGroup/ESMValTool/tree/main/esmvaltool/references>`_,
    see :ref:`config-ref`.
    The author name uses the format: ``surname_name``. For instance, John
-   Doe would be: ``doe_john``. This information can be omitted by new users
-   whose name is not yet included in ``config-references.yml``.
+   Doe would be: ``doe_john``.
+   New users can run a recipe before their name is included, ESMValCore then
+   logs a warning and the provenance information will be incomplete.
+   Other keys in the documentation section are deprecated: they are ignored
+   and will not work in ESMValCore v2.18.0.
 
 .. _Datasets:
 
@@ -558,6 +577,9 @@ section will include:
 - an optional ``title`` and ``description``, used to generate the title and description
   in the ``index.html`` output file.
 
+Other keys in a diagnostic are deprecated: they are ignored and will not work
+in ESMValCore v2.18.0.
+
 .. _tasks:
 
 The diagnostics section defines tasks
@@ -837,3 +859,58 @@ parameters to ``grading:`` via the shortcut ``<<: *cycle_settings``.
 To merge several mappings, use a single merge key with a list of mappings, for
 example ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
 Note that the first mapping in the list has priority.
+
+.. _recipe_validation:
+
+Recipe validation
+=================
+
+ESMValCore checks a recipe for mistakes before running it, using a
+`JSON Schema <https://json-schema.org>`__ that describes recipes, including all
+preprocessor functions and their arguments.
+To write the schema that matches your installation to the file
+``recipe_schema.json``, run
+
+.. code-block:: bash
+
+    esmvaltool recipes schema
+
+If ESMValTool is installed, this schema also checks that the
+:ref:`provenance items <config-ref>` in the recipe are defined in ESMValTool.
+The schema for each version of ESMValCore is also published with its
+documentation, for example at
+https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json,
+but it uses the default configuration and does not contain the items defined
+in ESMValTool.
+Editors that support JSON Schema for YAML files can use the schema to check
+recipes, for example by adding this comment to the top of a recipe:
+
+.. code-block:: yaml
+
+    # yaml-language-server: $schema=recipe_schema.json
+
+Unlike the :ref:`language server <recipe_editor_support>`, the schema cannot
+run all checks, for example it does not check that the preprocessors and
+ancestors used in the recipe are defined.
+
+.. _recipe_ambiguous_yaml:
+
+Ambiguous YAML
+--------------
+
+Before running a recipe, ESMValCore warns about YAML that is ignored or that
+other YAML parsers interpret differently:
+
+- Keys that are defined more than once in a mapping: only the last
+  definition is used.
+- Merge keys (``<<``) that are used more than once in a mapping, or aliases
+  inside the mapping that defines their anchor.
+  Other YAML parsers, for example those in editors, do not accept these, so
+  they are deprecated and will not work in ESMValCore v2.18.0.
+  Refer to :ref:`recipe_reuse_parameters` for how to merge several mappings.
+- Values that YAML 1.1, which ESMValCore currently uses, and YAML 1.2 read
+  differently, for example ``1e-2``, which is text in YAML 1.1 and a number in YAML 1.2,
+  and ``yes``, which is a boolean in YAML 1.1 and text in YAML 1.2.
+  These values are deprecated and will not work in ESMValCore v2.18.0.
+  Write ``1.0e-2`` or ``0.01`` for the number, ``true`` for the boolean, or
+  quote the value if it is text.

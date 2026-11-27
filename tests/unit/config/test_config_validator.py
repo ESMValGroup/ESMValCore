@@ -200,6 +200,17 @@ def generate_validator_testcases(valid):
                         },
                     },
                 ),
+                (
+                    {"OBS": {"required_facets": ["tier", "type"]}},
+                    {
+                        "OBS": {
+                            "cmor_table": {
+                                "type": "esmvalcore.cmor.table.NoInfo",
+                            },
+                            "required_facets": ["tier", "type"],
+                        },
+                    },
+                ),
             ),
             "fail": (
                 0,
@@ -207,6 +218,7 @@ def generate_validator_testcases(valid):
                 True,
                 "fail",
                 {"CMIP6": {"extra_facets": 0}},
+                {"OBS": {"required_facets": 1}},
                 {"CMIP6": {"invalid_option": 0}},
             ),
         },

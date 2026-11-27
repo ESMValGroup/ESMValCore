@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.resources
+import re
 import textwrap
+import warnings
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -17,7 +19,11 @@ import esmvalcore.io.local
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InputFilesNotFound,
+    RecipeError,
+)
 from esmvalcore.io.esgf import ESGFFile
 
 if TYPE_CHECKING:
@@ -509,6 +515,70 @@ def test_from_recipe_with_supplementary(session, tmp_path):
     dataset.session = session
 
     assert Dataset.from_recipe(recipe, session) == [dataset]
+
+
+def test_from_recipe_incomplete(session: Session) -> None:
+    """Test that an incomplete recipe can be read without warnings."""
+    recipe = textwrap.dedent("""
+    diagnostics:
+      diagnostic1:
+        variables:
+          tas:
+            project: CMIP6
+            mip: Amon
+            additional_datasets:
+              - {dataset: dataset1}
+    """)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        datasets = Dataset.from_recipe(recipe, session)
+    assert [d.facets["dataset"] for d in datasets] == ["dataset1"]
+
+
+def test_from_recipe_invalid(session: Session) -> None:
+    """Test that invalid datasets in a recipe are reported."""
+    recipe = textwrap.dedent("""
+    diagnostics:
+      diagnostic1:
+        variables:
+          tas:
+            project: CMIP6
+            mip: Amon
+            preprocessor: undefined
+            additional_datasets:
+              - {dataset: dataset1}
+    """)
+    msg = (
+        "The datasets in the recipe are invalid:\n"
+        "- line 8: diagnostics > diagnostic1 > variables > tas > "
+        "preprocessor: unknown value 'undefined'."
+    )
+    with pytest.warns(ESMValCoreDeprecationWarning, match=re.escape(msg)):
+        datasets = Dataset.from_recipe(recipe, session)
+    assert [d.facets["dataset"] for d in datasets] == ["dataset1"]
+
+
+def test_from_recipe_incomplete_dataset(session: Session) -> None:
+    """Test that datasets that cannot be read raise an error."""
+    recipe = textwrap.dedent("""
+    diagnostics:
+      diagnostic1:
+        variables:
+          tas:
+            project: CMIP6
+            additional_datasets:
+              - {dataset: dataset1}
+              - {dataset: dataset1}
+    """)
+    msg = (
+        "The datasets in the recipe are invalid:\n"
+        "- line 8: diagnostics > diagnostic1 > variables > tas > "
+        "additional_datasets > 0: missing required key 'mip'.\n"
+        "- line 9: diagnostics > diagnostic1 > variables > tas > "
+        "additional_datasets > 1: duplicate dataset.\n"
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        Dataset.from_recipe(recipe, session)
 
 
 def test_from_recipe_with_skip_supplementary(session, tmp_path):

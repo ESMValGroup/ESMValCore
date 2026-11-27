@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -105,3 +106,18 @@ def test_get_fail():
     msg = r"Recipe invalid_recipe not found."
     with pytest.raises(RecipeError, match=msg):
         Recipes().get("invalid_recipe")
+
+
+def test_schema(tmp_path, monkeypatch):
+    """Test the command `esmvaltool recipes schema`."""
+    monkeypatch.chdir(tmp_path)
+    Recipes.schema()
+    schema = json.loads((tmp_path / "recipe_schema.json").read_text())
+    assert schema["title"] == "ESMValTool recipe"
+
+
+def test_schema_output(tmp_path):
+    """Test the command `esmvaltool recipes schema --output=<path>`."""
+    output = tmp_path / "schema.json"
+    Recipes.schema(output=str(output))
+    assert "regrid" in json.loads(output.read_text())["definitions"]["steps"]
