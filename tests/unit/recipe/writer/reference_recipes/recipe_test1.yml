@@ -1,6 +1,7 @@
 documentation:
   title: Recipe that runs an example diagnostic written in Python.
-  description: Example recipe that plots a map and timeseries of temperature.
+  description: |
+    Example recipe that plots a map and timeseries of temperature.
   authors:
     - andela_bouwe
     - righi_mattia
@@ -67,16 +68,16 @@ diagnostics:
       - phys
     variables:
       tas_amsterdam:
+        short_name: tas
         caption: Annual mean {long_name} in Amsterdam according to {dataset}.
         mip: Amon
         preprocessor: annual_mean_amsterdam
-        short_name: tas
         timerange: 1850/2000
       tas_global:
+        short_name: tas
         caption: Annual global mean {long_name} according to {dataset}.
         mip: Amon
         preprocessor: annual_mean_global
-        short_name: tas
         timerange: 1850/2000
     scripts:
       script1:

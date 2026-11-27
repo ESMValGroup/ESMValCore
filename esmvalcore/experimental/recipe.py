@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import yaml
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
-from esmvalcore._recipe.writer import to_yaml
 from esmvalcore.config import CFG
 from esmvalcore.experimental._logging import log_to_dir
 from esmvalcore.experimental.recipe_info import RecipeInfo
@@ -58,22 +57,6 @@ class Recipe:
     def _repr_html_(self) -> str:
         """Return html representation."""
         return self.render()
-
-    def to_yaml(self, file: os.PathLike | None = None) -> str:
-        """Write recipe to a YAML file.
-
-        Parameters
-        ----------
-        file:
-            If provided, the recipe will be written to this file too.
-
-        Returns
-        -------
-        :
-            The YAML representation of the recipe as a string.
-
-        """
-        return to_yaml(self.data, file=file)
 
     def render(self, template=None):
         """Render output as html.

@@ -914,3 +914,27 @@ other YAML parsers interpret differently:
   These values are deprecated and will not work in ESMValCore v2.18.0.
   Write ``1.0e-2`` or ``0.01`` for the number, ``true`` for the boolean, or
   quote the value if it is text.
+
+To write a recipe in a standard format, use
+:func:`esmvalcore.recipe.format_recipe`.
+It puts the sections of the recipe and the facets of the datasets and variables
+in a standard order and makes the style of the YAML consistent, while keeping
+the order of the datasets, preprocessor steps, diagnostics, variable groups,
+and scripts.
+Anchors, aliases, comments, and the document start marker ``---`` are kept.
+A comment moves together with the item that it belongs to: the item on the
+same line, the next item if the comment is not indented more than that item,
+or otherwise the item above it.
+Comments inside a dataset that is written on one line are put on that line, or
+on their own line before the dataset.
+For example, to format the recipe ``recipe_example.yml``, run
+
+.. code-block:: python
+
+    from pathlib import Path
+
+    from esmvalcore.recipe import format_recipe
+
+    path = Path("recipe_example.yml")
+    text = path.read_text(encoding="utf-8")
+    path.write_text(format_recipe(text), encoding="utf-8")

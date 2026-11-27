@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
-from esmvalcore._recipe.writer import to_yaml
+from esmvalcore.recipe import format_recipe
 
 if TYPE_CHECKING:
     from pytest_regressions import FileRegressionFixture
@@ -29,7 +29,7 @@ def test_writer(
     load_recipe = yaml.safe_load(recipe.read_text(encoding="utf-8"))
     reference_data_path = Path(__file__).parent / "reference_recipes"
     file_regression.check(
-        contents=f"{to_yaml(load_recipe)}\n",
+        contents=format_recipe(load_recipe),
         encoding="utf-8",
         fullpath=reference_data_path / recipe.name,
     )
@@ -37,12 +37,26 @@ def test_writer(
 
 def test_empty_recipe() -> None:
     """Test that the code does not crash on an empty recipe."""
-    recipe_text = to_yaml({})
-    assert recipe_text == "{}"
+    assert format_recipe({}) == "{}\n"
 
 
-def test_recipe_file_endswith_newline(tmp_path: Path) -> None:
-    """Test that the recipe ends with a newline."""
-    filename = tmp_path / "recipe.yml"
-    to_yaml({}, file=filename)
-    assert filename.read_text(encoding="utf-8").endswith("\n")
+@pytest.mark.parametrize(
+    "recipe",
+    list(Path(__file__).parent.glob("recipes/*.yml")),
+)
+def test_writer_keeps_data(recipe: Path) -> None:
+    """Test that the formatted recipe contains the same data."""
+
+    def ignore_dataset_order(data: object, key: object = None) -> object:
+        if isinstance(data, dict):
+            return {k: ignore_dataset_order(v, k) for k, v in data.items()}
+        if isinstance(data, list):
+            items = [ignore_dataset_order(v) for v in data]
+            if key in ("datasets", "additional_datasets"):
+                items.sort(key=repr)
+            return items
+        return data
+
+    data = yaml.safe_load(recipe.read_text(encoding="utf-8"))
+    formatted = yaml.safe_load(format_recipe(data))
+    assert ignore_dataset_order(formatted) == ignore_dataset_order(data)
