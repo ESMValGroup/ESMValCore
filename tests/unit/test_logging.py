@@ -154,7 +154,42 @@ def test_main_log_same_as_console(tmp_path, capsys):
     console = capsys.readouterr().out
     main_log = (tmp_path / "main_log.txt").read_text(encoding="utf-8")
     assert re.fullmatch(
-        r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d,\d{3} UTC \[\d+\] INFO    message\n",
+        r"\d\d:\d\d:\d\d INFO    message\n",
         main_log,
     )
     assert console == main_log
+
+
+def test_console_format_task_and_indent(capsys):
+    """Test that the task is shown and continuation lines are indented."""
+    configure_logging(console_log_level="info")
+    named = logger.patch(lambda r: r.update(name="esmvalcore.test"))
+    with logger.contextualize(task="diag/variable"):
+        named.info("first line\n\nthird line")
+    with logger.contextualize(task="d/v"):
+        named.warning("short task name")
+    named.info("no task\ncontinued")
+    lines = [
+        line[len("HH:mm:ss ") :]
+        for line in capsys.readouterr().out.splitlines()
+    ]
+    assert lines == [
+        "INFO    diag/variable: first line",
+        "",
+        "                       third line",
+        "WARNING d/v: short task name",
+        "INFO    no task",
+        "        continued",
+    ]
+
+
+def test_colored_message_without_terminal(tmp_path, capsys):
+    """Test that color markup in messages is removed without a terminal."""
+    configure_logging(output_dir=tmp_path, console_log_level="info")
+    logger.patch(lambda r: r.update(name="esmvalcore.test")).opt(
+        colors=True,
+    ).info("Creating task <cyan>{}</cyan>", "a<b>/c{}")
+    configure_logging()  # Close the log files.
+    main_log = (tmp_path / "main_log.txt").read_text(encoding="utf-8")
+    assert main_log.endswith(" INFO    Creating task a<b>/c{}\n")
+    assert capsys.readouterr().out == main_log

@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import time
 from typing import TYPE_CHECKING
 
 import dask
 import distributed
 import pytest
+import rich.console
+from loguru import logger
 
-from esmvalcore.config._logging import configure_logging
+from esmvalcore.config._logging import _log_task, configure_logging
 from esmvalcore.preprocessor import _dask_progress
 
 if TYPE_CHECKING:
@@ -44,7 +48,6 @@ def test_compute_with_progress(
     _dask_progress._compute_with_progress(
         delayeds,
         session=session,
-        description="test",
     )
     progressbar = capsys.readouterr().out
     print(progressbar)
@@ -60,3 +63,31 @@ def test_compute_with_progress(
             assert "####" in progressbar
     if client is not None:
         client.shutdown()
+
+
+@pytest.mark.parametrize("task", [None, "diagnostic/variable"])
+def test_rich_progress_aligned(
+    capsys: pytest.CaptureFixture,
+    task: str | None,
+) -> None:
+    """Test that the Rich progress bars line up with the log messages."""
+    configure_logging(console_log_level="info")
+    console = rich.console.Console(
+        file=io.StringIO(),
+        width=200,
+        color_system=None,
+    )
+    named = logger.patch(lambda r: r.update(name="esmvalcore.test"))
+    with _log_task(task) if task else contextlib.nullcontext():
+        named.info("message")
+        progress = _dask_progress._rich_progress(console=console)
+    progress.add_task("progress", total=1)
+    console.print(progress.make_tasks_table(progress.tasks))
+    log_line = capsys.readouterr().out
+    bar_line = console.file.getvalue()
+    start = log_line.index("message")
+    # Skip the time, which may differ by a second.
+    assert (
+        bar_line[len("HH:mm:ss") : start] == log_line[len("HH:mm:ss") : start]
+    )
+    assert bar_line[start:].startswith("  0%")

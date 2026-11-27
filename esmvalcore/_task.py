@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import abc
 import contextlib
+import contextvars
 import datetime as dt
 import importlib
 import multiprocessing
@@ -31,7 +32,7 @@ from esmvalcore._citation import _write_citation_files
 from esmvalcore._provenance import TrackedFile, get_task_provenance
 from esmvalcore.config._dask import get_distributed_client
 from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
-from esmvalcore.config._logging import configure_logging
+from esmvalcore.config._logging import _log_task, configure_logging
 
 if TYPE_CHECKING:
     from esmvalcore.config import Session
@@ -147,7 +148,10 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
                     )
                     return
 
-    thread = threading.Thread(target=_log_resource_usage)
+    # Run the thread in a copy of the current context, so its messages show
+    # the name of the task.
+    context = contextvars.copy_context()
+    thread = threading.Thread(target=context.run, args=(_log_resource_usage,))
     thread.start()
     try:
         yield
@@ -286,20 +290,22 @@ class BaseTask:
                 input_files = []
             for task in self.ancestors:
                 input_files.extend(task.run(session))
-            logger.info(
-                "Starting task {} in process [{}]",
-                self.name,
-                os.getpid(),
-            )
-            start = dt.datetime.now()
-            self.output_files = self._run(input_files, session=session)
-            runtime = dt.datetime.now() - start
-            logger.info(
-                "Successfully completed task {} (priority {}) in {}",
-                self.name,
-                self.priority,
-                runtime,
-            )
+            # Show the task name with the messages logged by this task.
+            with _log_task(self.name):
+                logger.info(
+                    "Starting task {} in process [{}]",
+                    self.name,
+                    os.getpid(),
+                )
+                start = dt.datetime.now()
+                self.output_files = self._run(input_files, session=session)
+                runtime = dt.datetime.now() - start
+                logger.info(
+                    "Successfully completed task {} (priority {}) in {}",
+                    self.name,
+                    self.priority,
+                    runtime,
+                )
 
         return self.output_files
 
@@ -986,10 +992,12 @@ class TaskSet(set):
                         n_scheduled, n_running = len(scheduled), len(running)
                         n_done = n_tasks - n_scheduled - n_running
                         logger.info(
-                            "Progress: {} tasks running, {} tasks waiting for "
+                            "Progress: {} {} running, {} {} waiting for "
                             "ancestors, {}/{} done",
                             n_running,
+                            "task" if n_running == 1 else "tasks",
                             n_scheduled,
+                            "task" if n_scheduled == 1 else "tasks",
                             n_done,
                             n_tasks,
                         )

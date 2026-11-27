@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import contextlib
+import contextvars
+import datetime as dt
 import inspect
 import logging
 import sys
@@ -16,7 +18,7 @@ import esmvalcore.exceptions
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Iterable
+    from collections.abc import Generator, Iterable
 
     from loguru import Record
 
@@ -36,10 +38,70 @@ _CMOR_NAMES = (
     "esmvalcore.cmor._fixes.fix.genericfix",
 )
 
-_CONSOLE_FORMAT = (
-    "<green>{time:YYYY-MM-DD HH:mm:ss,SSS!UTC}</green> UTC [{process}] "
-    "<level>{level: <7}</level> <level>{message}</level>"
+
+_TASK: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "esmvalcore_task",
+    default=None,
 )
+"""Name of the task that is currently running."""
+
+
+@contextlib.contextmanager
+def _log_task(name: str) -> Generator[None]:
+    """Show the task name with the messages logged inside this block."""
+    token = _TASK.set(name)
+    try:
+        with logger.contextualize(task=name):
+            yield
+    finally:
+        _TASK.reset(token)
+
+
+def _console_prefix() -> tuple[str, str | None]:
+    """Get the start of a console line, for output that is not logged.
+
+    Returns
+    -------
+    :
+        The time (UTC) and the INFO level, formatted like the log messages,
+        and the name of the current task, if any.
+    """
+    time = dt.datetime.now(dt.UTC).strftime("%H:%M:%S")
+    return f"{time} {'INFO':<7}", _TASK.get()
+
+
+def _console_format(record: Record) -> str:
+    """Format messages for the console and the main log file.
+
+    Messages show the time (UTC), the level, and the message, prefixed with
+    the name of the task that logged it, if any. Continuation lines of
+    multi-line messages are indented to the start of the message.
+    """
+    task = record["extra"].get("task")
+    prefix = f"{task}: " if task else ""
+    time_width = len("HH:mm:ss ")
+    level_width = max(7, len(record["level"].name)) + 1
+    indent = " " * (time_width + level_width + len(prefix))
+    record["extra"]["_console_task"] = prefix
+    if "\n" in record["message"]:
+        first, *rest = record["message"].split("\n")
+        # Do not indent empty lines, to avoid trailing whitespace.
+        record["extra"]["_console_message"] = "\n".join(
+            [first, *(indent + line if line else line for line in rest)],
+        )
+        message = "{extra[_console_message]}"
+    else:
+        # Use the message field when possible, because loguru only shows the
+        # colors of messages logged with `logger.opt(colors=True)` there.
+        message = "{message}"
+    return (
+        "{time:HH:mm:ss!UTC} <level>{level: <7}</level> "
+        "<cyan>{extra[_console_task]}</cyan>"
+        f"<level>{message}</level>\n"
+        "{exception}"
+    )
+
+
 _BRIEF_FORMAT = "{level: <7} [{process}] {message}"
 _DEBUG_FORMAT = (
     "{time:YYYY-MM-DD HH:mm:ss,SSS!UTC} UTC [{process}] {level: <7} "
@@ -87,7 +149,7 @@ def _cmor_log_filter(record: Record) -> bool:
 
 _LOG_FILES = {
     # The main log file contains the same messages as the console.
-    "main_log.txt": ("INFO", _CONSOLE_FORMAT, _main_log_filter),
+    "main_log.txt": ("INFO", _console_format, _main_log_filter),
     "main_log_debug.txt": ("DEBUG", _DEBUG_FORMAT, _debug_log_filter),
     "cmor_log.txt": ("INFO", _BRIEF_FORMAT, _cmor_log_filter),
 }
@@ -182,6 +244,9 @@ def configure_logging(
     """
     level = "INFO" if console_log_level is None else console_log_level.upper()
     logger.level(level)  # Raises ValueError for unknown levels.
+    # Only use colors for the less common levels, so they stand out.
+    logger.level("INFO", color="")
+    logger.level("DEBUG", color="<light-blue>")
 
     # Only remove the handlers added by this function and the default
     # loguru handler, so other handlers (e.g. from pytest) keep working.
@@ -194,7 +259,7 @@ def configure_logging(
     handler_id = logger.add(
         sys.stdout,
         level=level,
-        format=_CONSOLE_FORMAT,
+        format=_console_format,
         filter=_main_log_filter,
         backtrace=False,
         diagnose=False,

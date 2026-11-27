@@ -109,7 +109,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
     )
 
     logger.info(70 * "-")
-    logger.info("RECIPE   = {}", recipe_file)
+    logger.info("RECIPE     = {}", recipe_file)
     logger.info("RUNDIR     = {}", session.run_dir)
     logger.info("WORKDIR    = {}", session.work_dir)
     logger.info("PREPROCDIR = {}", session.preproc_dir)

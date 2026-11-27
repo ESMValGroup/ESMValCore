@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import datetime as dt
 import threading
 import time
@@ -13,7 +14,10 @@ import dask.utils
 import distributed
 import distributed.diagnostics.progressbar
 import rich.progress
+import rich.text
 from loguru import logger
+
+from esmvalcore.config._logging import _console_prefix
 
 if TYPE_CHECKING:
     import contextlib
@@ -24,19 +28,41 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 
+class _PrefixColumn(rich.progress.ProgressColumn):
+    """Show the same start of the line as the log messages."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        time_and_level, task = _console_prefix()
+        self._text = rich.text.Text(time_and_level)
+        if task:
+            self._text.append(" ")
+            self._text.append(f"{task}:", style="cyan")
+
+    def render(self, task: rich.progress.Task) -> rich.text.Text:  # noqa: ARG002
+        return self._text
+
+
+def _rich_progress(**kwargs: Any) -> rich.progress.Progress:
+    """Create a progress bar that is aligned with the log messages."""
+    return rich.progress.Progress(
+        _PrefixColumn(),
+        rich.progress.TaskProgressColumn(),
+        rich.progress.BarColumn(bar_width=80),
+        rich.progress.MofNCompleteColumn(),
+        rich.progress.TimeElapsedColumn(),
+        redirect_stdout=False,
+        redirect_stderr=False,
+        **kwargs,
+    )
+
+
 class RichProgressBar(dask.diagnostics.Callback):
     """Progress bar using `rich` for the Dask threaded scheduler."""
 
     # Adapted from https://github.com/dask/dask/blob/0f3e5ff6e642e7661b3f855bfd192a6f6fb83b49/dask/diagnostics/progress.py#L32-L153
     def __init__(self):
-        self.progress = rich.progress.Progress(
-            rich.progress.TaskProgressColumn(),
-            rich.progress.BarColumn(bar_width=80),
-            rich.progress.MofNCompleteColumn(),
-            rich.progress.TimeElapsedColumn(),
-            redirect_stdout=False,
-            redirect_stderr=False,
-        )
+        self.progress = _rich_progress()
         self.task = self.progress.add_task(description="progress")
         self._dt = 0.1
         self._state = None
@@ -85,14 +111,7 @@ class RichDistributedProgressBar(
     """Progress bar using `rich` for the Dask distributed scheduler."""
 
     def __init__(self, keys) -> None:  # noqa: ANN001
-        self.progress = rich.progress.Progress(
-            rich.progress.TaskProgressColumn(),
-            rich.progress.BarColumn(bar_width=80),
-            rich.progress.MofNCompleteColumn(),
-            rich.progress.TimeElapsedColumn(),
-            redirect_stdout=False,
-            redirect_stderr=False,
-        )
+        self.progress = _rich_progress()
         self.progress.start()
         self.task_id = self.progress.add_task(description="progress")
         super().__init__(keys)
@@ -118,9 +137,10 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
     def __init__(
         self,
         log_interval: str | float = "1s",
-        description: str = "",
     ) -> None:
-        self._desc = f"{description} " if description else description
+        # The bar is drawn from another thread, so keep a copy of the current
+        # context to show the task that logged the messages.
+        self._context = contextvars.copy_context()
         self._log_interval = dask.utils.parse_timedelta(
             log_interval,
             default="s",
@@ -137,12 +157,10 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
         pbar = "#" * int(self._width * frac)
         percent = int(100 * frac)
         elapsed_fmt = dask.utils.format_time(elapsed)
-        desc_width = 30
         msg = (
-            f"{self._desc:<{desc_width}}[{pbar:<{self._width}}] | "
-            f"{percent:3}% Completed | {elapsed_fmt}"
+            f"[{pbar:<{self._width}}] | {percent:3}% Completed | {elapsed_fmt}"
         )
-        logger.info(msg)
+        self._context.run(logger.info, msg)
 
 
 class DistributedProgressLogger(
@@ -154,9 +172,10 @@ class DistributedProgressLogger(
         self,
         keys,  # noqa: ANN001
         log_interval: str | float = "1s",
-        description: str = "",
     ) -> None:
-        self._desc = f"{description} " if description else description
+        # The bar is drawn from another thread, so keep a copy of the current
+        # context to show the task that logged the messages.
+        self._context = contextvars.copy_context()
         self._log_interval = dask.utils.parse_timedelta(
             log_interval,
             default="s",
@@ -179,12 +198,8 @@ class DistributedProgressLogger(
         pbar = "#" * int(self.width * frac)
         percent = int(100 * frac)
         elapsed = dask.utils.format_time(self.elapsed)
-        desc_width = 30
-        msg = (
-            f"{self._desc:<{desc_width}}[{pbar:<{self.width}}] | "
-            f"{percent:3}% Completed | {elapsed}"
-        )
-        logger.info(msg)
+        msg = f"[{pbar:<{self.width}}] | {percent:3}% Completed | {elapsed}"
+        self._context.run(logger.info, msg)
 
     def _draw_stop(self, **kwargs):
         pass
@@ -193,7 +208,6 @@ class DistributedProgressLogger(
 def _compute_with_progress(
     delayeds: Iterable[Delayed],
     session: Session,
-    description: str,
 ) -> None:
     """Compute delayeds while displaying a progress bar."""
     use_distributed = True
@@ -226,7 +240,6 @@ def _compute_with_progress(
         else:
             DistributedProgressLogger(
                 futures,
-                description=description,
                 log_interval=log_progress_interval,
             )
         dask.compute(futures)
@@ -235,7 +248,6 @@ def _compute_with_progress(
             ctx: contextlib.AbstractContextManager = RichProgressBar()
         else:
             ctx = ProgressLogger(
-                description=description,
                 log_interval=log_progress_interval,
             )
         with ctx:

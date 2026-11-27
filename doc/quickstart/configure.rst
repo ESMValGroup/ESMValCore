@@ -642,6 +642,11 @@ Available options:
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 
+The ``esmvaltool`` command uses colors in its output when it writes to a
+terminal. Set the environment variable ``NO_COLOR`` to any value to turn this
+off, see https://no-color.org.
+
+
 When ESMValCore is used as a Python library, for example through the
 :class:`esmvalcore.dataset.Dataset` class, it does not show any log messages.
 ESMValCore uses `loguru <https://loguru.readthedocs.io>`__ for logging, so

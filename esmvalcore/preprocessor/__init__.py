@@ -920,7 +920,6 @@ class PreprocessingTask(BaseTask):
             _compute_with_progress(
                 delayeds,
                 session=session,
-                description=self.name,
             )
         finally:
             if self.scheduler_lock is not None:

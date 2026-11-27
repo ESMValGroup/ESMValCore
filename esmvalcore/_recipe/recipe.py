@@ -872,7 +872,10 @@ def _get_preprocessor_task(
         write_ncl_interface=session["write_ncl_interface"],
     )
 
-    logger.info("PreprocessingTask {} created.", task.name)
+    logger.opt(colors=True).info(
+        "PreprocessingTask <cyan>{}</cyan> created.",
+        task.name,
+    )
     logger.debug(
         "PreprocessingTask {} will create the files:\n{}",
         task.name,
@@ -1169,7 +1172,10 @@ class Recipe:
                         )
                         continue
 
-                logger.info("Creating diagnostic task {}", task_name)
+                logger.opt(colors=True).info(
+                    "Creating diagnostic task <cyan>{}</cyan>",
+                    task_name,
+                )
                 task = DiagnosticTask(
                     script=script_cfg["script"],
                     output_dir=script_cfg["output_dir"],
@@ -1237,7 +1243,10 @@ class Recipe:
                     tasks.append(task)
                     break
             else:
-                logger.info("Creating preprocessor task {}", task_name)
+                logger.opt(colors=True).info(
+                    "Creating preprocessor task <cyan>{}</cyan>",
+                    task_name,
+                )
                 try:
                     task = _get_preprocessor_task(
                         datasets=list(datasets),
@@ -1383,7 +1392,8 @@ class Recipe:
         recipe = datasets_to_recipe(USED_DATASETS, self._raw_recipe)
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
         to_yaml(recipe, filename)
-        logger.info(
+        # This is logged at the info level at the end of the run.
+        logger.debug(
             "Wrote recipe with version numbers and wildcards to:\nfile://{}",
             filename,
         )
