@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import iris.cube
+import numpy as np
 import pytest
+from iris.aux_factory import HybridPressureFactory
+from iris.coords import AuxCoord, DimCoord
 
 from esmvalcore.io.local import LocalFile, _get_attr_from_field_coord
 
@@ -46,3 +49,39 @@ def test_get_attr_from_field_coord_none(mocker: MockerFixture) -> None:
     """Test ``_get_attr_from_field_coord``."""
     attr = _get_attr_from_field_coord(mocker.sentinel.ncfield, None, "attr")
     assert attr is None
+
+
+def test_to_iris_removes_formula_term_cubes(tmp_path: Path) -> None:
+    """Test that cubes only needed for derived coordinates are removed."""
+    lev = DimCoord(
+        [0.5, 0.9],
+        var_name="lev",
+        standard_name="atmosphere_hybrid_sigma_pressure_coordinate",
+        units="1",
+    )
+    ap = AuxCoord([1.0, 2.0], var_name="ap", units="Pa")
+    b = AuxCoord([0.0, 1.0], var_name="b", units="1")
+    ps = AuxCoord(
+        np.ones((2, 2)),
+        var_name="ps",
+        standard_name="surface_air_pressure",
+        units="Pa",
+    )
+    cube = iris.cube.Cube(
+        np.zeros((2, 2, 2)),
+        var_name="cli",
+        dim_coords_and_dims=[(lev, 0)],
+        aux_coords_and_dims=[(ap, 0), (b, 0), (ps, (1, 2))],
+    )
+    cube.add_aux_factory(
+        HybridPressureFactory(delta=ap, sigma=b, surface_air_pressure=ps),
+    )
+    file = tmp_path / "test.nc"
+    iris.save(cube, file)
+    assert len(iris.load_raw(file)) == 2
+
+    cubes = LocalFile(file).to_iris()
+
+    assert len(cubes) == 1
+    assert cubes[0].var_name == "cli"
+    assert cubes[0].coords("air_pressure")

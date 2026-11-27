@@ -77,6 +77,11 @@ def load(
 ) -> CubeList:
     """Load Iris cubes.
 
+    When loading from a file or dataset, cubes that iris loads for the
+    reference surface of a derived coordinate (e.g., surface air pressure for
+    hybrid pressure coordinates) are not returned, because they duplicate the
+    auxiliary coordinate of the cube that uses them.
+
     Parameters
     ----------
     file:
