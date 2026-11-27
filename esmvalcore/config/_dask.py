@@ -4,20 +4,24 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import os
 from collections.abc import Mapping
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask.config
-from distributed import Client
+from distributed import Client, WorkerPlugin
 from loguru import logger
 
+from esmvalcore.config._logging import _debug_log_filter
 from esmvalcore.exceptions import InvalidConfigParameter
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from distributed import Worker
     from distributed.deploy import Cluster
+    from loguru import Message
 
     from esmvalcore.config import Session
 
@@ -72,6 +76,80 @@ def validate_dask_config(dask_config: Mapping) -> None:
         raise InvalidConfigParameter(msg)
 
 
+_WORKER_LOG_TOPIC = "esmvalcore-log"
+"""Dask event topic used to send log messages from the workers to the client."""
+
+
+def _send_to_client(worker: Worker, message: Message) -> None:
+    """Send a log message from a Dask worker to the client."""
+    record = message.record
+    worker.log_event(
+        _WORKER_LOG_TOPIC,
+        {
+            "name": record["name"],
+            "level": record["level"].name,
+            "line": record["line"],
+            "function": record["function"],
+            # The message includes the traceback if there is an exception.
+            "message": str(message).rstrip("\n"),
+        },
+    )
+
+
+def _log_worker_message(event: tuple[float, dict[str, Any]]) -> None:
+    """Log a message received from a Dask worker."""
+    _, msg = event
+    logger.patch(
+        lambda r: r.update(
+            name=msg["name"],
+            line=msg["line"],
+            function=msg["function"],
+        ),
+    ).log(msg["level"], msg["message"])
+
+
+class _ForwardLogsPlugin(WorkerPlugin):
+    """Send log messages from Dask workers to the client.
+
+    This makes sure that messages logged by ESMValCore code running on the
+    workers end up in the log files, which are written by the client process
+    only.
+    """
+
+    def __init__(self) -> None:
+        self._client_pid = os.getpid()
+        self._handler_id: int | None = None
+
+    def setup(self, worker: Worker) -> None:
+        if os.getpid() == self._client_pid:
+            # The worker runs in the client process, e.g. a LocalCluster
+            # with processes=False, so its messages are already logged there.
+            return
+        # Replace the default handler, which prints all messages to stderr.
+        with contextlib.suppress(ValueError):
+            logger.remove(0)
+        logger.enable("esmvalcore")
+        self._handler_id = logger.add(
+            lambda message: _send_to_client(worker, message),
+            level="DEBUG",
+            format="{message}",
+            filter=_debug_log_filter,
+            backtrace=False,
+            diagnose=False,
+        )
+
+    def teardown(self, worker: Worker) -> None:  # noqa: ARG002
+        if self._handler_id is not None:
+            logger.remove(self._handler_id)
+            self._handler_id = None
+
+
+def _forward_worker_logs(client: Client) -> None:
+    """Log messages from the Dask workers in the client process."""
+    client.subscribe_topic(_WORKER_LOG_TOPIC, _log_worker_message)
+    client.register_plugin(_ForwardLogsPlugin(), name="esmvalcore-logging")
+
+
 @contextlib.contextmanager
 def get_distributed_client(session: Session) -> Generator[Client | None]:
     """Get a Dask distributed client."""
@@ -116,6 +194,7 @@ def get_distributed_client(session: Session) -> Generator[Client | None]:
         )
     else:
         client = Client()
+        _forward_worker_logs(client)
         logger.info(
             "Using Dask distributed scheduler (address: {}, dashboard link: "
             "{})",
