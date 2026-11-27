@@ -70,6 +70,14 @@ def _console_prefix() -> tuple[str, str | None]:
     return f"{time} {'INFO':<7}", _TASK.get()
 
 
+def _task_prefix(record: Record) -> str:
+    """Store the task name prefix of the message in the record's extra."""
+    task = record["extra"].get("task")
+    prefix = f"{task}: " if task else ""
+    record["extra"]["_task_prefix"] = prefix
+    return prefix
+
+
 def _console_format(record: Record) -> str:
     """Format messages for the console and the main log file.
 
@@ -77,12 +85,10 @@ def _console_format(record: Record) -> str:
     the name of the task that logged it, if any. Continuation lines of
     multi-line messages are indented to the start of the message.
     """
-    task = record["extra"].get("task")
-    prefix = f"{task}: " if task else ""
+    prefix = _task_prefix(record)
     time_width = len("HH:mm:ss ")
     level_width = max(7, len(record["level"].name)) + 1
     indent = " " * (time_width + level_width + len(prefix))
-    record["extra"]["_console_task"] = prefix
     if "\n" in record["message"]:
         first, *rest = record["message"].split("\n")
         # Do not indent empty lines, to avoid trailing whitespace.
@@ -96,17 +102,26 @@ def _console_format(record: Record) -> str:
         message = "{message}"
     return (
         "{time:HH:mm:ss} <level>{level: <7}</level> "
-        "<cyan>{extra[_console_task]}</cyan>"
+        "<cyan>{extra[_task_prefix]}</cyan>"
         f"<level>{message}</level>\n"
         "{exception}"
     )
 
 
-_BRIEF_FORMAT = "{level: <7} [{process}] {message}"
-_DEBUG_FORMAT = (
-    "{time:YYYY-MM-DD HH:mm:ss,SSS Z} [{process}] {level: <7} "
-    "{name}:{line} {message}"
-)
+_CMOR_FORMAT = "{level: <7} [{process}] {message}"
+
+
+def _debug_format(record: Record) -> str:
+    """Format messages for the debug log file.
+
+    Messages are prefixed with the name of the task that logged them, if any,
+    like in the main log file.
+    """
+    _task_prefix(record)
+    return (
+        "{time:YYYY-MM-DD HH:mm:ss,SSS Z} [{process}] {level: <7} "
+        "{name}:{line} {extra[_task_prefix]}{message}\n{exception}"
+    )
 
 
 def _has_name(record: Record, names: Iterable[str]) -> bool:
@@ -150,8 +165,8 @@ def _cmor_log_filter(record: Record) -> bool:
 _LOG_FILES = {
     # The main log file contains the same messages as the console.
     "main_log.txt": ("INFO", _console_format, _main_log_filter),
-    "main_log_debug.txt": ("DEBUG", _DEBUG_FORMAT, _debug_log_filter),
-    "cmor_log.txt": ("INFO", _BRIEF_FORMAT, _cmor_log_filter),
+    "main_log_debug.txt": ("DEBUG", _debug_format, _debug_log_filter),
+    "cmor_log.txt": ("INFO", _CMOR_FORMAT, _cmor_log_filter),
 }
 """Log files: their level, format, and filter."""
 

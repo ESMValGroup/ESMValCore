@@ -208,6 +208,20 @@ def test_console_format_task_and_indent(capsys):
     ]
 
 
+def test_debug_log_task(tmp_path):
+    """Test that the debug log shows the task like the main log."""
+    configure_logging(output_dir=tmp_path, console_log_level="info")
+    named = logger.patch(lambda r: r.update(name="esmvalcore.test"))
+    with logger.contextualize(task="diag/variable"):
+        named.info("with task")
+    named.info("without task")
+    configure_logging()  # Close the log files.
+    debug_log = (tmp_path / "main_log_debug.txt").read_text(encoding="utf-8")
+    lines = debug_log.splitlines()
+    assert lines[0].endswith(" diag/variable: with task")
+    assert re.search(r":\d+ without task$", lines[1])
+
+
 def test_colored_message_without_terminal(tmp_path, capsys):
     """Test that color markup in messages is removed without a terminal."""
     configure_logging(output_dir=tmp_path, console_log_level="info")
