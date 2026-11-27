@@ -25,10 +25,25 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        return [
-            {"short_name": "tdps"},
-            {"short_name": "tas"},
-        ]
+        project = facets["project"]
+        if project == "CMIP7":
+            return [
+                {
+                    "short_name": "tdps",
+                    "branding_suffix": "tavg-h2m-hxy-u",
+                    "mip": "atmos",
+                },
+                {
+                    "short_name": "tas",
+                    "branding_suffix": "tavg-h2m-hxy-u",
+                    "mip": "atmos",
+                },
+            ]
+        else:
+            return [
+                {"short_name": "tdps"},
+                {"short_name": "tas"},
+            ]
 
     @staticmethod
     def calculate(cubes):
