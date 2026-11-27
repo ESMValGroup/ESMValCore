@@ -12,8 +12,7 @@ After running a recipe, output is returned by the :py:meth:`~esmvalcore.experime
     >>> recipe_output = recipe.get_output()
 
 ``recipe_output`` is a mapping of the individual tasks and their output
-filenames (data and image files) with a set of attributes describing the
-data.
+filenames with a set of attributes describing each file.
 
 .. code:: python
 
@@ -51,8 +50,8 @@ a dictionary.
       ImageFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.png')
 
 
-The task output has a list of files associated with them, usually image
-(``.png``) or data files (``.nc``). To get a list of all files, use
+Each task output has an associated list of files.
+To get a list of all files, use
 :py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.files`.
 
 .. code:: python
@@ -62,7 +61,11 @@ The task output has a list of files associated with them, usually image
     ..., ImageFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.png'))
 
 
-It is also possible to select the image (:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.image_files`) files or data files (:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.data_files`) only.
+Use the following properties to select files by type.
+
+- :py:attr:`~esmvalcore.experimental.recipe_output.TaskOutput.image_files`
+- :py:attr:`~esmvalcore.experimental.recipe_output.TaskOutput.data_files`
+- :py:attr:`~esmvalcore.experimental.recipe_output.TaskOutput.table_files`
 
 .. code:: python
 
@@ -80,10 +83,12 @@ It is also possible to select the image (:py:meth:`~esmvalcore.experimental.reci
 Working with output files
 *************************
 
-Output comes in two kinds, :py:class:`~esmvalcore.experimental.recipe_output.DataFile` corresponds to data
-files in ``.nc`` format and :py:class:`~esmvalcore.experimental.recipe_output.ImageFile` corresponds to plots
-in ``.png`` format (see below). Both object are derived from the same base class
-(:py:class:`~esmvalcore.experimental.recipe_output.OutputFile`) and therefore share most of the functionality.
+Output files use subclasses of
+:py:class:`~esmvalcore.experimental.recipe_output.OutputFile`.
+
+- :py:class:`~esmvalcore.experimental.recipe_output.DataFile` for NetCDF data
+- :py:class:`~esmvalcore.experimental.recipe_output.ImageFile` for PNG plots
+- :py:class:`~esmvalcore.experimental.recipe_output.TableFile` for CSV tables
 
 For example, author information can be accessed as instances of :py:class:`~esmvalcore.experimental.recipe_metadata.Contributor`  via
 

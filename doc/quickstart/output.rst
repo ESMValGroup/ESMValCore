@@ -27,6 +27,10 @@ This directory will contain 4 further subdirectories:
 A summary of the output is produced in the file:
 ``index.html``
 
+The summary displays figures and CSV files recorded in diagnostic provenance.
+Use UTF-8, comma-separated CSV with column names in the first row to display
+the contents as a table with a link to download the original file.
+
 
 .. _preprocessed_datasets:
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import csv
 import getpass
 import logging
 import os.path
@@ -69,6 +70,13 @@ class TaskOutput:
     def image_files(self) -> tuple:
         """Return a tuple of image objects."""
         return tuple(item for item in self.files if item.kind == "image")
+
+    @property
+    def table_files(self) -> tuple[TableFile, ...]:
+        """Return a tuple of table objects."""
+        return tuple(
+            item for item in self.files if isinstance(item, TableFile)
+        )
 
     @property
     def data_files(self) -> tuple:
@@ -418,6 +426,8 @@ class OutputFile:
         ext = Path(path).suffix
         if ext == ".png":
             item_class = ImageFile
+        elif ext == ".csv":
+            item_class = TableFile
         elif ext == ".nc":
             item_class = DataFile
         else:
@@ -441,6 +451,21 @@ class ImageFile(OutputFile):
         """Render png as html in Jupyter notebook."""
         html_image = self.to_base64()
         return f"{self.caption}<img src='data:image/png;base64,{html_image}'/>"
+
+
+class TableFile(OutputFile):
+    """Container for CSV output with column headers in the first row."""
+
+    kind = "table"
+
+    def read_rows(self) -> list[list[str]]:
+        """Read CSV rows as text, including the header row."""
+        try:
+            with self.path.open(encoding="utf-8-sig", newline="") as file:
+                return [row for row in csv.reader(file, strict=True) if row]
+        except (OSError, UnicodeError, csv.Error) as error:
+            logger.warning("Could not read CSV table %s: %s", self.path, error)
+            return []
 
 
 class DataFile(OutputFile):
