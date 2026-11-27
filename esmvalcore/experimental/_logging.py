@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 
 from esmvalcore.config._logging import (
+    _HANDLER_IDS,
     _add_log_files,
     _capture_external_messages,
     _main_log_filter,
@@ -24,11 +25,15 @@ def _log_to_stdout() -> None:
     """Print informative log messages to stdout.
 
     This replaces the default loguru handler, which prints messages of all
-    levels to stderr.
+    levels to stderr. Like :func:`logging.basicConfig`, this does nothing if
+    logging has already been configured, e.g. by the ``esmvaltool`` command.
+    The handler is removed if logging is configured later.
     """
+    if _HANDLER_IDS:
+        return
     with contextlib.suppress(ValueError):
         logger.remove(0)
-    logger.add(
+    handler_id = logger.add(
         sys.stdout,
         level="INFO",
         format="{message}",
@@ -36,6 +41,7 @@ def _log_to_stdout() -> None:
         backtrace=False,
         diagnose=False,
     )
+    _HANDLER_IDS.append(handler_id)
     _capture_external_messages()
 
 
