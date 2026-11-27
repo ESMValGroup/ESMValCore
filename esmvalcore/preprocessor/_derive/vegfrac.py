@@ -28,11 +28,42 @@ class DerivedVariable(DerivedVariableBase):
         sftlf: Facets = {"short_name": "sftlf", "mip": "fx"}
         if project == "CMIP5":
             sftlf["ensemble"] = "r0i0p0"
-        return [
-            {"short_name": "baresoilFrac"},
-            {"short_name": "residualFrac"},
-            sftlf,
-        ]
+            return [
+                {"short_name": "baresoilFrac"},
+                {"short_name": "residualFrac"},
+                sftlf,
+            ]
+        elif project == "CMIP6":
+            return [
+                {"short_name": "baresoilFrac"},
+                {"short_name": "residualFrac"},
+                sftlf,
+            ]
+        elif project == "CMIP7":
+            return [
+                {
+                    "short_name": "baresoilFrac",
+                    "branding_suffix": "tavg-u-hxy-u",
+                    "mip": "land",
+                },
+                {
+                    "short_name": "residualFrac",
+                    "branding_suffix": "tavg-u-hxy-u",
+                    "mip": "land",
+                },
+                {
+                    "short_name": "sftlf",
+                    "branding_suffix": "ti-u-hxy-u",
+                    "frequency": "fx",
+                    "mip": "atmos",
+                },
+            ]
+        else:
+            msg = (
+                f"Project {project} cannot be used for derivation of 'vegfrac'"
+            )
+            raise ValueError(msg)
+        
 
     @staticmethod
     def calculate(cubes: CubeList) -> Cube:
