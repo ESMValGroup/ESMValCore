@@ -20,7 +20,17 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        return [{"short_name": "mrsos"}]
+        project = facets["project"]
+        if project == "CMIP7":
+            return [
+                {
+                    "short_name": "mrsol",
+                    "branding_suffix": "tavg-sl-hxy-lnd",
+                    "mip": "land",
+                },
+            ]
+        else:
+            return [{"short_name": "mrsos"}]
 
     @staticmethod
     def calculate(cubes):
@@ -33,7 +43,21 @@ class DerivedVariable(DerivedVariableBase):
         20 deg C).
 
         """
-        mrsos_cube = cubes.extract_cube(NameConstraint(var_name="mrsos"))
+        try:  # CMIP5, CMIP6
+            mrsos = cubes.extract_cube(
+                NameConstraint(var_name="mrsos"),
+            )
+        except iris.exceptions.ConstraintMismatchError:
+            try:  # CMIP7
+                mrsos = cubes.extract_cube(
+                    NameConstraint(var_name="mrsol"),
+                )
+            except iris.exceptions.ConstraintMismatchError as exc:
+                msg = (
+                    "Derivation of variable sm failed due to missing "
+                    "soil moisture (mrsos (CMIP5/CMIP6) or mrsol (CMIP7))."
+                )
+                raise ValueError(msg) from exc
 
         depth = mrsos_cube.coord("depth").core_bounds().astype(np.float64)
         layer_thickness = depth[..., 1] - depth[..., 0]
