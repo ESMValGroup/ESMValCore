@@ -1,6 +1,7 @@
 """Tests for logging config submodule."""
 
 import logging
+import re
 import subprocess
 import sys
 import textwrap
@@ -143,3 +144,17 @@ def test_no_messages_until_configured(tmp_path):
     )
     assert "before.ncl" not in result.stdout + result.stderr
     assert "after.ncl" in result.stdout
+
+
+def test_main_log_same_as_console(tmp_path, capsys):
+    """Test that the main log file looks the same as the console output."""
+    configure_logging(output_dir=tmp_path, console_log_level="info")
+    logger.patch(lambda r: r.update(name="esmvalcore.test")).info("message")
+    configure_logging()  # Close the log files.
+    console = capsys.readouterr().out
+    main_log = (tmp_path / "main_log.txt").read_text(encoding="utf-8")
+    assert re.fullmatch(
+        r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d,\d{3} UTC \[\d+\] INFO    message\n",
+        main_log,
+    )
+    assert console == main_log

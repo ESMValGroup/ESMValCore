@@ -86,7 +86,8 @@ def _cmor_log_filter(record: Record) -> bool:
 
 
 _LOG_FILES = {
-    "main_log.txt": ("INFO", _BRIEF_FORMAT, _main_log_filter),
+    # The main log file contains the same messages as the console.
+    "main_log.txt": ("INFO", _CONSOLE_FORMAT, _main_log_filter),
     "main_log_debug.txt": ("DEBUG", _DEBUG_FORMAT, _debug_log_filter),
     "cmor_log.txt": ("INFO", _BRIEF_FORMAT, _cmor_log_filter),
 }
