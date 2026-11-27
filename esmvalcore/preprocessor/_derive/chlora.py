@@ -20,7 +20,7 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variables needed for derivation."""
         project = facets["project"]
         if project == "CMIP7":
-            return = [
+            return [
                 {
                     "short_name": "chldiat",
                     "branding_suffix": "tavg-ols-hxy-seamsftm",
