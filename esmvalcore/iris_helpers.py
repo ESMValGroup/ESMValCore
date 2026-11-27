@@ -620,9 +620,7 @@ def _remove_formula_term_cubes(
         if coord is not None
     }
     return iris.cube.CubeList(
-        cube
-        for cube in cubes
-        if cube.var_name not in formula_terms
+        cube for cube in cubes if cube.var_name not in formula_terms
     )
 
 
@@ -632,6 +630,11 @@ def dataset_to_iris(
     ignore_warnings: list[dict[str, Any]] | None = None,
 ) -> iris.cube.CubeList:
     """Convert dataset to :class:`~iris.cube.CubeList`.
+
+    Cubes that iris loads for the reference surface of a derived coordinate
+    (e.g., surface air pressure for hybrid pressure coordinates) are not
+    returned, because they duplicate the auxiliary coordinate of the cube that
+    uses them.
 
     Parameters
     ----------
