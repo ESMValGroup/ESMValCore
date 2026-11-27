@@ -15,7 +15,7 @@ import esmvalcore.config._config_object
 import esmvalcore.config._logging
 import esmvalcore.io.esgf
 from esmvalcore import __version__
-from esmvalcore._main import BANNER, ESMValTool, _color_banner
+from esmvalcore._main import BANNER, ESMValTool, _color_banner, _color_links
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 
 if TYPE_CHECKING:
@@ -359,6 +359,18 @@ def test_color_banner() -> None:
     """Test that each column gets its color and backslashes are escaped."""
     markup = _color_banner("a \\\n_")
     assert markup == "<fg #08519c>a</> <fg #2171b5>\\\\</>\n<fg #08519c>_</>"
+
+
+def test_color_links() -> None:
+    """Test that links are colored and tags in the text are escaped."""
+    markup = _color_links(
+        "See https://a.org/b/. <c> or (http://d.org), mail e.f@g.org.",
+    )
+    assert markup == (
+        "See <blue><u>https://a.org/b/</u></blue>. \\<c> or "
+        "(<blue><u>http://d.org</u></blue>), mail "
+        "<blue><u>e.f@g.org</u></blue>."
+    )
 
 
 @mock.patch("os.path.isfile")

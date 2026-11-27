@@ -84,6 +84,17 @@ def _color_banner(banner: str) -> str:
     )
 
 
+def _color_links(text: str) -> str:
+    """Color the hyperlinks and email addresses in the text with markup."""
+    # Escape any tags in the text and leave out trailing punctuation from the
+    # links.
+    return re.sub(
+        r"https?://\S*[^\s.,;:)]|[\w.+-]+@[\w-]+(?:\.[\w-]+)+",
+        r"<blue><u>\g<0></u></blue>",
+        text.replace("<", r"\<"),
+    )
+
+
 def parse_resume(resume, recipe):
     """Set `resume` to a correct value and sanity check."""
     if not resume:
@@ -725,7 +736,7 @@ class ESMValTool:
         from . import __version__
 
         logger.opt(raw=True, colors=True).info(_color_banner(BANNER))
-        logger.opt(raw=True).info(f"\n{__doc__}\n")
+        logger.opt(raw=True, colors=True).info(_color_links(f"\n{__doc__}\n"))
         logger.info("Package versions")
         logger.info("----------------")
         logger.info("ESMValCore: {}", __version__)
@@ -776,19 +787,25 @@ def run():
             "Program terminated abnormally, see stack trace "
             "below for more information:",
         )
-        logger.info(
-            "\n"
-            "If you have a question or need help, please start a new "
-            "discussion on "
-            "https://github.com/ESMValGroup/ESMValTool/discussions"
-            "\n"
-            "If you suspect this is a bug, please open an issue on "
-            "https://github.com/ESMValGroup/ESMValTool/issues"
-            "\n"
-            "To make it easier to find out what the problem is, please "
-            "consider attaching the files run/recipe_*.yml and "
-            "run/main_log_debug.txt from the output directory.",
-        )
+        # Log each line separately, because the console only shows the colors
+        # of single line messages.
+        for line in (
+            (
+                "If you have a question or need help, please start a new "
+                "discussion on "
+                "https://github.com/ESMValGroup/ESMValTool/discussions"
+            ),
+            (
+                "If you suspect this is a bug, please open an issue on "
+                "https://github.com/ESMValGroup/ESMValTool/issues"
+            ),
+            (
+                "To make it easier to find out what the problem is, please "
+                "consider attaching the files run/recipe_*.yml and "
+                "run/main_log_debug.txt from the output directory."
+            ),
+        ):
+            logger.opt(colors=True).info(_color_links(line))
         sys.exit(1)
     finally:
         # Wait until all queued log messages have been written.
