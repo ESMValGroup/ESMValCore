@@ -31,6 +31,7 @@ from esmvalcore._citation import _write_citation_files
 from esmvalcore._provenance import TrackedFile, get_task_provenance
 from esmvalcore.config._dask import get_distributed_client
 from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
+from esmvalcore.config._logging import configure_logging
 
 if TYPE_CHECKING:
     from esmvalcore.config import Session
@@ -942,7 +943,11 @@ class TaskSet(set):
 
             with (
                 dask.config.set(dask_config),
-                multiprocessing.Pool(processes=max_parallel_tasks) as pool,
+                multiprocessing.Pool(
+                    processes=max_parallel_tasks,
+                    initializer=configure_logging,
+                    initargs=(None, session.run_dir, session["log_level"]),
+                ) as pool,
             ):
                 while scheduled or running:
                     # Submit new tasks to pool

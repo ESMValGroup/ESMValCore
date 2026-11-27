@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - update-pixi
+      - fix_logging
   schedule:
     - cron: "0 0 * * *" # nightly
 
