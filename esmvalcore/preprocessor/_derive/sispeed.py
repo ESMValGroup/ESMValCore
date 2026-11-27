@@ -27,6 +27,19 @@ class DerivedVariable(DerivedVariableBase):
         required: list[Facets]
         if project == "CMIP6":
             required = [{"short_name": "siu"}, {"short_name": "siv"}]
+        elif project == "CMIP7":
+            required = [
+                {
+                    "short_name": "siu",
+                    "branding_suffix": "tavg-u-hxy-si",
+                    "mip": "seaIce",
+                },
+                {
+                    "short_name": "siv",
+                    "branding_suffix": "tavg-u-hxy-si",
+                    "mip": "seaIce",
+                },
+            ]
         else:
             required = [{"short_name": "usi"}, {"short_name": "vsi"}]
         return required
