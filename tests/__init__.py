@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 import unittest
-from types import SimpleNamespace
-from typing import TYPE_CHECKING
 from unittest import mock
 
 import numpy as np
+import pytest
 from cf_units import Unit
 from iris.coords import (
     AncillaryVariable,
@@ -18,35 +16,8 @@ from iris.coords import (
     DimCoord,
 )
 from iris.cube import Cube
-from loguru import logger
 
 from esmvalcore.preprocessor import PreprocessorFile as PreprocessorFileBase
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-
-@contextlib.contextmanager
-def capture_logs(level: str = "INFO") -> Iterator[SimpleNamespace]:
-    """Capture loguru messages, like :meth:`unittest.TestCase.assertLogs`.
-
-    The result has an ``output`` attribute with entries formatted as
-    ``"LEVEL:name:message"`` and a ``messages`` attribute with the messages.
-    """
-    captured = SimpleNamespace(output=[], messages=[])
-
-    def sink(message) -> None:  # noqa: ANN001
-        record = message.record
-        captured.messages.append(record["message"])
-        captured.output.append(
-            f"{record['level'].name}:{record['name']}:{record['message']}",
-        )
-
-    handler_id = logger.add(sink, level=level)
-    try:
-        yield captured
-    finally:
-        logger.remove(handler_id)
 
 
 def assert_array_equal(a, b):
@@ -58,6 +29,11 @@ def assert_array_equal(a, b):
 
 class Test(unittest.TestCase):
     """Provides esmvaltool specific testing functionality."""
+
+    @pytest.fixture(autouse=True)
+    def _caplog(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Make the :func:`caplog` fixture available as ``self.caplog``."""
+        self.caplog = caplog
 
     def _remove_testcase_patches(self):
         """Remove per-testcase patches installed by :meth:`patch`."""

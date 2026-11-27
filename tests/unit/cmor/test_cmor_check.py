@@ -1,5 +1,6 @@
 """Unit tests for the CMORCheck class."""
 
+import logging
 import unittest
 from copy import deepcopy
 
@@ -14,7 +15,6 @@ import pytest
 from cf_units import Unit
 from loguru import logger
 
-import tests
 from esmvalcore.cmor.check import (
     CheckLevels,
     CMORCheck,
@@ -100,6 +100,10 @@ class CoordinateInfoMock:
 class TestCMORCheck(unittest.TestCase):
     """Test CMORCheck class."""
 
+    @pytest.fixture(autouse=True)
+    def _caplog(self, caplog: pytest.LogCaptureFixture) -> None:
+        self.caplog = caplog
+
     def setUp(self):
         """Prepare tests."""
         self.var_info = VariableInfoMock()
@@ -128,12 +132,16 @@ class TestCMORCheck(unittest.TestCase):
     def test_warning_fail_on_error(self):
         """Test report warning function with fail_on_error."""
         checker = CMORCheck(self.cube, self.var_info, fail_on_error=True)
-        with tests.capture_logs(level="WARNING") as cm:
+        with self.caplog.at_level("WARNING"):
             checker.report_warning("New error: {}", "something failed")
             self.assertEqual(
-                cm.output,
+                self.caplog.record_tuples,
                 [
-                    "WARNING:esmvalcore.cmor.check:New error: something failed",
+                    (
+                        "esmvalcore.cmor.check",
+                        logging.WARNING,
+                        "New error: something failed",
+                    ),
                 ],
             )
 

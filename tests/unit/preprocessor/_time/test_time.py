@@ -957,14 +957,14 @@ class TestClimatology(tests.Test):
         )
         cube.add_cell_measure(measure, (0, 1, 2))
         cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
-        with tests.capture_logs(level="DEBUG") as cm:
+        with self.caplog.at_level("DEBUG"):
             result = climate_statistics(cube, operator="mean", period="mon")
         self.assertEqual(
-            cm.messages[0],
+            self.caplog.messages[0],
             "Averaging time dimension in measure volcello.",
         )
         self.assertEqual(
-            cm.messages[1],
+            self.caplog.messages[1],
             "Averaging time dimension in ancillary variable sftgif.",
         )
         self.assertEqual(result.cell_measure("ocean_volume").ndim, 2)
@@ -1106,14 +1106,14 @@ class TestSeasonalStatistics(tests.Test):
         )
         cube.add_cell_measure(measure, (0, 1, 2))
         cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
-        with tests.capture_logs(level="DEBUG") as cm:
+        with self.caplog.at_level("DEBUG"):
             result = seasonal_statistics(cube, operator="mean")
         self.assertEqual(
-            cm.messages[0],
+            self.caplog.messages[0],
             "Averaging time dimension in measure volcello.",
         )
         self.assertEqual(
-            cm.messages[1],
+            self.caplog.messages[1],
             "Averaging time dimension in ancillary variable sftgif.",
         )
         self.assertEqual(result.cell_measure("ocean_volume").ndim, 2)
@@ -1293,14 +1293,14 @@ class TestMonthlyStatistics(tests.Test):
         )
         cube.add_cell_measure(measure, (0, 1, 2))
         cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
-        with tests.capture_logs(level="DEBUG") as cm:
+        with self.caplog.at_level("DEBUG"):
             result = monthly_statistics(cube, operator="mean")
         self.assertEqual(
-            cm.messages[0],
+            self.caplog.messages[0],
             "Averaging time dimension in measure volcello.",
         )
         self.assertEqual(
-            cm.messages[1],
+            self.caplog.messages[1],
             "Averaging time dimension in ancillary variable sftgif.",
         )
         self.assertEqual(result.cell_measure("ocean_volume").ndim, 2)
