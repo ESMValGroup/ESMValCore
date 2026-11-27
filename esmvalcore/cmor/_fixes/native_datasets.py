@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from contextlib import suppress
+from typing import TYPE_CHECKING, ClassVar
 
 from iris import NameConstraint
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.iris_helpers import safe_convert_units
 
-from ..fix import Fix
 from .shared import (
+    add_scalar_areatype_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
-    add_scalar_typesi_coord,
 )
 
 if TYPE_CHECKING:
@@ -24,7 +25,7 @@ class NativeDatasetFix(Fix):
     """Common fix operations for native datasets."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS: Dict[str, str] = {}
+    INVALID_UNITS: ClassVar[dict[str, str]] = {}
 
     def fix_scalar_coords(self, cube: Cube) -> None:
         """Add missing scalar coordinate to cube (in-place).
@@ -43,7 +44,46 @@ class NativeDatasetFix(Fix):
         if "lambda550nm" in self.vardef.dimensions:
             add_scalar_lambda550nm_coord(cube)
         if "typesi" in self.vardef.dimensions:
-            add_scalar_typesi_coord(cube, "sea_ice")
+            add_scalar_areatype_coord(
+                cube,
+                long_name="Sea Ice area type",
+                value="sea_ice",
+            )
+        if "typenatgr" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typenatgr",
+                long_name="Natural grass area type",
+                value="natural_grasses",
+            )
+        if "typeshrub" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typeshrub",
+                long_name="Shrub area type",
+                value="shrubs",
+            )
+        if "typebare" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typebare",
+                long_name="surface type",
+                value="bare_ground",
+            )
+        if "typetree" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typetree",
+                long_name="Tree area type",
+                value="trees",
+            )
+        if "typecrop" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typecrop",
+                long_name="Crop area type",
+                value="crops",
+            )
 
     def fix_var_metadata(self, cube: Cube) -> None:
         """Fix variable metadata of cube (in-place).
@@ -78,10 +118,11 @@ class NativeDatasetFix(Fix):
             try:
                 cube.units = new_units
             except ValueError as exc:
-                raise ValueError(
+                msg = (
                     f"Failed to fix invalid units '{invalid_units}' for "
                     f"variable '{self.vardef.short_name}'"
-                ) from exc
+                )
+                raise ValueError(msg) from exc
         safe_convert_units(cube, self.vardef.units)
 
         # Fix attributes
@@ -91,7 +132,7 @@ class NativeDatasetFix(Fix):
     def get_cube(
         self,
         cubes: CubeList,
-        var_name: Optional[str] = None,
+        var_name: str | None = None,
     ) -> Cube:
         """Extract single cube from :class:`iris.cube.CubeList`.
 
@@ -117,19 +158,21 @@ class NativeDatasetFix(Fix):
         """
         if var_name is None:
             var_name = self.extra_facets.get(
-                "raw_name", self.vardef.short_name
+                "raw_name",
+                self.vardef.short_name,
             )
         if not cubes.extract(NameConstraint(var_name=var_name)):
-            raise ValueError(
+            msg = (
                 f"Variable '{var_name}' used to extract "
                 f"'{self.vardef.short_name}' is not available in input file"
             )
+            raise ValueError(msg)
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 
     def fix_regular_time(
         self,
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
         guess_bounds: bool = True,
     ) -> None:
         """Fix regular time coordinate.
@@ -155,7 +198,7 @@ class NativeDatasetFix(Fix):
     def fix_regular_lat(
         self,
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
         guess_bounds: bool = True,
     ) -> None:
         """Fix regular latitude coordinate.
@@ -181,7 +224,7 @@ class NativeDatasetFix(Fix):
     def fix_regular_lon(
         self,
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
         guess_bounds: bool = True,
     ) -> None:
         """Fix regular longitude coordinate.
@@ -230,16 +273,14 @@ class NativeDatasetFix(Fix):
         if isinstance(coord, str):
             coord = cube.coord(coord)
         if not coord.has_bounds():
-            try:
+            with suppress(ValueError):
                 coord.guess_bounds()
-            except ValueError:  # Coord has only 1 point
-                pass
         return coord
 
     @staticmethod
     def fix_time_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of time coordinate (in-place).
 
@@ -270,7 +311,7 @@ class NativeDatasetFix(Fix):
     @staticmethod
     def fix_alt16_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of alt16 coordinate (in-place).
 
@@ -303,7 +344,7 @@ class NativeDatasetFix(Fix):
     @staticmethod
     def fix_height_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of height coordinate (in-place).
 
@@ -336,7 +377,7 @@ class NativeDatasetFix(Fix):
     @staticmethod
     def fix_depth_coord_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of depth_coord coordinate (in-place).
 
@@ -369,7 +410,7 @@ class NativeDatasetFix(Fix):
     @staticmethod
     def fix_plev_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of air_pressure coordinate (in-place).
 
@@ -402,7 +443,7 @@ class NativeDatasetFix(Fix):
     @staticmethod
     def fix_lat_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of latitude coordinate (in-place).
 
@@ -434,7 +475,7 @@ class NativeDatasetFix(Fix):
     @staticmethod
     def fix_lon_metadata(
         cube: Cube,
-        coord: Optional[str | Coord] = None,
+        coord: str | Coord | None = None,
     ) -> Coord:
         """Fix metadata of longitude coordinate (in-place).
 

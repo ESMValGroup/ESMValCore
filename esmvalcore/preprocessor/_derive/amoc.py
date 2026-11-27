@@ -1,5 +1,9 @@
 """Derivation of variable `amoc`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import iris
 import numpy as np
 
@@ -7,13 +11,18 @@ from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from ._baseclass import DerivedVariableBase
 
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
+
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `amoc`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
+        project = facets["project"]
+        required: list[Facets]
         if project == "CMIP5":
             required = [{"short_name": "msftmyz", "mip": "Omon"}]
         elif project == "CMIP6":
@@ -21,10 +30,11 @@ class DerivedVariable(DerivedVariableBase):
                 {"short_name": "msftmz", "optional": True},
                 {"short_name": "msftyz", "optional": True},
             ]
+        elif project == "ICON":
+            required = [{"short_name": "msftmz", "mip": "Omon"}]
         else:
-            raise ValueError(
-                f"Project {project} can not be used for Amoc derivation."
-            )
+            msg = f"Project {project} can not be used for Amoc derivation."
+            raise ValueError(msg)
 
         return required
 
@@ -47,15 +57,17 @@ class DerivedVariable(DerivedVariableBase):
             # msftmyz and msfmz
             cube = cubes.extract_cube(
                 iris.Constraint(
-                    name="ocean_meridional_overturning_mass_streamfunction"
-                )
+                    name="ocean_meridional_overturning_mass_streamfunction",
+                ),
             )
             meridional = True
             lats = cube.coord("latitude").points
         except iris.exceptions.ConstraintMismatchError:
             # msftyz
             cube = cubes.extract_cube(
-                iris.Constraint(name="ocean_y_overturning_mass_streamfunction")
+                iris.Constraint(
+                    name="ocean_y_overturning_mass_streamfunction",
+                ),
             )
             meridional = False
             lats = cube.coord("grid_latitude").points
@@ -67,10 +79,11 @@ class DerivedVariable(DerivedVariableBase):
         cube = cube.extract(constraint=atl_constraint)
 
         if cube is None:
-            raise ValueError(
+            msg = (
                 f"Amoc calculation: {cube_orig} doesn't contain"
                 f" atlantic_arctic_ocean."
             )
+            raise ValueError(msg)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.0)
@@ -89,6 +102,4 @@ class DerivedVariable(DerivedVariableBase):
 
         # 4: find the maximum in the water column along the time axis.
         with ignore_iris_vague_metadata_warnings():
-            cube = cube.collapsed(["depth", "region"], iris.analysis.MAX)
-
-        return cube
+            return cube.collapsed(["depth", "region"], iris.analysis.MAX)

@@ -22,7 +22,10 @@ def mock_cubes():
 @pytest.fixture
 def patched_derive(mocker):
     """Fixture for mocked derivation scripts."""
-    mocker.patch("iris.cube.CubeList", side_effect=lambda x: x)
+    mocker.patch(
+        "esmvalcore.preprocessor._derive.CubeList",
+        side_effect=lambda x: x,
+    )
     mocker.patch.object(_derive, "ALL_DERIVED_VARIABLES", autospec=True)
     mocker.patch.object(_derive, "logger", autospec=True)
 
@@ -43,7 +46,7 @@ def assert_derived_var_calc_called_once_with(*args):
     """Assert that derivation script of variable has been called."""
     (
         _derive.ALL_DERIVED_VARIABLES.__getitem__.return_value.return_value.calculate.assert_called_once_with(
-            *args
+            *args,
         )
     )
 
@@ -182,7 +185,7 @@ def test_check_units_fail(mock_cubes):
 
 def test_get_required():
     """Test getting required variables for derivation."""
-    variables = get_required("alb", "CMIP5")
+    variables = get_required({"short_name": "alb", "project": "CMIP5"})
 
     reference = [
         {
@@ -198,14 +201,20 @@ def test_get_required():
 
 def test_get_required_with_fx():
     """Test getting required variables for derivation with fx variables."""
-    variables = get_required("ohc", "CMIP5")
+    variables = get_required({"short_name": "ohc", "project": "CMIP5"})
 
     reference = [
         {"short_name": "thetao"},
-        {"short_name": "volcello", "mip": "fx"},
+        {"short_name": "volcello", "mip": "fx", "ensemble": "r0i0p0"},
     ]
 
     assert variables == reference
+
+
+def test_get_required_invalid_var():
+    msg = r"Cannot derive variable '_invalid_var_'"
+    with pytest.raises(NotImplementedError, match=msg):
+        get_required({"short_name": "_invalid_var_", "project": "CMIP5"})
 
 
 def test_derive_nonstandard_nofx():

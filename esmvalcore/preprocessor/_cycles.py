@@ -1,13 +1,20 @@
 """Operations related to cycles (annual cycle, diurnal cycle, etc.)."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import iris
 import iris.coord_categorisation
 from loguru import logger
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
-def amplitude(cube, coords):
+
+def amplitude(cube: Cube, coords: str | list[str]) -> Cube:
     """Calculate amplitude of cycles by aggregating over coordinates.
 
     Note
@@ -57,15 +64,17 @@ def amplitude(cube, coords):
         )
         if hasattr(iris.coord_categorisation, f"add_{coord_name}"):
             getattr(iris.coord_categorisation, f"add_{coord_name}")(
-                cube, "time"
+                cube,
+                "time",
             )
             logger.debug("Added temporal coordinate '{}'", coord_name)
         else:
-            raise iris.exceptions.CoordinateNotFoundError(
+            msg = (
                 f"Coordinate '{coord_name}' is not a coordinate of cube "
                 f"{cube.summary(shorten=True)} and cannot be added via "
                 f"iris.coord_categorisation"
             )
+            raise iris.exceptions.CoordinateNotFoundError(msg)
 
     # Calculate amplitude
     with ignore_iris_vague_metadata_warnings():

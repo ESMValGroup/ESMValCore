@@ -103,7 +103,8 @@ def test_tos_fix_metadata():
     assert j_coord.units == "1"
     np.testing.assert_allclose(i_coord.points, [0, 1, 2])
     np.testing.assert_allclose(
-        i_coord.bounds, [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]]
+        i_coord.bounds,
+        [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
     )
     np.testing.assert_allclose(j_coord.points, [0, 1])
     np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
@@ -121,10 +122,11 @@ def test_tos_fix_metadata():
                 [-22.00961894, 2.00961894, 14.01923789, -10.0],
                 [2.00961894, 11.47114317, 23.48076211, 14.01923789],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("latitude").bounds, latitude_bounds
+        fixed_cube.coord("latitude").bounds,
+        latitude_bounds,
     )
     longitude_bounds = np.array(
         [
@@ -138,8 +140,9 @@ def test_tos_fix_metadata():
                 [99.375, 140.625, 140.625, 99.375],
                 [140.625, 99.375, 99.375, 140.625],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("longitude").bounds, longitude_bounds
+        fixed_cube.coord("longitude").bounds,
+        longitude_bounds,
     )

@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 import multiprocessing
 import os
+import re
 import shutil
 from contextlib import contextmanager
 from functools import partial
 from multiprocessing.pool import ThreadPool
+from typing import TYPE_CHECKING
+from unittest.mock import sentinel
 
 import pytest
 import yaml
 
 import esmvalcore
+import esmvalcore._task
 from esmvalcore._task import (
     BaseTask,
     DiagnosticError,
@@ -19,15 +25,18 @@ from esmvalcore._task import (
 )
 from esmvalcore.config._diagnostics import DIAGNOSTICS
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
 
 class MockBaseTask(BaseTask):
-    def _run(self, input_files):
+    def _run(self, input_files, session):
         tmp_path = self._tmp_path
         output_file = tmp_path / self.name
 
-        msg = "running {} in thread {}, using input {}, generating {}".format(
-            self.name, os.getpid(), input_files, output_file
-        )
+        msg = f"running {self.name} in thread {os.getpid()}, using input {input_files}, generating {output_file}"
         print(msg)
 
         # Check that the output is created just once
@@ -68,14 +77,14 @@ def get_distributed_client_mock(client):
     """Mock `get_distributed_client` to avoid starting a Dask cluster."""
 
     @contextmanager
-    def get_distributed_client():
+    def get_distributed_client(session):
         yield client
 
     return get_distributed_client
 
 
 @pytest.mark.parametrize(
-    ["mpmethod", "max_parallel_tasks"],
+    ("mpmethod", "max_parallel_tasks"),
     [
         ("fork", 1),
         ("fork", 2),
@@ -84,7 +93,13 @@ def get_distributed_client_mock(client):
         ("spawn", 2),
     ],
 )
-def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
+def test_run_tasks(
+    monkeypatch,
+    session,
+    max_parallel_tasks,
+    example_tasks,
+    mpmethod,
+):
     """Check that tasks are run correctly."""
     monkeypatch.setattr(
         esmvalcore._task,
@@ -96,14 +111,20 @@ def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
         "Pool",
         multiprocessing.get_context(mpmethod).Pool,
     )
-    example_tasks.run(max_parallel_tasks=max_parallel_tasks)
+    session["max_parallel_tasks"] = max_parallel_tasks
+    example_tasks.run(session=session)
 
     for task in example_tasks:
         print(task.name, task.output_files)
         assert task.output_files
 
 
-def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
+def test_diag_task_updated_with_address(
+    monkeypatch,
+    mocker,
+    tmp_path,
+    session,
+):
     """Test that the scheduler address is passed to the diagnostic tasks."""
     # Set up mock Dask distributed client
     client = mocker.Mock()
@@ -125,7 +146,8 @@ def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
     mocker.patch.object(TaskSet, "_run_sequential")
     tasks = TaskSet()
     tasks.add(task)
-    tasks.run(max_parallel_tasks=1)
+    session["max_parallel_tasks"] = 1
+    tasks.run(session=session)
 
     # Check that the scheduler address was added to the
     # diagnostic task settings.
@@ -140,15 +162,15 @@ def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
         partial(
             TaskSet._run_parallel,
             scheduler_address=None,
-            max_parallel_tasks=1,
         ),
     ],
 )
-def test_runner_uses_priority(monkeypatch, runner, example_tasks):
+def test_runner_uses_priority(monkeypatch, session, runner, example_tasks):
     """Check that the runner tries to respect task priority."""
+    session["max_parallel_tasks"] = 1
     order = []
 
-    def _run(self, input_files):
+    def _run(self, input_files, session):
         print(f"running task {self.name} with priority {self.priority}")
         order.append(self.priority)
         return [f"{self.name}_test.nc"]
@@ -156,14 +178,14 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     monkeypatch.setattr(MockBaseTask, "_run", _run)
     monkeypatch.setattr(esmvalcore._task.multiprocessing, "Pool", ThreadPool)
 
-    runner(example_tasks)
+    runner(example_tasks, session=session)
     print(order)
     assert len(order) == 12
     assert order == sorted(order)
 
 
 @pytest.mark.parametrize("address", [None, "localhost:1234"])
-def test_run_task(mocker, address):
+def test_run_task(mocker, session, address):
     # Set up mock Dask distributed client
     mocker.patch.object(esmvalcore._task, "Client")
 
@@ -173,7 +195,10 @@ def test_run_task(mocker, address):
     task = mocker.create_autospec(DiagnosticTask, instance=True)
     task.products = mocker.Mock()
     output_files, products = _run_task(
-        task, scheduler_address=address, scheduler_lock=scheduler_lock
+        task,
+        scheduler_address=address,
+        scheduler_lock=scheduler_lock,
+        session=session,
     )
     assert output_files == task.run.return_value
     assert products == task.products
@@ -204,11 +229,10 @@ def test_py2ncl():
 
 def _get_single_base_task():
     """Test BaseTask basic attributes."""
-    task = BaseTask(
+    return BaseTask(
         name="task0",
         ancestors=[BaseTask(name=f"task0-ancestor{j}") for j in range(2)],
     )
-    return task
 
 
 def test_base_task_names():
@@ -235,15 +259,13 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
         with open(diag_script, "w", encoding="utf-8") as fil:
             fil.write("import os\n\nprint(os.getcwd())")
 
-    task = DiagnosticTask(
+    return DiagnosticTask(
         name="task0",
         ancestors=[BaseTask(name=f"task0-ancestor{j}") for j in range(2)],
         script=diag_script,
         settings=diag_settings,
         output_dir=diag_output_dir,
     )
-
-    return task
 
 
 def test_py_diagnostic_task_constructor(tmp_path):
@@ -268,7 +290,7 @@ def test_py_diagnostic_task_write_settings(tmp_path):
     my_arg_dict = {"b": [1], "a": 3.0, "c": False}
     task.settings.update(my_arg_dict)
     settings = task.write_settings()
-    with open(settings, "r") as stream:
+    with open(settings) as stream:
         settings_data = yaml.safe_load(stream)
 
     assert list(settings_data) == ["run_dir", "b", "a", "c"]
@@ -281,9 +303,7 @@ def test_diagnostic_diag_script_none(tmp_path):
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
     diagnostics_root = DIAGNOSTICS.scripts
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
-    ept = "Cannot execute script '{}' ({}): file does not exist.".format(
-        script_file, script_file
-    )
+    ept = f"Cannot execute script '{script_file}' ({script_file}): file does not exist."
     assert ept == str(err_msg.value)
 
 
@@ -306,7 +326,7 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
     with open(diag_script, "w", encoding="utf-8") as fil:
         fil.write(diagnostic_text)
 
-    task = DiagnosticTask(
+    return DiagnosticTask(
         name="task0",
         ancestors=None,
         script=diag_script.as_posix(),
@@ -314,15 +334,15 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
         output_dir=diag_output_dir.as_posix(),
     )
 
-    return task
-
 
 # skip if no exec
 no_ncl = pytest.mark.skipif(
-    shutil.which("ncl") is None, reason="ncl is not installed"
+    shutil.which("ncl") is None,
+    reason="ncl is not installed",
 )
 no_rscript = pytest.mark.skipif(
-    shutil.which("Rscript") is None, reason="Rscript is not installed"
+    shutil.which("Rscript") is None,
+    reason="Rscript is not installed",
 )
 
 CMD_diag = {
@@ -343,7 +363,7 @@ CMD_diag_fail = {
 }
 
 
-@pytest.mark.parametrize("executable,diag_text", CMD_diag.items())
+@pytest.mark.parametrize(("executable", "diag_text"), CMD_diag.items())
 @no_ncl
 @no_rscript
 def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
@@ -359,10 +379,13 @@ def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
     task.run()
 
 
-@pytest.mark.parametrize("executable,diag_text", CMD_diag_fail.items())
+@pytest.mark.parametrize(("executable", "diag_text"), CMD_diag_fail.items())
 @no_ncl
 def test_diagnostic_run_task_fail(
-    monkeypatch, executable, diag_text, tmp_path
+    monkeypatch,
+    executable,
+    diag_text,
+    tmp_path,
 ):
     """Run DiagnosticTask that will fail."""
 
@@ -375,4 +398,25 @@ def test_diagnostic_run_task_fail(
     monkeypatch.setattr(BaseTask, "_run", _run)
     with pytest.raises(DiagnosticError) as err_mssg:
         task.run()
-        assert diag_text[1] in str(err_mssg.value)
+    assert diag_text[1] in str(err_mssg.value)
+
+
+def test_initialize_provenance_already_initialized_fail() -> None:
+    task = BaseTask()  # type: ignore[abstract]
+    task.activity = sentinel.activity
+
+    msg = r"Provenance of BaseTask('') already initialized"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        task.initialize_provenance(sentinel.recipe_entity)
+
+
+def test_diagnostic_task_script_not_x_fail(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    mock_os = mocker.patch.object(esmvalcore._task, "os", create_autospec=True)
+    mock_os.access.return_value = False
+    diag_script = tmp_path / "diag_cow.c"
+    msg = r"Cannot execute script"
+    with pytest.raises(DiagnosticError, match=re.escape(msg)):
+        _get_single_diagnostic_task(tmp_path, diag_script)

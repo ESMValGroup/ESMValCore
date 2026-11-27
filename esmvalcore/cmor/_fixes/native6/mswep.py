@@ -6,9 +6,8 @@ import cf_units
 import numpy as np
 from cf_units import Unit
 
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.iris_helpers import date2num
-
-from ..fix import Fix
 
 
 def fix_time_month(cube):
@@ -53,7 +52,8 @@ def fix_longitude(cube):
     lon = cube.coord(axis="X")
 
     if not lon.is_monotonic():
-        raise ValueError("Data must be monotonic to fix longitude.")
+        msg = "Data must be monotonic to fix longitude."
+        raise ValueError(msg)
 
     # roll data because iris forces `lon.points` to be strictly monotonic.
     shift = np.sum(lon.points < 0)
@@ -86,7 +86,8 @@ class Pr(Fix):
         elif frequency == "mon":
             fix_time_month(cube)
         else:
-            raise ValueError(f"Cannot fix time for frequency: {frequency!r}")
+            msg = f"Cannot fix time for frequency: {frequency!r}"
+            raise ValueError(msg)
 
     def _fix_units(self, cube):
         """Convert units from mm/[t] to kg m-2 s-1 units."""
@@ -101,7 +102,8 @@ class Pr(Fix):
             # divide by number of seconds in a month
             cube.data = cube.core_data() / (60 * 60 * 24 * 30)
         else:
-            raise ValueError(f"Cannot fix units for frequency: {frequency!r}")
+            msg = f"Cannot fix units for frequency: {frequency!r}"
+            raise ValueError(msg)
 
     def _fix_bounds(self, cube):
         """Add bounds to coords."""
@@ -110,7 +112,7 @@ class Pr(Fix):
         )
 
         for coord_def in coord_defs:
-            if not coord_def.must_have_bounds == "yes":
+            if coord_def.must_have_bounds != "yes":
                 continue
 
             coord = cube.coord(axis=coord_def.axis)

@@ -1,0 +1,21 @@
+SOURCE: CMIP6
+!============
+variable_entry:    lwp
+!============
+modeling_realm:    aerosol
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     atmosphere_mass_content_of_cloud_liquid_water
+units:             kg m-2
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Liquid Water Path
+comment:           The total mass of liquid water in cloud per unit area.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!

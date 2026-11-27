@@ -10,6 +10,9 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
+from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin53 import (
+    AllVars as Aladin53AllVars,
+)
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin63 import (
     Tas,
 )
@@ -53,7 +56,7 @@ def test_get_grid_fix_cordex():
         "tas",
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
-    assert fix == [AllVars(None), GenericFix(None)]
+    assert fix == [Aladin53AllVars(None), AllVars(None), GenericFix(None)]
 
 
 def test_get_fixes_with_replace():
@@ -77,13 +80,13 @@ def test_get_fix_no_project():
 
 def test_get_fix_no_model():
     assert Fix.get_fixes("CMIP5", "BAD_MODEL", "Amon", "ch4") == [
-        GenericFix(None)
+        GenericFix(None),
     ]
 
 
 def test_get_fix_no_var():
     assert Fix.get_fixes("CMIP5", "BNU-ESM", "Amon", "BAD_VAR") == [
-        GenericFix(None)
+        GenericFix(None),
     ]
 
 
@@ -141,7 +144,9 @@ def test_get_fixed_filepath_unique_suffix_paths(tmp_path):
     filepath = Path("this", "is", "a", "file.nc")
     assert not output_dir.parent.is_dir()
     fixed_path = Fix(None).get_fixed_filepath(
-        output_dir, filepath, add_unique_suffix=True
+        output_dir,
+        filepath,
+        add_unique_suffix=True,
     )
     assert fixed_path.parent.is_dir()
     assert isinstance(fixed_path, Path)
@@ -165,7 +170,9 @@ def test_get_fixed_filepath_unique_suffix_strs(tmp_path):
     filepath = os.path.join("this", "is", "a", "file.nc")
     assert not Path(output_dir).parent.is_dir()
     fixed_path = Fix(None).get_fixed_filepath(
-        output_dir, filepath, add_unique_suffix=True
+        output_dir,
+        filepath,
+        add_unique_suffix=True,
     )
     assert fixed_path.parent.is_dir()
     assert isinstance(fixed_path, Path)

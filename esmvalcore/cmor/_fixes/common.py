@@ -6,7 +6,11 @@ from loguru import logger
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
-from .shared import add_plev_from_altitude, add_scalar_typesi_coord, fix_bounds
+from .shared import (
+    add_plev_from_altitude,
+    add_scalar_areatype_coord,
+    fix_bounds,
+)
 
 
 class ClFixHybridHeightCoord(Fix):
@@ -126,7 +130,7 @@ class OceanFixGrid(Fix):
             logger.warning(
                 "OceanFixGrid is designed to work on any data with an "
                 "irregular ocean grid, but it was only tested on 3D (time, "
-                "latitude, longitude) data so far; got %dD data",
+                "latitude, longitude) data so far; got {}D data",
                 cube.ndim,
             )
 
@@ -141,8 +145,8 @@ class OceanFixGrid(Fix):
         (j_dim, i_dim) = sorted(
             set(
                 cube.coord_dims(cube.coord("latitude", dim_coords=False))
-                + cube.coord_dims(cube.coord("longitude", dim_coords=False))
-            )
+                + cube.coord_dims(cube.coord("longitude", dim_coords=False)),
+            ),
         )
         try:
             cube.coord(dim_coords=True, dimensions=i_dim)
@@ -150,13 +154,15 @@ class OceanFixGrid(Fix):
         except iris.exceptions.CoordinateNotFoundError:
             cube.add_dim_coord(
                 iris.coords.DimCoord(
-                    np.arange(cube.shape[i_dim]), var_name="i"
+                    np.arange(cube.shape[i_dim]),
+                    var_name="i",
                 ),
                 i_dim,
             )
             cube.add_dim_coord(
                 iris.coords.DimCoord(
-                    np.arange(cube.shape[j_dim]), var_name="j"
+                    np.arange(cube.shape[j_dim]),
+                    var_name="j",
                 ),
                 j_dim,
             )
@@ -185,7 +191,7 @@ class OceanFixGrid(Fix):
 
         # Calculate latitude/longitude vertices by interpolation.
         # Following the CF conventions (see
-        # cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries)
+        # https://cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries)
         # we go counter-clockwise around the cells and construct a grid of
         # index values which are in turn used to interpolate longitudes and
         # latitudes in the midpoints between the cell centers.
@@ -193,17 +199,23 @@ class OceanFixGrid(Fix):
         lon_vertices = []
         for j, i in [(0, 0), (0, 1), (1, 1), (1, 0)]:
             (j_v, i_v) = np.meshgrid(
-                j_coord.bounds[:, j], i_coord.bounds[:, i], indexing="ij"
+                j_coord.bounds[:, j],
+                i_coord.bounds[:, i],
+                indexing="ij",
             )
             lat_vertices.append(
                 map_coordinates(
-                    cube.coord("latitude").points, [j_v, i_v], mode="nearest"
-                )
+                    cube.coord("latitude").points,
+                    [j_v, i_v],
+                    mode="nearest",
+                ),
             )
             lon_vertices.append(
                 map_coordinates(
-                    cube.coord("longitude").points, [j_v, i_v], mode="wrap"
-                )
+                    cube.coord("longitude").points,
+                    [j_v, i_v],
+                    mode="wrap",
+                ),
             )
         lat_vertices = np.array(lat_vertices)
         lon_vertices = np.array(lon_vertices)
@@ -233,5 +245,9 @@ class SiconcFixScalarCoord(Fix):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_typesi_coord(cube)
+        add_scalar_areatype_coord(
+            cube,
+            long_name="Sea Ice area type",
+            value="sea_ice",
+        )
         return iris.cube.CubeList([cube])

@@ -4,7 +4,8 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.canesm5 import Co2, Gpp
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Cl, Cli, Clw, Co2, Gpp, Ps
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
@@ -18,13 +19,12 @@ def test_get_co2_fix():
 @pytest.fixture
 def co2_cube():
     """``co2`` cube."""
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [1.0],
         var_name="co2",
         standard_name="mole_fraction_of_carbon_dioxide_in_air",
         units="mol mol-1",
     )
-    return cube
 
 
 def test_co2_fix_data(co2_cube):
@@ -37,14 +37,13 @@ def test_co2_fix_data(co2_cube):
 @pytest.fixture
 def gpp_cube():
     """``gpp`` cube."""
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [0, 1],
         var_name="gpp",
         standard_name="gross_primary_productivity_of_biomass_expressed_as_"
         "carbon",
         units="kg m-2 s-1",
     )
-    return cube
 
 
 def test_get_gpp_fix():
@@ -58,6 +57,51 @@ def test_gpp_fix_data(gpp_cube):
     fix = Gpp(None)
     out_cube = fix.fix_data(gpp_cube)
     np.testing.assert_allclose(
-        out_cube.data, np.ma.masked_invalid([np.nan, 1])
+        out_cube.data,
+        np.ma.masked_invalid([np.nan, 1]),
     )
     assert np.array_equal(out_cube.data.mask, [True, False])
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "cl")
+    assert fix == [Cl(None), GenericFix(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert issubclass(Cl, ClFixHybridPressureCoord)
+
+
+def test_get_cli_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "cli")
+    assert fix == [Cli(None), GenericFix(None)]
+
+
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert issubclass(Cli, ClFixHybridPressureCoord)
+
+
+def test_get_clw_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "clw")
+    assert fix == [Clw(None), GenericFix(None)]
+
+
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert issubclass(Clw, ClFixHybridPressureCoord)
+
+
+def test_get_ps_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "ps")
+    assert fix == [Ps(None), GenericFix(None)]
+
+
+def test_ps_fix():
+    """Test fix for ``ps``."""
+    assert issubclass(Ps, ClFixHybridPressureCoord)

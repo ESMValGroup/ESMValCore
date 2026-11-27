@@ -1,17 +1,25 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._compare_with_refs`."""
 
+from __future__ import annotations
+
 import contextlib
+import re
+from typing import Any
 
 import dask.array as da
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import CellMeasure, CellMethod
+from iris.coords import AncillaryVariable, AuxCoord, CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
+from esmvalcore.preprocessor._compare_with_refs import (
+    bias,
+    distance_metric,
+    t_test,
+)
 from tests import PreprocessorFile
 
 
@@ -60,10 +68,11 @@ def get_3d_cube(data, **cube_kwargs):
         units="degrees_east",
     )
     coord_specs = [(times, 0), (lats, 1), (lons, 2)]
-    cube = Cube(
-        data.astype("float32"), dim_coords_and_dims=coord_specs, **cube_kwargs
+    return Cube(
+        data.astype("float32"),
+        dim_coords_and_dims=coord_specs,
+        **cube_kwargs,
     )
-    return cube
 
 
 @pytest.fixture
@@ -71,7 +80,10 @@ def regular_cubes():
     """Regular cubes."""
     cube_data = np.arange(8.0).reshape(2, 2, 2)
     cube = get_3d_cube(
-        cube_data, standard_name="air_temperature", var_name="tas", units="K"
+        cube_data,
+        standard_name="air_temperature",
+        var_name="tas",
+        units="K",
     )
     return CubeList([cube])
 
@@ -82,7 +94,10 @@ def ref_cubes():
     cube_data = np.full((2, 2, 2), 2.0)
     cube_data[1, 1, 1] = 4.0
     cube = get_3d_cube(
-        cube_data, standard_name="air_temperature", var_name="tas", units="K"
+        cube_data,
+        standard_name="air_temperature",
+        var_name="tas",
+        units="K",
     )
     return CubeList([cube])
 
@@ -93,11 +108,13 @@ TEST_BIAS = [
 ]
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS)
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
 def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     """Test calculation of bias with products."""
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_bias": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_bias": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
@@ -141,7 +158,7 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert product_b.mock_ancestors == {ref_product}
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS)
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
 def test_bias_cubes(regular_cubes, ref_cubes, bias_type, data, units):
     """Test calculation of bias with cubes."""
     ref_cube = ref_cubes[0]
@@ -166,9 +183,16 @@ TEST_BIAS_BROADCASTABLE = [
 ]
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS_BROADCASTABLE)
+@pytest.mark.parametrize(
+    ("bias_type", "data", "units"),
+    TEST_BIAS_BROADCASTABLE,
+)
 def test_bias_cubes_broadcastable(
-    regular_cubes, ref_cubes, bias_type, data, units
+    regular_cubes,
+    ref_cubes,
+    bias_type,
+    data,
+    units,
 ):
     """Test calculation of bias with cubes."""
     ref_cube = ref_cubes[0][0]  # only select one time step
@@ -190,14 +214,18 @@ def test_bias_cubes_broadcastable(
 def test_denominator_mask_threshold_products(regular_cubes, ref_cubes):
     """Test denominator_mask_threshold argument with products."""
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_bias": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_bias": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
         ref_product,
     }
     out_products = bias(
-        products, bias_type="relative", denominator_mask_threshold=3.0
+        products,
+        bias_type="relative",
+        denominator_mask_threshold=3.0,
     )
 
     assert isinstance(out_products, set)
@@ -211,7 +239,8 @@ def test_denominator_mask_threshold_products(regular_cubes, ref_cubes):
     out_cube = product_a.cubes[0]
     assert out_cube.dtype == np.float32
     expected_data = np.ma.masked_equal(
-        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]], 42.0
+        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]],
+        42.0,
     )
     assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == "tas"
@@ -238,7 +267,8 @@ def test_denominator_mask_threshold_cubes(regular_cubes, ref_cubes):
     out_cube = out_cubes[0]
     assert out_cube.dtype == np.float32
     expected_data = np.ma.masked_equal(
-        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]], 42.0
+        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]],
+        42.0,
     )
     assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == "tas"
@@ -256,7 +286,9 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes, bias_type):
         PreprocessorFile(ref_cubes, "REF", {"reference_for_bias": True}),
     }
     out_products = bias(
-        products, bias_type=bias_type, keep_reference_dataset=True
+        products,
+        bias_type=bias_type,
+        keep_reference_dataset=True,
     )
 
     assert isinstance(out_products, set)
@@ -278,14 +310,19 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes, bias_type):
     assert out_cube.aux_coords == ref_cubes[0].aux_coords
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS)
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
 @pytest.mark.parametrize("keep_ref", [True, False])
 def test_bias_products_and_ref_cube(
-    regular_cubes, ref_cubes, keep_ref, bias_type, data, units
+    regular_cubes,
+    ref_cubes,
+    keep_ref,
+    bias_type,
+    data,
+    units,
 ):
     """Test calculation of bias with products and ref_cube given."""
     ref_cube = ref_cubes[0]
-    products = set([PreprocessorFile(regular_cubes, "A", {"dataset": "a"})])
+    products = {PreprocessorFile(regular_cubes, "A", {"dataset": "a"})}
 
     out_products = bias(
         products,
@@ -312,6 +349,41 @@ def test_bias_products_and_ref_cube(
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     product_a.wasderivedfrom.assert_not_called()
     assert product_a.mock_ancestors == set()
+
+
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
+def test_bias_cubes_preserve_metadata(
+    regular_cubes,
+    ref_cubes,
+    bias_type,
+    data,
+    units,
+):
+    """Test calculation of bias with cubes."""
+    cube = regular_cubes[0]
+    ancillary_var = AncillaryVariable([0, 1], var_name="a")
+    cell_measure = CellMeasure([0, 1], var_name="c")
+    cube.add_ancillary_variable(ancillary_var, 0)
+    cube.add_cell_measure(cell_measure, 1)
+    ref_cube = ref_cubes[0]
+
+    out_cubes = bias(regular_cubes, ref_cube, bias_type=bias_type)
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == units
+    assert out_cube.dim_coords == cube.dim_coords
+    assert out_cube.aux_coords == cube.aux_coords
+    assert out_cube.ancillary_variables() == [ancillary_var]
+    assert out_cube.ancillary_variable_dims(ancillary_var) == (0,)
+    assert out_cube.cell_measures() == [cell_measure]
+    assert out_cube.cell_measure_dims(cell_measure) == (1,)
 
 
 def test_no_reference_for_bias(regular_cubes, ref_cubes):
@@ -353,8 +425,8 @@ def test_invalid_bias_type(regular_cubes, ref_cubes):
         bias(products, bias_type="invalid_bias_type")
 
 
-def test_reference_none_cubes(regular_cubes):
-    """Test reference=None with with cubes."""
+def test_bias_reference_none_cubes(regular_cubes):
+    """Test bias with reference=None and cubes given."""
     msg = (
         "A list of Cubes is given to this preprocessor; please specify a "
         "`reference`"
@@ -380,11 +452,13 @@ AREA_WEIGHTS = CellMeasure(
 
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize(
-    "metric,data,ref_data,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "data", "ref_data", "long_name", "var_name", "units"),
+    TEST_DISTANCE_METRICS,
 )
-def test_distance_metric(
+def test_distance_metric(  # noqa: PLR0913, PLR0915
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     data,
     ref_data,
@@ -400,7 +474,9 @@ def test_distance_metric(
             regular_cubes[0].cell_measure("cell_area").lazy_data()
         )
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_metric": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_metric": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
@@ -475,7 +551,9 @@ def test_distance_metric(
     assert not out_cube.has_lazy_data()
     # an rtol=1e-6 is needed for numpy >=2.0
     assert_allclose(
-        out_cube.data, np.array(ref_data, dtype=np.float32), rtol=1e-6
+        out_cube.data,
+        np.array(ref_data, dtype=np.float32),
+        rtol=1e-6,
     )
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -505,16 +583,25 @@ TEST_DISTANCE_METRICS_LAZY = [
 
 
 @pytest.mark.parametrize(
-    "metric,data,long_name,var_name,units", TEST_DISTANCE_METRICS_LAZY
+    ("metric", "data", "long_name", "var_name", "units"),
+    TEST_DISTANCE_METRICS_LAZY,
 )
 def test_distance_metric_lazy(
-    regular_cubes, ref_cubes, metric, data, long_name, var_name, units
+    regular_cubes,
+    ref_cubes,
+    metric,
+    data,
+    long_name,
+    var_name,
+    units,
 ):
     """Test `distance_metric` with lazy data."""
     regular_cubes[0].data = da.array(regular_cubes[0].data)
     ref_cubes[0].data = da.array(ref_cubes[0].data)
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_metric": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_metric": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
@@ -564,14 +651,15 @@ def test_distance_metric_lazy(
 
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize(
-    "metric,data,_,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "data", "long_name", "var_name", "units"),
+    [t[:2] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_cubes(
+def test_distance_metric_cubes(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     data,
-    _,
     long_name,
     var_name,
     units,
@@ -609,14 +697,15 @@ def test_distance_metric_cubes(
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
 @pytest.mark.parametrize(
-    "metric,data,_,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "data", "long_name", "var_name", "units"),
+    [t[:2] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_masked_data(
+def test_distance_metric_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
+    *,
     metric,
     data,
-    _,
     long_name,
     var_name,
     units,
@@ -644,13 +733,14 @@ def test_distance_metric_masked_data(
         constant_values=np.nan,
     )
     cube = Cube(
-        np.ma.masked_invalid(cube_data), dim_coords_and_dims=coord_specs
+        np.ma.masked_invalid(cube_data),
+        dim_coords_and_dims=coord_specs,
     )
     cube.metadata = regular_cubes[0].metadata
     cube.add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
     if lazy_weights:
         cube.cell_measure("cell_area").data = cube.cell_measure(
-            "cell_area"
+            "cell_area",
         ).lazy_data()
 
     # Ref cube
@@ -701,14 +791,14 @@ def test_distance_metric_masked_data(
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
 @pytest.mark.parametrize(
-    "metric,_,__,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "long_name", "var_name", "units"),
+    [t[:1] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_fully_masked_data(
+def test_distance_metric_fully_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
+    *,
     metric,
-    _,
-    __,
     long_name,
     var_name,
     units,
@@ -721,7 +811,7 @@ def test_distance_metric_fully_masked_data(
     cube.add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
     if lazy_weights:
         cube.cell_measure("cell_area").data = cube.cell_measure(
-            "cell_area"
+            "cell_area",
         ).lazy_data()
     ref_cube = ref_cubes[0]
 
@@ -859,7 +949,7 @@ def test_distance_metric_non_matching_dims(regular_cubes, metric):
 
 
 @pytest.mark.parametrize(
-    "metric,error",
+    ("metric", "error"),
     [
         ("rmse", False),
         ("weighted_rmse", True),
@@ -889,3 +979,385 @@ def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
             reference=ref_cube,
             coords=["time", "latitude"],
         )
+
+
+def assert_correct_p_value(
+    cube: Cube,
+    data: Any,  # noqa: ANN401
+    *,
+    dims: tuple[int, ...],
+    is_lazy: bool = False,
+) -> None:
+    assert len(cube.ancillary_variables()) == 1
+    p_value = cube.ancillary_variables()[0]
+    assert p_value.standard_name is None
+    assert p_value.long_name == "p-value"
+    assert p_value.var_name == "pvalue"
+    assert p_value.units == "1"
+    assert p_value.attributes == {}
+    assert p_value.has_lazy_data() is is_lazy
+    assert p_value.dtype == np.float32
+    print("p-value:", p_value.data)
+    if np.ma.is_masked(data):
+        np.testing.assert_equal(p_value.data.mask, data.mask)
+    np.testing.assert_allclose(p_value.data, data)
+    assert cube.ancillary_variable_dims(p_value) == dims
+
+
+@pytest.mark.parametrize("use_reference_product", [True, False])
+def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # noqa: PLR0915
+    products = {
+        PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
+        PreprocessorFile(regular_cubes, "B", {"dataset": "b"}),
+    }
+
+    if use_reference_product:
+        ref_product = PreprocessorFile(
+            ref_cubes,
+            "REF",
+            {"reference_for_t_test": True},
+        )
+        products.add(ref_product)
+        expected_ancestors = {ref_product}
+        reference = None
+    else:
+        expected_ancestors = set()
+        reference = ref_cubes[0]
+
+    out_products = t_test(products, reference=reference, coords=["time"])
+
+    assert isinstance(out_products, set)
+    out_dict = products_set_to_dict(out_products)
+    assert len(out_dict) == len(products)
+
+    product_a = out_dict["A"]
+    assert product_a.filename == "A"
+    assert product_a.attributes == {"dataset": "a"}
+    assert len(product_a.cubes) == 1
+    out_cube = product_a.cubes[0]
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, regular_cubes[0].data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(
+        out_cube,
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
+        dims=(1, 2),
+    )
+    assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
+    assert product_a.mock_ancestors == expected_ancestors
+
+    product_b = out_dict["B"]
+    assert product_b.filename == "B"
+    assert product_b.attributes == {"dataset": "b"}
+    assert len(product_b.cubes) == 1
+    out_cube = product_b.cubes[0]
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, regular_cubes[0].data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(
+        out_cube,
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
+        dims=(1, 2),
+    )
+    assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
+    assert product_b.mock_ancestors == expected_ancestors
+
+    if use_reference_product:
+        product_ref = out_dict["REF"]
+        assert product_ref.filename == "REF"
+        assert product_ref.attributes == {"reference_for_t_test": True}
+        assert len(product_ref.cubes) == 1
+        out_cube = product_ref.cubes[0]
+        assert out_cube.dtype == np.float32
+        assert_allclose(out_cube.data, ref_cubes[0].data)
+        assert out_cube.var_name == "tas"
+        assert out_cube.standard_name == "air_temperature"
+        assert out_cube.units == "K"
+        assert out_cube.dim_coords == ref_cubes[0].dim_coords
+        assert out_cube.aux_coords == ref_cubes[0].aux_coords
+        assert out_cube.ancillary_variables() == []
+        product_ref.wasderivedfrom.assert_not_called()
+        assert product_ref.mock_ancestors == set()
+
+
+@pytest.mark.parametrize("coords_as_str", [True, False])
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy, coords_as_str):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1))
+        ref_cube.data = ref_cube.lazy_data().rechunk((1, 1, 1))
+    coords = ["time"] if coords_as_str else [cube.coord("time")]
+
+    out_cubes = t_test([cube], ref_cube, coords=coords)
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(
+        out_cube,
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
+        dims=(1, 2),
+        is_lazy=lazy,
+    )
+
+
+@pytest.mark.parametrize(
+    ("dims", "p_value", "out_dims"),
+    [
+        ((0, 1), [0.4950256049633026, 0.34128352999687195], (2,)),
+        ((0, 2), [0.7026968598365784, 0.1957930326461792], (1,)),
+    ],
+)
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_2d(
+    regular_cubes,
+    ref_cubes,
+    lazy,
+    dims,
+    p_value,
+    out_dims,
+):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    x_coord = AuxCoord([[0, 0], [0, 0]], var_name="x")
+    cube.add_aux_coord(x_coord, dims)
+    ref_cube.add_aux_coord(x_coord, dims)
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1))
+        ref_cube.data = ref_cube.lazy_data().rechunk((1, 1, 1))
+
+    out_cubes = t_test([cube], reference=ref_cube, coords=["x"])
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(out_cube, p_value, dims=out_dims, is_lazy=lazy)
+
+
+@pytest.mark.parametrize(
+    ("coords", "p_value", "out_dims"),
+    [
+        (
+            ("time", "latitude"),
+            [0.4950256049633026, 0.34128352999687195],
+            (2,),
+        ),
+        (
+            ("time", "longitude"),
+            [0.7026968598365784, 0.1957930326461792],
+            (1,),
+        ),
+    ],
+)
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_multiple_coords(
+    regular_cubes,
+    ref_cubes,
+    lazy,
+    coords,
+    p_value,
+    out_dims,
+):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if lazy:
+        cube.data = cube.lazy_data()
+        ref_cube.data = ref_cube.lazy_data()
+
+    out_cubes = t_test([cube], reference=ref_cube, coords=coords)
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(out_cube, p_value, dims=out_dims, is_lazy=lazy)
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_scalar_result(regular_cubes, ref_cubes, lazy):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1))
+        ref_cube.data = ref_cube.lazy_data().rechunk((1, 1, 1))
+
+    out_cubes = t_test(
+        [cube],
+        ref_cube,
+        equal_var=True,
+    )
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == cube.dim_coords
+    assert out_cube.aux_coords == cube.aux_coords
+    assert_correct_p_value(
+        out_cube,
+        [0.1872035712003708],
+        dims=(),
+        is_lazy=lazy,
+    )
+
+
+@pytest.mark.parametrize("ref_lazy", [True, False])
+def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if ref_lazy:
+        ref_cube.data = ref_cube.lazy_data()
+    else:
+        cube.data = cube.lazy_data()
+
+    out_cubes = t_test([cube], ref_cube, coords=["time"])
+
+    assert cube.has_lazy_data() is not ref_lazy
+    assert ref_cube.has_lazy_data() is ref_lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is not ref_lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(
+        out_cube,
+        [[1.0, 0.7048326730728149], [0.4999999701976776, 0.4931325912475586]],
+        dims=(1, 2),
+    )
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_masked(regular_cubes, ref_cubes, lazy):
+    cube = regular_cubes[0]
+    cube.data = np.ma.masked_inside(cube.data, 1.5, 3.5)
+    cube.data = np.ma.masked_greater(cube.data, 6.5)
+    ref_cube = ref_cubes[0]
+    ref_cube.data = np.ma.masked_invalid(
+        np.array(
+            [[[2.0, np.nan], [2.0, 2.0]], [[2.0, 2.0], [2.0, 2.0]]],
+            dtype=np.float32,
+        ),
+    )
+    if lazy:
+        cube.data = cube.lazy_data()
+        ref_cube.data = ref_cube.lazy_data()
+
+    out_cubes = t_test([cube], ref_cube, coords=["time"])
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(
+        out_cube,
+        np.ma.masked_invalid([[1.0, np.nan], [np.nan, np.nan]]),
+        dims=(1, 2),
+        is_lazy=lazy,
+    )
+
+
+def test_t_test_reference_none_cubes_fail(regular_cubes):
+    """Test t_test with reference=None and cubes given."""
+    msg = (
+        r"A list of Cubes is given to this preprocessor; please specify a "
+        r"`reference`"
+    )
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        t_test(regular_cubes)
+
+
+def test_no_reference_for_t_test_fail(regular_cubes, ref_cubes):
+    """Test fail when no reference_for_t_test is given."""
+    products = {
+        PreprocessorFile(regular_cubes, "A", {}),
+        PreprocessorFile(regular_cubes, "B", {}),
+        PreprocessorFile(ref_cubes, "REF", {}),
+    }
+    msg = r"Expected exactly 1 dataset with 'reference_for_t_test: true', found 0"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        t_test(products)
+
+
+def test_two_references_for_t_test_fail(regular_cubes, ref_cubes):
+    """Test fail when two reference_for_t_test products are given."""
+    products = {
+        PreprocessorFile(regular_cubes, "A", {"reference_for_t_test": False}),
+        PreprocessorFile(ref_cubes, "REF1", {"reference_for_t_test": True}),
+        PreprocessorFile(ref_cubes, "REF2", {"reference_for_t_test": True}),
+    }
+    msg = r"Expected exactly 1 dataset with 'reference_for_t_test: true', found 2"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        t_test(products)

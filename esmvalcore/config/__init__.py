@@ -13,10 +13,37 @@
 
 """
 
-from ._config_object import CFG, Config, Session
+import contextlib
+from pathlib import Path, PosixPath
+
+import iris
+import yaml.representer
+
+from esmvalcore.config._config_object import CFG, Config, Session
 
 __all__ = (
     "CFG",
     "Config",
     "Session",
 )
+
+# Set iris.FUTURE flags
+for attr, value in {
+    "save_split_attrs": True,
+    "date_microseconds": True,
+}.items():
+    with contextlib.suppress(AttributeError):
+        setattr(iris.FUTURE, attr, value)
+
+
+# Add a representer for pathlib objects to the YAML library.
+def path_representer(
+    dumper: yaml.representer.SafeRepresenter,
+    data: Path | PosixPath,
+) -> yaml.representer.ScalarNode:
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)

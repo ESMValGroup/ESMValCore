@@ -5,7 +5,41 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-import esmvalcore.preprocessor._derive.ctotal as ctotal
+from esmvalcore.preprocessor._derive import ctotal
+
+
+@pytest.mark.parametrize(
+    ("project", "out"),
+    [
+        (
+            "CMIP5",
+            [
+                {"short_name": "cVeg", "mip": "Lmon"},
+                {"short_name": "cSoil", "mip": "Lmon"},
+            ],
+        ),
+        (
+            "CMIP6",
+            [
+                {"short_name": "cVeg", "mip": "Lmon"},
+                {"short_name": "cSoil", "mip": "Emon"},
+            ],
+        ),
+    ],
+)
+def test_required(project, out):
+    """Test function ``required``."""
+    derived_var = ctotal.DerivedVariable()
+    output = derived_var.required({"project": project})
+    assert output == out
+
+
+def test_required_not_supported_project():
+    """Test function ``required``."""
+    derived_var = ctotal.DerivedVariable()
+    msg = r"Project CMIP7 cannot be used for derivation of 'ctotal'"
+    with pytest.raises(ValueError, match=msg):
+        derived_var.required({"project": "CMIP7"})
 
 
 @pytest.fixture
@@ -42,7 +76,8 @@ def _run_test(cubes):
     derived_var = ctotal.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     np.testing.assert_allclose(
-        out_cube.data, np.array([[11.0, 22.0], [50.0, 120.0]])
+        out_cube.data,
+        np.array([[11.0, 22.0], [50.0, 120.0]]),
     )
     assert out_cube.units == Unit("kg m-2")
 

@@ -3,7 +3,7 @@
 from iris import NameConstraint
 from iris.exceptions import ConstraintMismatchError
 
-from ..native_datasets import NativeDatasetFix
+from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 
 
 class EmacFix(NativeDatasetFix):
@@ -14,14 +14,12 @@ class EmacFix(NativeDatasetFix):
         # If no var_name given, use the CMOR short_name
         if var_name is None:
             var_name = self.extra_facets.get(
-                "raw_name", self.vardef.short_name
+                "raw_name",
+                self.vardef.short_name,
             )
 
         # Convert to list if only a single var_name is given
-        if isinstance(var_name, str):
-            var_names = [var_name]
-        else:
-            var_names = var_name
+        var_names = [var_name] if isinstance(var_name, str) else var_name
 
         # Try to extract the variable (prioritize variables as given by the
         # list)
@@ -32,12 +30,13 @@ class EmacFix(NativeDatasetFix):
                 pass
 
         # If no cube could be extracted, raise an error
-        raise ValueError(
+        msg = (
             f"No variable of {var_names} necessary for the extraction/"
             f"derivation the CMOR variable '{self.vardef.short_name}' is "
             f"available in the input file. Please specify a valid `raw_name` "
-            f"in the recipe or extra facets file."
+            f"in the recipe or as extra facets."
         )
+        raise ValueError(msg)
 
 
 class NegateData(EmacFix):

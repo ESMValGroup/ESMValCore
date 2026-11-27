@@ -1,0 +1,21 @@
+!============
+variable_entry:    lapserate
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             K km-1
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Lapse Rate
+comment:           Atmospheric lapse rate calculated as -dT/dz in K per km.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude plevs time
+out_name:          lapserate
+type:              real
+!----------------------------------
+!

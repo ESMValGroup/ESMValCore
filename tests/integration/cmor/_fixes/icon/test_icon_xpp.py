@@ -5,19 +5,22 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import DimCoord
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
+from iris.util import new_axis
 
 import esmvalcore.cmor._fixes.icon.icon_xpp
 from esmvalcore.cmor._fixes.fix import GenericFix
-from esmvalcore.cmor._fixes.icon._base_fixes import AllVarsBase, IconFix
+from esmvalcore.cmor._fixes.icon._base_fixes import AllVarsBase
 from esmvalcore.cmor._fixes.icon.icon_xpp import (
     AllVars,
     Clwvi,
     Evspsbl,
     Gpp,
+    Hfbasin,
     Hfls,
     Hfss,
+    Msftmz,
     Rlut,
     Rlutcs,
     Rsutcs,
@@ -27,17 +30,7 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
 )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
-
-
-@pytest.fixture(autouse=True)
-def tmp_cache_dir(monkeypatch, tmp_path):
-    """Use temporary path as cache directory for all tests in this module."""
-    monkeypatch.setattr(IconFix, "CACHE_DIR", tmp_path)
-
-
-# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
 
 @pytest.fixture
@@ -93,7 +86,7 @@ def cubes_regular_grid():
     return CubeList([cube])
 
 
-def _get_fix(mip, short_name, fix_name, session=None):
+def _get_fix(mip, short_name, fix_name, branding_suffix, session=None):
     """Load a fix from esmvalcore.cmor._fixes.icon.icon_xpp."""
     dataset = Dataset(
         project="ICON",
@@ -101,24 +94,40 @@ def _get_fix(mip, short_name, fix_name, session=None):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = "mon"
     extra_facets["exp"] = "amip"
-    vardef = get_var_info(project="ICON", mip=mip, short_name=short_name)
+    vardef = get_var_info(
+        project="ICON",
+        mip=mip,
+        short_name=short_name,
+        branding_suffix=branding_suffix,
+    )
     cls = getattr(esmvalcore.cmor._fixes.icon.icon_xpp, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets, session=session)
-    return fix
+    return cls(vardef, extra_facets=extra_facets, session=session)
 
 
-def get_fix(mip, short_name, session=None):
+def get_fix(mip, short_name, *, branding_suffix=None, session=None):
     """Load a variable fix from esmvalcore.cmor._fixes.icon.icon_xpp."""
     fix_name = short_name[0].upper() + short_name[1:]
-    return _get_fix(mip, short_name, fix_name, session=session)
+    return _get_fix(
+        mip,
+        short_name,
+        fix_name,
+        branding_suffix=branding_suffix,
+        session=session,
+    )
 
 
-def get_allvars_fix(mip, short_name, session=None):
+def get_allvars_fix(mip, short_name, *, branding_suffix=None, session=None):
     """Load the AllVars fix from esmvalcore.cmor._fixes.icon.icon_xpp."""
-    return _get_fix(mip, short_name, "AllVars", session=session)
+    return _get_fix(
+        mip,
+        short_name,
+        "AllVars",
+        branding_suffix=branding_suffix,
+        session=session,
+    )
 
 
 def fix_metadata(cubes, mip, short_name, session=None):
@@ -126,8 +135,7 @@ def fix_metadata(cubes, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def fix_data(cube, mip, short_name, session=None):
@@ -135,8 +143,7 @@ def fix_data(cube, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cube = fix.fix_data(cube)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cube = fix.fix_data(cube)
-    return cube
+    return fix.fix_data(cube)
 
 
 def check_ta_metadata(cubes):
@@ -183,7 +190,8 @@ def check_time(cube):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time.points, [54770.5])
     np.testing.assert_allclose(time.bounds, [[54755.0, 54786.0]])
@@ -342,7 +350,7 @@ def check_lat_lon(cube):
     check_mesh(mesh)
 
 
-def check_mesh(mesh):
+def check_mesh(mesh):  # noqa: PLR0915
     """Check the mesh."""
     assert mesh is not None
     assert mesh.var_name is None
@@ -418,7 +426,9 @@ def check_mesh(mesh):
     assert mesh_node_lat.units == "degrees_north"
     assert mesh_node_lat.attributes == {}
     np.testing.assert_allclose(
-        mesh_node_lat.points, [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0], rtol=1e-5
+        mesh_node_lat.points,
+        [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0],
+        rtol=1e-5,
     )
     assert mesh_node_lat.bounds is None
 
@@ -429,7 +439,9 @@ def check_mesh(mesh):
     assert mesh_node_lon.units == "degrees_east"
     assert mesh_node_lon.attributes == {}
     np.testing.assert_allclose(
-        mesh_node_lon.points, [0.0, 180.0, 270.0, 0.0, 90, 0.0], rtol=1e-5
+        mesh_node_lon.points,
+        [0.0, 180.0, 270.0, 0.0, 90, 0.0],
+        rtol=1e-5,
     )
     assert mesh_node_lon.bounds is None
 
@@ -496,19 +508,19 @@ def test_get_ch4clim_fix():
 def test_ch4clim_fix(cubes_regular_grid):
     """Test fix."""
     cube = cubes_regular_grid[0]
-    cube.var_name = "ch4Clim"
+    cube.var_name = "ch4"
     cube.units = "mol mol-1"
     cube.coord("time").units = "no_unit"
     cube.coord("time").attributes["invalid_units"] = "day as %Y%m%d.%f"
     cube.coord("time").points = [18500201.0]
     cube.coord("time").long_name = "wrong_time_name"
 
-    fix = get_allvars_fix("Amon", "ch4Clim")
+    fix = get_allvars_fix("Amon", "ch4", branding_suffix="Clim")
     fixed_cubes = fix.fix_metadata(cubes_regular_grid)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == "ch4Clim"
+    assert cube.var_name == "ch4"
     assert cube.standard_name == "mole_fraction_of_methane_in_air"
     assert cube.long_name == "Mole Fraction of CH4"
     assert cube.units == "mol mol-1"
@@ -519,7 +531,8 @@ def test_ch4clim_fix(cubes_regular_grid):
     assert time_coord.standard_name == "time"
     assert time_coord.long_name == "time"
     assert time_coord.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time_coord.points, [15.5])
     np.testing.assert_allclose(time_coord.bounds, [[0.0, 31.0]])
@@ -537,7 +550,7 @@ def test_get_clwvi_fix():
 def test_clwvi_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList(
-        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()]
+        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()],
     )
     cubes[0].var_name = "tqc_dia"
     cubes[1].var_name = "tqi_dia"
@@ -627,10 +640,58 @@ def test_gpp_fix(cubes_regular_grid):
         fixed_cube.data,
         [
             [
-                [0.0, 1.0 * 44.0095 / 1000],
-                [2.0 * 44.0095 / 1000, 3.0 * 44.0095 / 1000],
-            ]
+                [0.0, 1.0 * 12.011 / 1000],
+                [2.0 * 12.011 / 1000, 3.0 * 12.011 / 1000],
+            ],
         ],
+    )
+
+
+# Test hfbasin (for extra fix)
+
+
+def test_get_hfbasin_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Omon", "hfbasin")
+    assert fix == [Hfbasin(None), AllVars(None), GenericFix(None)]
+
+
+def test_hfbasin_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0][..., [0]]
+    cube.coord("latitude").var_name = "lat"
+    cubes = CubeList([cube.copy() * 0.0, cube.copy() * 1.0, cube.copy() * 2.0])
+    cubes[0].var_name = "atlantic_hfbasin"
+    cubes[0].long_name = "atlantic northward ocean heat transport"
+    cubes[0].units = "W"
+    cubes[1].var_name = "global_hfbasin"
+    cubes[1].long_name = "global northward ocean heat transport"
+    cubes[1].units = "W"
+    cubes[2].var_name = "pacific_hfbasin"
+    cubes[2].long_name = "indopacific northward ocean heat transport"
+    cubes[2].units = "W"
+
+    fixed_cubes = fix_metadata(cubes, "Omon", "hfbasin")
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "hfbasin"
+    assert cube.standard_name == "northward_ocean_heat_transport"
+    assert cube.long_name == "Northward Ocean Heat Transport"
+
+    assert cube.units == "W"
+    assert "positive" not in cube.attributes
+    assert "invalid_units" not in cube.attributes
+
+    np.testing.assert_equal(
+        cube.coord("region").points,
+        ["atlantic_arctic_ocean", "indian_pacific_ocean", "global_ocean"],
+    )
+
+    assert cube.shape == (1, 3, 2)
+    np.testing.assert_allclose(
+        cube.data,
+        [[[0.0, 0.0], [0.0, 4.0], [0.0, 2.0]]],
     )
 
 
@@ -694,6 +755,64 @@ def test_hfss_fix(cubes_regular_grid):
     np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
 
 
+# Test msftmz (for extra fix)
+
+
+def test_get_msftmz_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Omon", "msftmz")
+    assert fix == [Msftmz(None), AllVars(None), GenericFix(None)]
+
+
+def test_msftmz_fix(cubes_regular_grid):
+    """Test fix."""
+    depth_coord = AuxCoord(
+        10.0,
+        standard_name="depth",
+        long_name="depth below sea",
+        units="m",
+        attributes={"positive": "down"},
+    )
+    cube = cubes_regular_grid[0][..., [0]]
+    cube.coord("latitude").var_name = "lat"
+    cube.add_aux_coord(depth_coord, ())
+    cube = new_axis(cube, "depth")
+    cube.transpose([1, 0, 2, 3])
+    cubes = CubeList([cube.copy() * 0.0, cube.copy() * 1.0, cube.copy() * 2.0])
+    cubes[0].var_name = "atlantic_moc"
+    cubes[0].units = "kg s-1"
+    cubes[1].var_name = "pacific_moc"
+    cubes[1].units = "kg s-1"
+    cubes[2].var_name = "global_moc"
+    cubes[2].units = "kg s-1"
+
+    fixed_cubes = fix_metadata(cubes, "Omon", "msftmz")
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "msftmz"
+    assert (
+        cube.standard_name
+        == "ocean_meridional_overturning_mass_streamfunction"
+    )
+    assert cube.long_name == "Ocean Meridional Overturning Mass Streamfunction"
+
+    assert cube.units == "kg s-1"
+    assert "positive" not in cube.attributes
+    assert "invalid_units" not in cube.attributes
+
+    np.testing.assert_equal(
+        cube.coord("region").points,
+        ["atlantic_arctic_ocean", "indian_pacific_ocean", "global_ocean"],
+    )
+
+    assert cube.shape == (1, 3, 1, 2)
+    np.testing.assert_allclose(
+        cube.data,
+        [[[[0.0, 0.0]], [[0.0, 2.0]], [[0.0, 4.0]]]],
+    )
+
+
 # Test rlut (for extra fix)
 
 
@@ -733,7 +852,8 @@ def test_get_rlutcs_fix():
     assert fix == [Rlutcs(None), AllVars(None), GenericFix(None)]
 
 
-def test_rlutcs_fix(cubes_atm_3d):
+@pytest.mark.online
+def test_rlutcs_fix(cubes_atm_3d, session):
     """Test fix."""
     cube = cubes_atm_3d.extract_cube(NameConstraint(var_name="temp"))
     cube.var_name = "lwflx_up_clr"
@@ -741,7 +861,7 @@ def test_rlutcs_fix(cubes_atm_3d):
     cube.data = np.arange(1 * 47 * 8, dtype=np.float32).reshape(1, 47, 8)
     cubes = CubeList([cube])
 
-    fixed_cubes = fix_metadata(cubes, "Amon", "rlutcs")
+    fixed_cubes = fix_metadata(cubes, "Amon", "rlutcs", session=session)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -771,9 +891,10 @@ def test_get_rsdt_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsdt_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_rsdt_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "rsdt")
+    fix = get_allvars_fix("Amon", "rsdt", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -794,9 +915,10 @@ def test_get_rsut_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsut_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_rsut_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "rsut")
+    fix = get_allvars_fix("Amon", "rsut", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -820,7 +942,8 @@ def test_get_rsutcs_fix():
     assert fix == [Rsutcs(None), AllVars(None), GenericFix(None)]
 
 
-def test_rsutcs_fix(cubes_atm_3d):
+@pytest.mark.online
+def test_rsutcs_fix(cubes_atm_3d, session):
     """Test fix."""
     cube = cubes_atm_3d.extract_cube(NameConstraint(var_name="temp"))
     cube.var_name = "swflx_up_clr"
@@ -828,7 +951,7 @@ def test_rsutcs_fix(cubes_atm_3d):
     cube.data = np.arange(1 * 47 * 8, dtype=np.float32).reshape(1, 47, 8)
     cubes = CubeList([cube])
 
-    fixed_cubes = fix_metadata(cubes, "Amon", "rsutcs")
+    fixed_cubes = fix_metadata(cubes, "Amon", "rsutcs", session=session)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -861,7 +984,7 @@ def test_get_rtnt_fix():
 def test_rtnt_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList(
-        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()]
+        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()],
     )
     cubes[0].var_name = "sob_t"
     cubes[1].var_name = "thb_t"
@@ -893,7 +1016,7 @@ def test_get_rtmt_fix():
 def test_rtmt_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList(
-        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()]
+        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()],
     )
     cubes[0].var_name = "sob_t"
     cubes[1].var_name = "thb_t"
@@ -915,7 +1038,8 @@ def test_rtmt_fix(cubes_regular_grid):
     np.testing.assert_allclose(cube.data, [[[0.0, 2.0], [4.0, 6.0]]])
 
 
-# Test siconc (for extra_facets, removal of lev coord and  typesi coordinate)
+# Test siconc (for extra_facets, removal of lev/ice_class coord and typesi
+# coordinate)
 
 
 def test_get_siconc_fix():
@@ -924,31 +1048,35 @@ def test_get_siconc_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconc_fix(cubes_ocean_3d):
+@pytest.mark.online
+@pytest.mark.parametrize("z_coord_name", ["lev", "ice_class"])
+def test_siconc_fix(z_coord_name, cubes_ocean_3d, session):
     """Test fix."""
     cubes = CubeList(
-        [cubes_ocean_3d.extract_cube(NameConstraint(var_name="to")).copy()]
+        [cubes_ocean_3d.extract_cube(NameConstraint(var_name="to")).copy()],
     )
     cubes[0].var_name = "conc"
     cubes[0].units = None
 
-    # Add lev coord to test removal of it
+    # Add Z-coord to test removal of it
     cubes[0] = cubes[0][:, [0], :]
     cubes[0].remove_coord("depth")
-    cubes[0].add_dim_coord(DimCoord(0.0, var_name="lev"), 1)
+    cubes[0].add_dim_coord(DimCoord(0.0, var_name=z_coord_name), 1)
 
-    fix = get_allvars_fix("SImon", "siconc")
+    fix = get_allvars_fix("SImon", "siconc", session=session)
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_siconc_metadata(
-        fixed_cubes, "siconc", "Sea-Ice Area Percentage (Ocean Grid)"
+        fixed_cubes,
+        "siconc",
+        "Sea-Ice Area Percentage (Ocean Grid)",
     )
     check_time(cube)
     check_lat_lon(cube)
     check_typesi(cube)
 
     assert cube.shape == (1, 8)
-    assert not cube.coords(var_name="lev")
+    assert not cube.coords(var_name=z_coord_name)
 
     assert cube.dtype == np.float32
     np.testing.assert_allclose(
@@ -963,7 +1091,7 @@ def test_siconc_fix(cubes_ocean_3d):
                 18642.248,
                 18647.305,
                 18664.15,
-            ]
+            ],
         ],
     )
 
@@ -977,13 +1105,16 @@ def test_get_siconca_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconca_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_siconca_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("SImon", "siconca")
+    fix = get_allvars_fix("SImon", "siconca", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
-        fixed_cubes, "siconca", "Sea-Ice Area Percentage (Atmospheric Grid)"
+        fixed_cubes,
+        "siconca",
+        "Sea-Ice Area Percentage (Atmospheric Grid)",
     )
     check_time(cube)
     check_lat_lon(cube)
@@ -1004,9 +1135,10 @@ def test_get_ta_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_ta_fix(cubes_atm_3d):
+@pytest.mark.online
+def test_ta_fix(cubes_atm_3d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "ta")
+    fix = get_allvars_fix("Amon", "ta", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_3d)
 
     cube = check_ta_metadata(fixed_cubes)
@@ -1027,9 +1159,10 @@ def test_get_tas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_tas_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_tas_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
@@ -1051,7 +1184,7 @@ def test_tas_fix(cubes_atm_2d):
                 262.97803,
                 260.04846,
                 263.80975,
-            ]
+            ],
         ],
     )
 
@@ -1065,9 +1198,10 @@ def test_get_thetao_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_thetao_fix(cubes_ocean_3d):
+@pytest.mark.online
+def test_thetao_fix(cubes_ocean_3d, session):
     """Test fix."""
-    fix = get_allvars_fix("Omon", "thetao")
+    fix = get_allvars_fix("Omon", "thetao", session=session)
 
     fixed_cubes = fix.fix_metadata(cubes_ocean_3d)
 
@@ -1086,7 +1220,36 @@ def test_thetao_fix(cubes_ocean_3d):
     assert cube.shape == (1, 47, 8)
 
 
-def test_thetao_fix_already_bounds(cubes_ocean_3d):
+@pytest.mark.online
+def test_thetao_fix_switched_depth_coords(cubes_ocean_3d, session):
+    """Test fix."""
+    to_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    w_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="w"))
+    to_cube.coord("depth").var_name = "depth_2"
+    w_cube.coord("depth").var_name = "depth"
+    cubes = CubeList([to_cube, w_cube])
+
+    fix = get_allvars_fix("Omon", "thetao", session=session)
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+@pytest.mark.online
+def test_thetao_fix_already_bounds(cubes_ocean_3d, session):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
     cube.coord("depth").guess_bounds()
@@ -1095,7 +1258,7 @@ def test_thetao_fix_already_bounds(cubes_ocean_3d):
     cube.coord("depth").bounds = bounds
     cubes = CubeList([cube])
 
-    fix = get_allvars_fix("Omon", "thetao")
+    fix = get_allvars_fix("Omon", "thetao", session=session)
 
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1115,12 +1278,43 @@ def test_thetao_fix_already_bounds(cubes_ocean_3d):
     assert cube.shape == (1, 47, 8)
 
 
-def test_thetao_fix_no_bounds(cubes_ocean_3d):
+@pytest.mark.online
+def test_thetao_fix_no_bounds(cubes_ocean_3d, session):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
     cubes = CubeList([cube])
 
-    fix = get_allvars_fix("Omon", "thetao")
+    fix = get_allvars_fix("Omon", "thetao", session=session)
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert not depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+@pytest.mark.online
+def test_thetao_fix_no_bounds_invalid_depth_2(cubes_ocean_3d, session):
+    """Test fix."""
+    to_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    w_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="w"))[
+        :,
+        :40,
+        :,
+    ]
+    cubes = CubeList([to_cube, w_cube])
+
+    fix = get_allvars_fix("Omon", "thetao", session=session)
 
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1165,5 +1359,81 @@ def test_zg_fix(cubes_regular_grid):
     assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(
-        cube.data, [[[0.0, 0.10197162], [0.20394324, 0.30591486]]]
+        cube.data,
+        [[[0.0, 0.10197162], [0.20394324, 0.30591486]]],
     )
+
+
+# Test landfraction fixes
+
+
+def check_lfrac_auxcoord(cube, long_name):
+    assert cube.coords("area_type")
+    typelfrac = cube.coord("area_type")
+    assert typelfrac.standard_name == "area_type"
+    assert typelfrac.long_name == long_name
+
+
+def test_grassfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_grass_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "grassFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "grassFrac"
+    check_lfrac_auxcoord(fixed_cube, "Natural grass area type")
+
+
+def test_shrubfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_shrub_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "shrubFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "shrubFrac"
+    check_lfrac_auxcoord(fixed_cube, "Shrub area type")
+
+
+def test_baresoilfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_baresoil_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "baresoilFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "baresoilFrac"
+    check_lfrac_auxcoord(fixed_cube, "surface type")
+
+
+def test_treefrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_tree_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "treeFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "treeFrac"
+    check_lfrac_auxcoord(fixed_cube, "Tree area type")
+
+
+def test_cropfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "pplcc_crop_fract_box"
+    cubes[0].units = "1"
+    fix = get_allvars_fix("Lmon", "cropFrac")
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "cropFrac"
+    check_lfrac_auxcoord(fixed_cube, "Crop area type")

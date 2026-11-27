@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-import esmvalcore.preprocessor._derive.et as et
+from esmvalcore.preprocessor._derive import et
 
 
 @pytest.fixture
@@ -23,7 +23,8 @@ def test_et_calculation(cubes):
     derived_var = et.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     np.testing.assert_allclose(
-        out_cube.data, np.array([[0.03505071, 0.07010142], [0.0, -0.07010142]])
+        out_cube.data,
+        np.array([[0.03505071, 0.07010142], [0.0, -0.07010142]]),
     )
     assert out_cube.units == Unit("mm day-1")
     assert "positive" not in out_cube.attributes

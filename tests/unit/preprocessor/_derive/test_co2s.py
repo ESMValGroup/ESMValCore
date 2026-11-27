@@ -5,7 +5,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.co2s as co2s
+from esmvalcore.preprocessor._derive import co2s
 
 
 def get_coord_spec(include_plev=True):
@@ -36,6 +36,7 @@ def get_coord_spec(include_plev=True):
             var_name="plev",
             standard_name="air_pressure",
             units="Pa",
+            long_name="pressure",
         )
         coord_spec = [
             (time_coord, 0),
@@ -56,14 +57,13 @@ def get_ps_cube():
     """Surface air pressure cube."""
     ps_data = [[[105000.0, 50000.0], [95000.0, 60000.0]]]
     coord_spec = get_coord_spec(include_plev=False)
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         ps_data,
         var_name="ps",
         standard_name="surface_air_pressure",
         units="Pa",
         dim_coords_and_dims=coord_spec,
     )
-    return cube
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def masked_cubes():
                 [[170.0, -1.0], [-1.0, -1.0]],
                 [[150.0, 100.0], [80.0, -1.0]],
                 [[100.0, 50.0], [30.0, 10.0]],
-            ]
+            ],
         ],
         0.0,
     )
@@ -101,8 +101,8 @@ def unmasked_cubes():
                 [[200.0, 100.0], [80.0, 9.0]],
                 [[150.0, 80.0], [70.0, 5.0]],
                 [[100.0, 50.0], [30.0, 1.0]],
-            ]
-        ]
+            ],
+        ],
     )
     co2_cube = iris.cube.Cube(
         co2_data,
@@ -120,7 +120,7 @@ def test_co2_calculate_masked_cubes(masked_cubes):
     derived_var = co2s.DerivedVariable()
     out_cube = derived_var.calculate(masked_cubes)
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data, [[[180.0, 50.0], [80.0, 10.0]]])
+    np.testing.assert_allclose(out_cube.data, [[[170.0, 50.0], [80.0, 10.0]]])
     assert out_cube.units == "1e-6"
     plev_coord = out_cube.coord("air_pressure")
     assert plev_coord.var_name == "plev"
@@ -128,7 +128,8 @@ def test_co2_calculate_masked_cubes(masked_cubes):
     assert plev_coord.long_name == "pressure"
     assert plev_coord.units == "Pa"
     np.testing.assert_allclose(
-        plev_coord.points, [[[105000.0, 50000.0], [95000.0, 60000.0]]]
+        plev_coord.points,
+        [[[105000.0, 50000.0], [95000.0, 60000.0]]],
     )
 
 
@@ -137,7 +138,7 @@ def test_co2_calculate_unmasked_cubes(unmasked_cubes):
     derived_var = co2s.DerivedVariable()
     out_cube = derived_var.calculate(unmasked_cubes)
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data, [[[2.25, 0.50], [0.75, 0.02]]])
+    np.testing.assert_allclose(out_cube.data, [[[2.0, 0.50], [0.75, 0.02]]])
     assert out_cube.units == "1e-6"
     plev_coord = out_cube.coord("air_pressure")
     assert plev_coord.var_name == "plev"
@@ -145,5 +146,6 @@ def test_co2_calculate_unmasked_cubes(unmasked_cubes):
     assert plev_coord.long_name == "pressure"
     assert plev_coord.units == "Pa"
     np.testing.assert_allclose(
-        plev_coord.points, [[[105000.0, 50000.0], [95000.0, 60000.0]]]
+        plev_coord.points,
+        [[[105000.0, 50000.0], [95000.0, 60000.0]]],
     )

@@ -51,14 +51,13 @@ def test_get_nbp_fix():
 @pytest.fixture
 def nbp_cube():
     """``nbp`` cube."""
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [1.0],
         var_name="nbp",
         standard_name="surface_net_downward_mass_flux_of_carbon_dioxide"
         "_expressed_as_carbon_due_to_all_land_processes",
         units="kg m-2 s-1",
     )
-    return cube
 
 
 def test_nbp_fix_data(nbp_cube):

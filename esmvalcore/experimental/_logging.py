@@ -1,12 +1,18 @@
 """Logging utilities."""
 
+from __future__ import annotations
+
 import logging
 from contextlib import contextmanager
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from contextlib.abc import ContextManager
+    from pathlib import Path
 
 
 @contextmanager
-def log_to_dir(drc: Path):
+def log_to_dir(drc: Path) -> ContextManager[None]:
     """Log messages to the specified directory.
 
     This is a context manager to temporarily redirect the logging when
@@ -34,7 +40,7 @@ def log_to_dir(drc: Path):
     debug_log_file.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
         "%(asctime)s UTC [%(process)d] %(levelname)-7s"
-        " %(name)s:%(lineno)s %(message)s"
+        " %(name)s:%(lineno)s %(message)s",
     )
     debug_log_file.setFormatter(formatter)
 

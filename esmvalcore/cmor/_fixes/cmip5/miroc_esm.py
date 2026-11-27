@@ -5,8 +5,8 @@ from cf_units import Unit
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 Cl = ClFixHybridPressureCoord
 
@@ -97,7 +97,8 @@ class AllVars(Fix):
             # Fix time for files that contain year < 1 (which is not allowed)
             if cube.coords("time"):
                 expected_time_units = Unit(
-                    "days since 1950-1-1 00:00:00", calendar="gregorian"
+                    "days since 1950-1-1 00:00:00",
+                    calendar="gregorian",
                 )
                 if cube.coord("time").units != expected_time_units:
                     continue

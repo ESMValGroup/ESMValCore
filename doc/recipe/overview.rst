@@ -30,8 +30,11 @@ The documentation section includes:
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
   the :ref:`config-ref`)
-- the project or projects associated with the recipe (``projects``, matching
-  the definitions in the :ref:`config-ref`)
+- The research projects that funded the development of the recipe
+  (``projects``, matching the definitions in the :ref:`config-ref`).
+  These are not the same as the ``project`` facet of a dataset, which
+  describes the project that provides the data, such as ``CMIP6``
+  (refer to :ref:`Datasets`).
 
 For example, the documentation section of ``recipes/recipe_ocean_amoc.yml`` is
 the following:
@@ -60,9 +63,12 @@ the following:
 
 .. note::
 
-   Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the (locally installed copy of the) file
-   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
+   Note that all authors, maintainers, and projects mentioned in the
+   documentation section of the recipe need to be included in the (locally
+   installed copy of the) file
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_
+   and that each reference should have a bibtex file in the directory
+   `esmvaltool/references <https://github.com/ESMValGroup/ESMValTool/tree/main/esmvaltool/references>`_,
    see :ref:`config-ref`.
    The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
@@ -73,12 +79,13 @@ the following:
 Recipe section: ``datasets``
 ============================
 
-The ``datasets`` section includes dictionaries that, via key-value pairs or
-"facets", define standardized data specifications:
+The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
+define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
-- project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
-  ``OBS`` for observational data, ``ana4mips`` for ana4mips data,
+- project that provides the data (key ``project``, value e.g. ``CMIP7`` or
+  ``CMIP6`` for CMIP data,
+  ``OBS`` or ``OBS6`` for observational data, ``ana4MIPs`` for ana4MIPs data,
   ``obs4MIPs`` for obs4MIPs data, ``ICON`` for ICON data).
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``rcp85``).
@@ -109,6 +116,7 @@ For example, a datasets section could be:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: ACCESS-CM2, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: 'P5Y/*', grid: gn}
+      - {dataset: CCLM4-8-17, project: CORDEX, domain: EUR-11, driver: CNRM-CERFACS-CNRM-CM5, exp: historical, ensemble: r1i1p1, institute: CLMcom, rcm_version: v1, timerange: '2001/2004'}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: CMCC-CM2-SR5, project: CMIP6, exp: historical, ensemble: r1i1p1f1, timerange: '2001/P10Y', grid: gn}
       - {dataset: HadGEM3-GC31-MM, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
@@ -131,13 +139,13 @@ See :ref:`CMOR-DRS` for more information on this kind of file organization.
 When (some) files are available locally, the tool will not automatically look
 for more files on ESGF.
 To populate a recipe with all available datasets from ESGF, the
-:ref:`configuration option <config_options>` ``search_esgf`` should be set to
-``always``.
+:ref:`configuration option <config_options>` ``search_data`` should be set to
+``complete`` and an :ref:`ESGF data source <config-esgf>` needs to be configured.
 
 For more control over which datasets are selected, it is recommended to use
 a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose
 the recipe.
-See :ref:`/notebooks/composing-recipes.ipynb` for an example.
+See the :doc:`/notebooks/composing-recipes` notebook for an example.
 This is particularly useful when specific relations are required between
 datasets, e.g. when a dataset needs to be available for multiple variables
 or experiments.
@@ -247,7 +255,7 @@ Automatic definition of supplementary variables
 -----------------------------------------------
 
 If an ancillary variable or cell measure is
-:ref:`needed by a preprocessor function <preprocessors_using_supplementary_variables>`,
+:ref:`needed by a preprocessor function <add_supplementary_variables>`,
 but it is not specified in the recipe, the tool will automatically make a best
 guess using the syntax above.
 Usually this will work fine, but if it does not, it is recommended to explicitly
@@ -255,7 +263,7 @@ define the supplementary variables in the recipe.
 
 To disable this automatic addition, define the supplementary variable as usual,
 but add the special facet ``skip`` with value ``true``.
-See :ref:`preprocessors_using_supplementary_variables` for an example recipe.
+See :ref:`add_supplementary_variables` for an example recipe.
 
 Saving ancillary variables and cell measures
 --------------------------------------------
@@ -378,6 +386,112 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
 
+.. _dataset_alias:
+
+Dataset aliases
+---------------
+
+Each dataset has an alias: a short name that diagnostic scripts can use, for
+example in the legend of a plot.
+By default, ESMValCore creates the alias from the facets that differ between
+the datasets of a diagnostic, such as ``project``, ``exp``, ``dataset``, and
+``ensemble``.
+Use the ``alias`` key to choose the alias of a dataset yourself.
+For example, the aliases of the following datasets are ``example`` (manually set),
+``MPI-ESM1-2-LR_r1i1p1f1``, and ``MPI-ESM1-2-LR_r2i1p1f1`` (automatically generated):
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: CanESM5, alias: example, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r2i1p1f1, grid: gn}
+
+.. _cordex_datasets:
+
+CORDEX datasets
+---------------
+
+The horizontal coordinates of CORDEX data are often not accurate. Therefore,
+the tool provides the option to specify that the standard CORDEX grid for the
+domain should be used instead of the grid defined in the files. This can be
+enabled by adding ``use_standard_grid: true`` and disabled by adding
+``use_standard_grid: false`` to the dataset definition of the CORDEX data.
+
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - dataset: CCLM4-8-17
+      rcm_version: v1
+      driver: CNRM-CERFACS-CNRM-CM5
+      institute: CLMcom
+      project: CORDEX
+      domain: EUR-11
+      exp: historical
+      ensemble: r1i1p1
+      use_standard_grid: true
+
+will use the standard CORDEX grid for the EUR-11 domain, as defined by the
+`py-cordex <https://py-cordex.readthedocs.io>`_ package for datasets on a
+rotated pole grid. For datasets on a Lambert conformal grid, ESMValCore provides
+an algorithm to calculate the standard grid, but this only works if the
+`grid mapping <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#grid-mappings-and-projections>`_
+is correct.
+
+This feature is disabled by default, but enabled by default for models with
+known issues through the default
+`CORDEX extra facets file <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/configurations/defaults/extra_facets_cordex.yml>`__.
+
+.. warning::
+
+  If ``use_standard_grid: true`` is used, the tool will overwrite the existing grid
+  information. It is recommended to visualize the resulting data and compare it
+  to easily recognizable features (e.g. coastlines) to make sure the grid is
+  correct before using it in an aggregated manner.
+
+  Example Python script to visualize the grid of a CORDEX dataset and compare it
+  to coastlines:
+
+  .. code-block:: python
+
+      from esmvalcore.dataset import Dataset
+      import iris.quickplot
+      import matplotlib.pyplot as plt
+
+      ds = Dataset(
+          short_name="sftlf",
+          mip="fx",
+          project="CORDEX",
+          domain="EUR-11",
+          dataset="ALADIN63",
+          driver="CNRM-CERFACS-CNRM-CM5",
+          institute="CNRM",
+          exp="historical",
+          ensemble="r1i1p1",
+          rcm_version="v2",
+          use_standard_grid=True,
+      )
+      cube = ds.load()
+
+      plt.figure()
+      iris.quickplot.pcolormesh(
+          cube,
+          coords=["projection_x_coordinate", "projection_y_coordinate"],
+      )
+      plt.gca().coastlines()
+
+      plt.figure()
+      iris.quickplot.pcolormesh(
+          cube,
+          coords=["longitude", "latitude"],
+      )
+      plt.gca().coastlines()
+
+      plt.show()
+
+
 .. _`yaml`: https://yaml.org/refcard.html
 
 .. _Preprocessors:
@@ -435,9 +549,11 @@ Recipe section: ``diagnostics``
 The diagnostics section includes one or more diagnostics. Each diagnostic
 section will include:
 
-- the variable(s) to preprocess, including the preprocessor to be applied to each variable;
+- the :ref:`variable(s) <cmor_tables>` to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
-- a description of the diagnostic and lists of themes and realms that it applies to;
+- a description of the diagnostic and lists of themes and realms that it applies to,
+  as defined in :ref:`config-ref`. These are passed on to the diagnostic
+  scripts, which can use them to record provenance;
 - an optional ``additional_datasets`` section.
 - an optional ``title`` and ``description``, used to generate the title and description
   in the ``index.html`` output file.
@@ -493,7 +609,7 @@ Depending on the installation configuration, you may get an error of
 using relative paths. If this happens, use an absolute path instead.
 
 Note that the script should either have the extension for a supported language,
-i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
+i.e. ``.py``, ``.R``, or ``.ncl`` for Python, R, and NCL diagnostics
 respectively, or be executable if it is written in any other language.
 
 .. _ancestor-tasks:
@@ -563,7 +679,7 @@ running the tool (a lower number means higher priority).
 
 Variable and dataset definitions
 --------------------------------
-To define a variable/dataset combination that corresponds to an actual
+To define a :ref:`variable <cmor_tables>`/dataset combination that corresponds to an actual
 variable from a dataset, the keys in each variable section
 are combined with the keys of each dataset definition. If two versions of the same
 key are provided, then the key in the datasets section will take precedence
@@ -695,6 +811,8 @@ the absolute path to the diagnostic:
 This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
+.. _recipe_reuse_parameters:
+
 Reusing parameters from one ``script`` to another
 -------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
@@ -715,3 +833,7 @@ for use with other diagnostics. Here is an example:
 
 In this example the hook ``&cycle_settings`` can be used to pass the ``cycle:``
 parameters to ``grading:`` via the shortcut ``<<: *cycle_settings``.
+
+To merge several mappings, use a single merge key with a list of mappings, for
+example ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
+Note that the first mapping in the list has priority.

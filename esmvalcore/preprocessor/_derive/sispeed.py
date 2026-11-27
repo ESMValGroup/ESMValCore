@@ -1,18 +1,28 @@
 """Derivation of variable `sispeed`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from iris import Constraint
 from loguru import logger
 
-from .._regrid import regrid
+from esmvalcore.preprocessor._regrid import regrid
+
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sispeed`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
+        project = facets["project"]
+        required: list[Facets]
         if project == "CMIP6":
             required = [{"short_name": "siu"}, {"short_name": "siv"}]
         else:

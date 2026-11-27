@@ -1,7 +1,7 @@
 """Fixes for CMIP6 UKESM1-0-LL."""
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):
@@ -26,7 +26,7 @@ class AllVars(Fix):
             try:
                 if cube.attributes[parent_units] == bad_value:
                     cube.attributes[parent_units] = "days since 1850-01-01"
-            except AttributeError:
+            except KeyError:
                 pass
         return cubes
 

@@ -1,15 +1,22 @@
 """Derivation of variable ``toz``."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cf_units
 import iris
 from scipy import constants
 
-from esmvalcore.cmor.table import CMOR_TABLES
+import esmvalcore.cmor.table
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._regrid import extract_levels, regrid
 
-from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 # Constants
 AVOGADRO_CONST = constants.value("Avogadro constant")
@@ -23,7 +30,7 @@ MW_O3_UNIT = cf_units.Unit("g mol^-1")
 DOBSON_UNIT = cf_units.Unit("2.69e20 m^-2")
 
 
-def add_longitude_coord(cube, ps_cube=None):
+def add_longitude_coord(cube):
     """Add dimensional ``longitude`` coordinate of length 1 to cube."""
     lon_coord = iris.coords.DimCoord(
         [180.0],
@@ -48,22 +55,27 @@ def add_longitude_coord(cube, ps_cube=None):
 def interpolate_hybrid_plevs(cube):
     """Interpolate hybrid pressure levels."""
     # Use CMIP6's plev19 target levels (in Pa)
-    target_levels = CMOR_TABLES["CMIP6"].coords["plev19"].requested
-    cube.coord("air_pressure").convert_units("Pa")
-    cube = extract_levels(
-        cube, target_levels, "linear", coordinate="air_pressure"
+    target_levels = (
+        esmvalcore.cmor.table.CMOR_TABLES["CMIP6"].coords["plev19"].requested
     )
-    return cube
+    cube.coord("air_pressure").convert_units("Pa")
+    return extract_levels(
+        cube,
+        target_levels,
+        "linear",
+        coordinate="air_pressure",
+    )
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable ``toz``."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
-        # TODO: make get_required _derive/__init__.py use variables as argument
-        # and make this dependent on mip
+        # TODO: make this dependent on mip
+        project = facets["project"]
+        required: list[Facets]
         if project == "CMIP6":
             required = [
                 {"short_name": "o3"},
@@ -87,10 +99,10 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name="mole_fraction_of_ozone_in_air")
+            iris.Constraint(name="mole_fraction_of_ozone_in_air"),
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name="surface_air_pressure")
+            iris.Constraint(name="surface_air_pressure"),
         )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),

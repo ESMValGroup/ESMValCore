@@ -52,7 +52,8 @@ def test_allvars_fix_correct_air_pressure_pa():
     assert out_cubes[0] == cubes[0]
     assert out_cubes[0].coord("air_pressure").units == "Pa"
     np.testing.assert_allclose(
-        out_cubes[0].coord("air_pressure").points, [100000.0, 80000.0]
+        out_cubes[0].coord("air_pressure").points,
+        [100000.0, 80000.0],
     )
 
 
@@ -72,7 +73,8 @@ def test_allvars_fix_correct_air_pressure_hpa():
     assert out_cubes[0] == cubes[0]
     assert out_cubes[0].coord("air_pressure").units == "hPa"
     np.testing.assert_allclose(
-        out_cubes[0].coord("air_pressure").points, [1000.0, 800.0]
+        out_cubes[0].coord("air_pressure").points,
+        [1000.0, 800.0],
     )
 
 
@@ -92,5 +94,6 @@ def test_allvars_fix_incorrect_air_pressure():
     assert out_cubes[0] != cubes[0]
     assert out_cubes[0].coord("air_pressure").units == "Pa"
     np.testing.assert_allclose(
-        out_cubes[0].coord("air_pressure").points, [100000.0, 80000.0]
+        out_cubes[0].coord("air_pressure").points,
+        [100000.0, 80000.0],
     )

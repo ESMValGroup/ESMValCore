@@ -1,19 +1,26 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import iris
 import numpy as np
 import pyesgf.search.results
 import pytest
+import yaml
 
 import esmvalcore
 import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.config
 import esmvalcore.experimental.recipe_output
 from esmvalcore.dataset import Dataset
-from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.esgf._download import ESGFFile
 from tests import PreprocessorFile
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 class MockRecipe(_recipe.Recipe):
@@ -39,7 +46,7 @@ TEST_ALLOW_SKIPPING = [
 ]
 
 
-@pytest.mark.parametrize("var,cfg,out", TEST_ALLOW_SKIPPING)
+@pytest.mark.parametrize(("var", "cfg", "out"), TEST_ALLOW_SKIPPING)
 def test_allow_skipping(var, cfg, out):
     """Test ``_allow_skipping``."""
     dataset = Dataset(**var)
@@ -78,7 +85,11 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
-        recipe, diagnostic_name, diagnostic, [], True
+        recipe,
+        diagnostic_name,
+        diagnostic,
+        [],
+        True,
     )
 
     assert tasks == [resume_task]
@@ -107,16 +118,18 @@ def create_esgf_search_results():
                     "source_id": ["EC-Earth3"],
                     "title": "tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_185001-185012.nc",
                     "url": [
-                        "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
-                        "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
-                        "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
-                        "_historical_r1i1p1f1_gr_185001-185012.nc"
-                        "|application/netcdf|HTTPServer",
+                        (
+                            "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
+                            "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
+                            "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
+                            "_historical_r1i1p1f1_gr_185001-185012.nc"
+                            "|application/netcdf|HTTPServer"
+                        ),
                     ],
                 },
                 context=None,
-            )
-        ]
+            ),
+        ],
     )
     file1 = ESGFFile(
         [
@@ -129,66 +142,21 @@ def create_esgf_search_results():
                     "source_id": ["EC-Earth3"],
                     "title": "tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_185101-185112.nc",
                     "url": [
-                        "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
-                        "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
-                        "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
-                        "_historical_r1i1p1f1_gr_185101-185112.nc"
-                        "|application/netcdf|HTTPServer",
+                        (
+                            "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
+                            "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
+                            "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
+                            "_historical_r1i1p1f1_gr_185101-185112.nc"
+                            "|application/netcdf|HTTPServer"
+                        ),
                     ],
                 },
                 context=None,
-            )
-        ]
+            ),
+        ],
     )
 
     return [file0, file1]
-
-
-@pytest.mark.parametrize("local_availability", ["all", "partial", "none"])
-def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
-    """Test that `_schedule_for_download` updates DOWNLOAD_FILES."""
-    esgf_files = create_esgf_search_results()
-    download_dir = tmp_path / "download_dir"
-    local_dir = Path("/local_dir")
-
-    # Local files can cover the entire period, part of it, or nothing
-    local_file_options = {
-        "all": [f.local_file(local_dir) for f in esgf_files],
-        "partial": [esgf_files[1].local_file(local_dir)],
-        "none": [],
-    }
-    local_files = local_file_options[local_availability]
-
-    variable = {
-        "project": "CMIP6",
-        "mip": "Amon",
-        "frequency": "mon",
-        "short_name": "tas",
-        "dataset": "EC.-Earth3",
-        "exp": "historical",
-        "ensemble": "r1i1p1f1",
-        "grid": "gr",
-        "timerange": "1850/1851",
-        "alias": "CMIP6_EC-Eeath3_tas",
-    }
-    dataset = Dataset(**variable)
-    files = {
-        "all": local_files,
-        "partial": local_files + esgf_files[:1],
-        "none": esgf_files,
-    }
-    dataset.session = {"download_dir": download_dir}
-    dataset.files = list(files[local_availability])
-
-    monkeypatch.setattr(_recipe, "DOWNLOAD_FILES", set())
-    _recipe._schedule_for_download([dataset])
-    print(esgf_files)
-    expected = {
-        "all": set(),
-        "partial": set(esgf_files[:1]),
-        "none": set(esgf_files),
-    }
-    assert _recipe.DOWNLOAD_FILES == expected[local_availability]
 
 
 def test_write_html_summary(mocker, caplog):
@@ -312,7 +280,10 @@ def test_update_multiproduct_multi_model_statistics():
     preproc_dir = "/preproc"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 2
@@ -327,9 +298,9 @@ def test_update_multiproduct_multi_model_statistics():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -401,17 +372,20 @@ def test_update_multiproduct_no_timerange():
     preproc_dir = "/preproc"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
 
     assert product.filename == Path("/preproc/d/var/CMIP6_MultiModelMean.nc")
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert "dataset" in product.attributes
     assert "multi_model_statistics" in product.attributes
@@ -438,7 +412,7 @@ def test_update_multiproduct_multi_model_statistics_percentile():
             "statistics": [
                 {"operator": "percentile", "percent": 5.0},
                 {"operator": "percentile", "percent": 95.0},
-            ]
+            ],
         },
         "save": {"compute": False},
     }
@@ -494,7 +468,10 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     preproc_dir = "/preproc"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 2
@@ -510,9 +487,9 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -564,34 +541,49 @@ def test_update_multiproduct_ensemble_statistics():
     cube = iris.cube.Cube(np.array([1]))
     products = [
         PreprocessorFile(
-            cube, "A", attributes=common_attributes, settings=settings
+            cube,
+            "A",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "B", attributes=common_attributes, settings=settings
+            cube,
+            "B",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "C", attributes=common_attributes, settings=settings
+            cube,
+            "C",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "D", attributes=common_attributes, settings=settings
+            cube,
+            "D",
+            attributes=common_attributes,
+            settings=settings,
         ),
     ]
     order = ("load", "ensemble_statistics", "save")
     preproc_dir = "/preproc"
     step = "ensemble_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
     assert product.filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsembleMedian"
     assert "dataset" in product.attributes
@@ -610,7 +602,7 @@ def test_update_multiproduct_ensemble_statistics():
     assert len(stats) == 1
     assert "median" in stats
     assert stats["median"].filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
 
 
@@ -636,34 +628,49 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     cube = iris.cube.Cube(np.array([1]))
     products = [
         PreprocessorFile(
-            cube, "A", attributes=common_attributes, settings=settings
+            cube,
+            "A",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "B", attributes=common_attributes, settings=settings
+            cube,
+            "B",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "C", attributes=common_attributes, settings=settings
+            cube,
+            "C",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "D", attributes=common_attributes, settings=settings
+            cube,
+            "D",
+            attributes=common_attributes,
+            settings=settings,
         ),
     ]
     order = ("load", "ensemble_statistics", "save")
     preproc_dir = "/preproc"
     step = "ensemble_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
     assert product.filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsemblePercentile5"
     assert "dataset" in product.attributes
@@ -682,20 +689,23 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     assert len(stats) == 1
     assert "percentile5" in stats
     assert stats["percentile5"].filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
 
 
 def test_update_multiproduct_no_product():
     cube = iris.cube.Cube(np.array([1]))
     products = [
-        PreprocessorFile(cube, "A", attributes=None, settings={"step": {}})
+        PreprocessorFile(cube, "A", attributes=None, settings={"step": {}}),
     ]
     order = ("load", "save")
     preproc_dir = "/preproc_dir"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
     assert output == products
     assert settings == {}
@@ -709,7 +719,7 @@ SCRIPTS_CFG = {
 DIAGNOSTICS = {
     "d1": {"scripts": {"s1": {"ancestors": [], **SCRIPTS_CFG}}},
     "d2": {
-        "scripts": {"s1": {"ancestors": ["d1/pr", "d1/s1"], **SCRIPTS_CFG}}
+        "scripts": {"s1": {"ancestors": ["d1/pr", "d1/s1"], **SCRIPTS_CFG}},
     },
     "d3": {"scripts": {"s1": {"ancestors": ["d2/s1"], **SCRIPTS_CFG}}},
     "d4": {
@@ -717,7 +727,7 @@ DIAGNOSTICS = {
             "s1": {"ancestors": "d1/pr d1/tas", **SCRIPTS_CFG},
             "s2": {"ancestors": ["d4/pr", "d4/tas"], **SCRIPTS_CFG},
             "s3": {"ancestors": ["d3/s1"], **SCRIPTS_CFG},
-        }
+        },
     },
 }
 TEST_GET_TASKS_TO_RUN = [
@@ -756,7 +766,8 @@ TEST_GET_TASKS_TO_RUN = [
 
 
 @pytest.mark.parametrize(
-    "diags_to_run,tasknames_to_run", TEST_GET_TASKS_TO_RUN
+    ("diags_to_run", "tasknames_to_run"),
+    TEST_GET_TASKS_TO_RUN,
 )
 def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
     """Test ``Recipe._get_tasks_to_run``."""
@@ -780,7 +791,8 @@ TEST_CREATE_DIAGNOSTIC_TASKS = [
 
 
 @pytest.mark.parametrize(
-    "tasks_to_run,tasks_run", TEST_CREATE_DIAGNOSTIC_TASKS
+    ("tasks_to_run", "tasks_run"),
+    TEST_CREATE_DIAGNOSTIC_TASKS,
 )
 @mock.patch("esmvalcore._recipe.recipe.DiagnosticTask", autospec=True)
 def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
@@ -803,6 +815,64 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
             name=f"{diag_name}{_recipe.TASKSEP}{task_name}",
         )
         assert expected_call in mock_diag_task.mock_calls
+
+
+def test_update_target_grid_accepts_cordex_domain():
+    """Test recipe preprocessing accepts CORDEX domain target grids."""
+    dataset = Dataset(
+        dataset="RCA4",
+        project="CORDEX",
+        domain="EUR-11",
+        diagnostic="bias",
+        variable_group="ts",
+        preprocessor="ts_pp",
+    )
+    settings = {"regrid": {"target_grid": "EUR-11", "scheme": "linear"}}
+
+    _recipe._update_target_grid(dataset, [dataset], settings)
+
+    assert settings["regrid"]["target_grid"] == "EUR-11"
+
+
+def test_update_target_grid_still_validates_mxn():
+    """Test invalid MxN target grids are still rejected."""
+    dataset = Dataset(
+        dataset="RCA4",
+        project="CORDEX",
+        diagnostic="bias",
+        variable_group="ts",
+        preprocessor="ts_pp",
+    )
+    settings = {"regrid": {"target_grid": "EUR-11x", "scheme": "linear"}}
+
+    with pytest.raises(ValueError, match="Invalid MxN cell specification"):
+        _recipe._update_target_grid(dataset, [dataset], settings)
+
+
+def test_update_target_grid_validates_regional_dict():
+    """Test regional dict target grids are still validated."""
+    dataset = Dataset(
+        dataset="RCA4",
+        project="CORDEX",
+        diagnostic="bias",
+        variable_group="ts",
+        preprocessor="ts_pp",
+    )
+    settings = {
+        "regrid": {
+            "target_grid": {
+                "start_longitude": 0,
+                "end_longitude": 360,
+                "step_longitude": 5,
+                "start_latitude": -90,
+                "end_latitude": 90,
+                "step_latitude": 5,
+            },
+            "scheme": "linear",
+        },
+    }
+
+    _recipe._update_target_grid(dataset, [dataset], settings)
 
 
 def test_update_regrid_time():
@@ -838,7 +908,7 @@ def test_limit_datasets():
 def test_get_default_settings(mocker):
     mocker.patch.object(
         _recipe,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         autospec=True,
         return_value=Path("/path/to/file.nc"),
     )
@@ -917,7 +987,8 @@ def test_update_extract_shape_abs_shapefile(session, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "shapefile", ["aux_dir/ar6.shp", "ar6.shp", "ar6", "AR6", "aR6"]
+    "shapefile",
+    ["aux_dir/ar6.shp", "ar6.shp", "ar6", "AR6", "aR6"],
 )
 def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
     """Test ``_update_extract_shape``."""
@@ -938,3 +1009,65 @@ def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
             / "ar6.shp"
         )
         assert settings["extract_shape"]["shapefile"] == ar6_file
+
+
+def test_special_name_to_dataset_invalid_special_name_type():
+    facets = {
+        "preprocessor": "preproc",
+        "variable_group": "var",
+        "diagnostic": "diag",
+        "reference_dataset": 1,
+    }
+    msg = (
+        r"Preprocessor 'preproc' uses 'reference_dataset', but "
+        r"'reference_dataset' is not a `str` for variable 'var' of diagnostic "
+        r"'diag', got '1' \(<class 'int'>\)"
+    )
+    with pytest.raises(RecipeError, match=msg):
+        _recipe._special_name_to_dataset(facets, "reference_dataset")
+
+
+@pytest.mark.parametrize("has_csafeloader", [True, False])
+def test_read_recipe_file(
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    has_csafeloader: bool,
+) -> None:
+    """Test that a recipe is read with and without ``yaml.CSafeLoader``."""
+    if not has_csafeloader:
+        monkeypatch.delattr(yaml, "CSafeLoader", raising=False)
+    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
+    session = mocker.sentinel.session
+    recipe_file = tmp_path / "recipe_test.yml"
+    recipe_file.write_text("diagnostics:\n  diag: {}\n", encoding="utf-8")
+
+    result = _recipe.read_recipe_file(recipe_file, session)
+
+    raw_recipe: dict[str, dict[str, dict]] = {"diagnostics": {"diag": {}}}
+    mock_check.assert_called_once_with(raw_recipe, path=recipe_file)
+    mock_recipe.assert_called_once_with(
+        raw_recipe,
+        session,
+        recipe_file=recipe_file,
+    )
+    assert result == mock_recipe.return_value
+
+
+def test_read_recipe_file_invalid_yaml(
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    """Test that invalid YAML is re-parsed with ``yaml.safe_load``."""
+    safe_load = mocker.spy(_recipe.yaml, "safe_load")
+    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    recipe_file = tmp_path / "recipe_test.yml"
+    recipe_text = "diagnostics: [\n"
+    recipe_file.write_text(recipe_text, encoding="utf-8")
+
+    with pytest.raises(yaml.YAMLError):
+        _recipe.read_recipe_file(recipe_file, mocker.sentinel.session)
+
+    safe_load.assert_called_once_with(recipe_text)
+    mock_check.assert_not_called()

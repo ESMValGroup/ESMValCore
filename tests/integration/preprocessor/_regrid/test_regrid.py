@@ -1,12 +1,16 @@
 """Integration tests for :func:`esmvalcore.preprocessor.regrid`."""
 
+import dask.array as da
 import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
+import iris.fileformats.pp
 import numpy as np
 import pytest
 from numpy import ma
 
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import regrid
 from tests import assert_array_equal
 from tests.unit.preprocessor._regrid import _make_cube
@@ -43,10 +47,15 @@ class Test:
         )
 
         # Setup cube with multiple horizontal dimensions
-        self.multidim_cube = _make_cube(data, grid="rotated", aux_coord=False)
+        self.multidim_cube = _make_cube(
+            data,
+            grid="rotated",
+            dtype=np.float64,
+            aux_coord=False,
+        )
         lats, lons = np.meshgrid(
-            np.arange(1, data.shape[-2] + 1),
-            np.arange(1, data.shape[-1] + 1),
+            np.arange(1, data.shape[-2] + 1).astype(np.float64),
+            np.arange(1, data.shape[-1] + 1).astype(np.float64),
         )
         self.multidim_cube.add_aux_coord(
             iris.coords.AuxCoord(
@@ -87,7 +96,8 @@ class Test:
         )
         coords_spec = [(lats, 0), (lons, 1)]
         self.tgt_grid_for_unstructured = iris.cube.Cube(
-            np.zeros((1, 1)), dim_coords_and_dims=coords_spec
+            np.zeros((1, 1)),
+            dim_coords_and_dims=coords_spec,
         )
 
         lons = self.cube.coord("longitude")
@@ -117,7 +127,8 @@ class Test:
         )
 
         unstructured_data = np.ma.masked_less(
-            self.cube.data.reshape(3, -1).astype(np.float32), 3.5
+            self.cube.data.reshape(3, -1).astype(np.float32),
+            3.5,
         )
 
         self.unstructured_grid_cube = iris.cube.Cube(
@@ -129,10 +140,14 @@ class Test:
 
         # Setup irregular cube and grid
         lons_2d = iris.coords.AuxCoord(
-            [[0, 1]], standard_name="longitude", units="degrees_east"
+            [[0, 1]],
+            standard_name="longitude",
+            units="degrees_east",
         )
         lats_2d = iris.coords.AuxCoord(
-            [[0, 1]], standard_name="latitude", units="degrees_north"
+            [[0, 1]],
+            standard_name="latitude",
+            units="degrees_north",
         )
         self.irregular_grid = iris.cube.Cube(
             [[1, 1]],
@@ -161,6 +176,45 @@ class Test:
         result.data = np.round(result.data, 1)
         assert_array_equal(result.data, expected)
 
+    @pytest.mark.parametrize(
+        "use_src_coords",
+        [
+            ["latitude", "longitude"],
+            ["grid_latitude", "grid_longitude"],
+        ],
+    )
+    @pytest.mark.parametrize("close", [True, False])
+    def test_regrid__nearest_cordex_result_has_all_coords(
+        self,
+        use_src_coords: list[str],
+        close: bool,
+    ) -> None:
+        """Test that the result of regridding has both 1D and 2D lat and lon."""
+        target_grid = self.multidim_cube.copy()
+        offset = 1e-9 if close else 0.1
+        target_grid.coord("grid_longitude").points = (
+            target_grid.coord("grid_longitude").points + offset
+        )
+        target_grid.coord("grid_longitude").bounds = (
+            target_grid.coord("grid_longitude").bounds + offset
+        )
+        target_grid.coord("longitude").points = (
+            target_grid.coord("longitude").points + offset
+        )
+        result = regrid(
+            self.multidim_cube,
+            target_grid,
+            "nearest",
+            use_src_coords=use_src_coords,
+        )
+        for coord in (
+            "latitude",
+            "longitude",
+            "grid_latitude",
+            "grid_longitude",
+        ):
+            assert result.coord(coord) == target_grid.coord(coord)
+
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__linear_file(self, tmp_path, cache_weights):
         file = tmp_path / "file.nc"
@@ -181,7 +235,10 @@ class Test:
             short_name="tas",
         )
         result = regrid(
-            self.cube, dataset, "linear", cache_weights=cache_weights
+            self.cube,
+            dataset,
+            "linear",
+            cache_weights=cache_weights,
         )
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         assert_array_equal(result.data, expected)
@@ -312,6 +369,49 @@ class Test:
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
         assert_array_equal(result.data, expected)
 
+    def test_regrid__linear_with_ancillary(self) -> None:
+        """Test that ancillary coordinates are also regridded."""
+        cube = self.cube.copy()
+        cube.data = cube.lazy_data()
+        cube.add_ancillary_variable(
+            iris.coords.AncillaryVariable(
+                da.arange(2, 6).astype(np.float32).reshape(2, 2),
+                var_name="ancillary",
+            ),
+            (1, 2),
+        )
+        result = regrid(cube, self.grid_for_linear, "linear")
+        ancillary_result = result.ancillary_variable("ancillary")
+        assert isinstance(ancillary_result, iris.coords.AncillaryVariable)
+        assert ancillary_result.has_lazy_data()
+        assert_array_equal(
+            ancillary_result.data,
+            np.array([3.5], dtype=np.float32).reshape(1, 1),
+        )
+
+    def test_regrid__linear_with_cell_measure(
+        self,
+    ) -> None:
+        """Test that cell measures are preserved when present on the target grid."""
+        cube = self.cube.copy()
+        target_grid = self.grid_for_linear.copy()
+        target_grid.add_cell_measure(
+            iris.coords.CellMeasure(
+                np.ones((1, 1), dtype=np.float32),
+                standard_name="cell_area",
+                units="m2",
+            ),
+            (0, 1),
+        )
+        result = regrid(cube, target_grid, "linear")
+
+        cell_measure_result = result.cell_measure("cell_area")
+        assert isinstance(cell_measure_result, iris.coords.CellMeasure)
+        assert_array_equal(
+            cell_measure_result.data,
+            np.array([1.0], dtype=np.float32).reshape(1, 1),
+        )
+
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__nearest(self, cache_weights):
         data = np.empty((1, 1))
@@ -332,7 +432,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "nearest", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "nearest",
+            cache_weights=cache_weights,
         )
         expected = np.array([[[3]], [[7]], [[11]]])
         assert_array_equal(result.data, expected)
@@ -357,7 +460,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "nearest", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "nearest",
+            cache_weights=cache_weights,
         )
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
@@ -384,7 +490,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "area_weighted", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "area_weighted",
+            cache_weights=cache_weights,
         )
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
@@ -490,56 +599,3 @@ class Test:
                 "invalid",
                 cache_weights=cache_weights,
             )
-
-    @pytest.mark.parametrize("cache_weights", [True, False])
-    def test_deprecate_unstrucured_nearest(self, cache_weights):
-        """Test deprecation of `unstructured_nearest` regridding scheme."""
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            result = regrid(
-                self.unstructured_grid_cube,
-                self.tgt_grid_for_unstructured,
-                "unstructured_nearest",
-                cache_weights=cache_weights,
-            )
-        expected = np.ma.array(
-            [[[3.0]], [[7.0]], [[11.0]]],
-            mask=[[[True]], [[False]], [[False]]],
-        )
-        np.testing.assert_array_equal(result.data.mask, expected.mask)
-        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
-
-    @pytest.mark.parametrize("cache_weights", [True, False])
-    def test_deprecate_linear_extrapolate(self, cache_weights):
-        """Test deprecation of `linear_extrapolate` regridding scheme."""
-        data = np.empty((3, 3))
-        lons = iris.coords.DimCoord(
-            [0, 1.5, 3],
-            standard_name="longitude",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="degrees_east",
-            coord_system=self.cs,
-        )
-        lats = iris.coords.DimCoord(
-            [0, 1.5, 3],
-            standard_name="latitude",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="degrees_north",
-            coord_system=self.cs,
-        )
-        coords_spec = [(lats, 0), (lons, 1)]
-        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            result = regrid(
-                self.cube,
-                grid,
-                "linear_extrapolate",
-                cache_weights=cache_weights,
-            )
-
-        expected = [
-            [[-3.0, -1.5, 0.0], [0.0, 1.5, 3.0], [3.0, 4.5, 6.0]],
-            [[1.0, 2.5, 4.0], [4.0, 5.5, 7.0], [7.0, 8.5, 10.0]],
-            [[5.0, 6.5, 8.0], [8.0, 9.5, 11.0], [11.0, 12.5, 14.0]],
-        ]
-        assert_array_equal(result.data, expected)

@@ -1,0 +1,24 @@
+SOURCE: CMIP5
+!============
+variable_entry:    tsLCNight
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:    
+var_name:          tsLCNight
+units:             
+cell_methods:      time: mean
+cell_measures:     
+long_name:         land cover class night time
+comment:
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time latitude longitude
+type:              float
+valid_min:         0
+valid_max:         255
+!----------------------------------
+!

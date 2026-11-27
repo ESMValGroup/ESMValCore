@@ -1,0 +1,24 @@
+SOURCE: CMIP5
+!============
+variable_entry:    tsLocalAtmErrDay
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+var_name:          tsLocalAtmErrDay  
+units:             K
+cell_methods:      time: mean
+cell_measures:     
+long_name:         uncertainty from locally correlated errors on atmospheric scales daytime
+comment:
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time latitude longitude
+type:              real
+valid_min:         0
+valid_max:         10
+!----------------------------------
+!

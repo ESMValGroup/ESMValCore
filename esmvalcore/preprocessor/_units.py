@@ -5,17 +5,22 @@ Allows for unit conversions.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import dask.array as da
 import iris
 import numpy as np
-from cf_units import Unit
-from iris.coords import AuxCoord, DimCoord
-from iris.cube import Cube
+from iris.coords import AuxCoord
 
 from esmvalcore.iris_helpers import _try_special_unit_conversions
 
+if TYPE_CHECKING:
+    from cf_units import Unit
+    from iris.coords import DimCoord
+    from iris.cube import Cube
 
-def convert_units(cube: Cube, units: str | Unit) -> Cube:
+
+def convert_units(cube: Cube, units: str | float | Unit) -> Cube:
     """Convert the units of a cube to new ones (in-place).
 
     Note
@@ -30,11 +35,18 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
 
     Currently, the following special conversions are supported:
 
+
+    * ``precipitation_amount`` (``kg m-2``) --
+      ``lwe_thickness_of_precipitation_amount`` (``mm``)
+    * ``surface_snow_amount`` (``kg m-2``) --
+      ``lwe_thickness_of_snowfall_amount`` (``mm``)
     * ``precipitation_flux`` (``kg m-2 s-1``) --
       ``lwe_precipitation_rate`` (``mm day-1``)
     * ``water_evaporation_flux`` (``kg m-2 s-1``) --
       ``lwe_water_evaporation_rate`` (``mm day-1``)
     * ``water_potential_evaporation_flux`` (``kg m-2 s-1``) --
+      ``None`` (``mm day-1``)
+    * ``water_evapotranspiration_flux`` (``kg m-2 s-1``) --
       ``None`` (``mm day-1``)
     * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
       ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
@@ -114,15 +126,15 @@ def accumulate_coordinate(
     try:
         coord = cube.coord(coordinate)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(
+        msg = (
             f"Requested coordinate {coordinate} not found in cube "
-            f"{cube.summary(shorten=True)}",
-        ) from err
+            f"{cube.summary(shorten=True)}"
+        )
+        raise ValueError(msg) from err
 
     if coord.ndim > 1:
-        raise NotImplementedError(
-            f"Multidimensional coordinate {coord} not supported."
-        )
+        msg = f"Multidimensional coordinate {coord} not supported."
+        raise NotImplementedError(msg)
 
     array_module = da if coord.has_lazy_bounds() else np
     factor = AuxCoord(

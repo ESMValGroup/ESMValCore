@@ -197,5 +197,6 @@ def test_amon_fix_metadata_wrong_lat_end(tas_cubes, coord_name):
     out_cube = out_cubes[0]
     assert out_cube.coords(coord_name, dim_coords=True)
     np.testing.assert_allclose(
-        out_cube.coord(coord_name).bounds, [[0.0, 2.0], [2.0, 4.0]]
+        out_cube.coord(coord_name).bounds,
+        [[0.0, 2.0], [2.0, 4.0]],
     )

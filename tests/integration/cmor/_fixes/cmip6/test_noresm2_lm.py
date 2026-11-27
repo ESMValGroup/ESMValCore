@@ -60,10 +60,16 @@ def siconc_cubes():
         units="days since 1850-01-01",
     )
     lat_coord = iris.coords.DimCoord(
-        [30.0], standard_name="latitude", var_name="lat", units="degrees_north"
+        [30.0],
+        standard_name="latitude",
+        var_name="lat",
+        units="degrees_north",
     )
     lon_coord = iris.coords.DimCoord(
-        [30.0], standard_name="longitude", var_name="lon", units="degrees_east"
+        [30.0],
+        standard_name="longitude",
+        var_name="lon",
+        units="degrees_east",
     )
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
     cube = iris.cube.Cube(
@@ -80,7 +86,9 @@ def siconc_cubes():
 def cubes_bounds():
     """Correct and wrong cubes."""
     lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
         [0, 357.5],

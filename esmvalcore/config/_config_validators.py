@@ -4,30 +4,29 @@ from __future__ import annotations
 
 import os.path
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
-from loguru import logger
 from packaging import version
 
+import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config._config import (
-    TASKSEP,
-    importlib_files,
-    load_config_developer,
-)
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
 
-SEARCH_ESGF_OPTIONS = (
-    "never",  # Never search ESGF for files
-    "when_missing",  # Only search ESGF if no local files are available
-    "always",  # Always search ESGF for files
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+SEARCH_DATA_OPTIONS = (
+    "quick",  # Stop searching as soon as a result is found
+    "complete",  # Search all configured data sources
 )
 
 
@@ -39,7 +38,11 @@ class ValidationError(ValueError):
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-def _make_type_validator(cls, *, allow_none=False):
+def _make_type_validator(
+    cls: Any,  # noqa: ANN401
+    *,
+    allow_none: bool = False,
+) -> Callable:
     """Construct a type validator for `cls`.
 
     Return a validator that converts inputs to *cls* or raises (and
@@ -52,11 +55,10 @@ def _make_type_validator(cls, *, allow_none=False):
             return None
         try:
             return cls(inp)
-        except ValueError as err:
+        except (ValueError, TypeError) as err:
             if isinstance(cls, type):
-                raise ValidationError(
-                    f"Could not convert {repr(inp)} to {cls.__name__}"
-                ) from err
+                msg = f"Could not convert {inp!r} to {cls.__name__}"
+                raise ValidationError(msg) from err
             raise
 
     validator.__name__ = f"validate_{cls.__name__}"
@@ -72,7 +74,7 @@ def _make_type_validator(cls, *, allow_none=False):
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-@lru_cache()
+@lru_cache
 def _listify_validator(
     scalar_validator,
     allow_stringlist=False,
@@ -105,7 +107,8 @@ def _listify_validator(
         # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
         # -- but not sets, whose iteration order is non-deterministic.
         elif isinstance(inp, Iterable) and not isinstance(
-            inp, (set, frozenset)
+            inp,
+            (set, frozenset),
         ):
             # The condition on this list comprehension will preserve the
             # behavior of filtering out any empty strings (behavior was
@@ -117,20 +120,20 @@ def _listify_validator(
                 if not isinstance(val, str) or val
             )
         else:
-            raise ValidationError(
-                f"Expected str or other non-set iterable, but got {inp}"
-            )
+            msg = f"Expected str or other non-set iterable, but got {inp}"
+            raise ValidationError(msg)
         if n_items is not None and len(inp) != n_items:
-            raise ValidationError(
+            msg = (
                 f"Expected {n_items} values, "
                 f"but there are {len(inp)} values in {inp}"
             )
+            raise ValidationError(msg)
         return inp
 
     try:
-        func.__name__ = "{}list".format(scalar_validator.__name__)
+        func.__name__ = f"{scalar_validator.__name__}list"
     except AttributeError:  # class instance.
-        func.__name__ = "{}List".format(type(scalar_validator).__name__)
+        func.__name__ = f"{type(scalar_validator).__name__}List"
     func.__qualname__ = (
         func.__qualname__.rsplit(".", 1)[0] + "." + func.__name__
     )
@@ -145,7 +148,8 @@ def validate_bool(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     if not isinstance(value, bool):
-        raise ValidationError(f"Could not convert `{value}` to `bool`")
+        msg = f"Could not convert `{value}` to `bool`"
+        raise ValidationError(msg)
     return value
 
 
@@ -156,15 +160,20 @@ def validate_path(value, allow_none=False):
     try:
         path = Path(os.path.expandvars(value)).expanduser().absolute()
     except TypeError as err:
-        raise ValidationError(f"Expected a path, but got {value}") from err
+        msg = f"Expected a path, but got {value}"
+        raise ValidationError(msg) from err
     else:
         return path
 
 
 def validate_positive(value):
     """Check if number is positive."""
-    if value is not None and value <= 0:
-        raise ValidationError(f"Expected a positive number, but got {value}")
+    msg = f"Expected a positive number, but got {value}"
+    try:
+        if value is not None and value <= 0:
+            raise ValidationError(msg)
+    except TypeError as err:
+        raise ValidationError(msg) from err
     return value
 
 
@@ -182,7 +191,8 @@ def _chain_validator(*funcs):
 validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(
-    validate_string, docstring="Return a list of strings."
+    validate_string,
+    docstring="Return a list of strings.",
 )
 
 validate_bool_or_none = partial(validate_bool, allow_none=True)
@@ -190,7 +200,8 @@ validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
 validate_floatlist = _listify_validator(
-    validate_float, docstring="Return a list of floats."
+    validate_float,
+    docstring="Return a list of floats.",
 )
 
 validate_dict = _make_type_validator(dict)
@@ -198,137 +209,129 @@ validate_dict = _make_type_validator(dict)
 validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 
 validate_pathlist = _listify_validator(
-    validate_path, docstring="Return a list of paths."
+    validate_path,
+    docstring="Return a list of paths.",
 )
 
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(
-    validate_int_positive, allow_none=True
+    validate_int_positive,
+    allow_none=True,
 )
-
-
-def validate_rootpath(value):
-    """Validate `rootpath` mapping."""
-    mapping = validate_dict(value)
-    new_mapping = {}
-    for key, paths in mapping.items():
-        if key == "obs4mips":
-            logger.warning(
-                "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'rootpath'"
-            )
-            key = "obs4MIPs"
-        if isinstance(paths, Path):
-            paths = str(paths)
-        if isinstance(paths, (str, list)):
-            new_mapping[key] = validate_pathlist(paths)
-        else:
-            validate_dict(paths)
-
-            # dask.config.merge cannot handle pathlib.Path objects as dict keys
-            # -> we convert the validated Path back to a string and handle this
-            # downstream in local.py (see also
-            # https://github.com/ESMValGroup/ESMValCore/issues/2577)
-            new_mapping[key] = {
-                str(validate_path(path)): validate_string(drs)
-                for path, drs in paths.items()
-            }
-
-    return new_mapping
-
-
-def validate_drs(value):
-    """Validate `drs` mapping."""
-    mapping = validate_dict(value)
-    new_mapping = {}
-    for key, drs in mapping.items():
-        if key == "obs4mips":
-            logger.warning(
-                "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'drs'"
-            )
-            key = "obs4MIPs"
-        new_mapping[key] = validate_string(drs)
-    return new_mapping
-
-
-def validate_config_developer(value):
-    """Validate and load config developer path."""
-    path = validate_path_or_none(value)
-    if path is None:
-        path = importlib_files("esmvalcore") / "config-developer.yml"
-    load_config_developer(path)
-
-    return path
 
 
 def validate_check_level(value):
     """Validate CMOR level check."""
+    msg = f"`{value}` is not a valid strictness level"
+
     if isinstance(value, str):
         try:
             value = CheckLevels[value.upper()]
         except KeyError:
-            raise ValidationError(
-                f"`{value}` is not a valid strictness level"
-            ) from None
+            raise ValidationError(msg) from None
 
     else:
-        value = CheckLevels(value)
+        try:
+            value = CheckLevels(value)
+        except (ValueError, TypeError) as err:
+            raise ValidationError(msg) from err
 
     return value
 
 
-def validate_search_esgf(value):
-    """Validate options for ESGF search."""
+def validate_search_data(value):
+    """Validate options for data search."""
     value = validate_string(value)
     value = value.lower()
-    if value not in SEARCH_ESGF_OPTIONS:
-        raise ValidationError(
-            f"`{value}` is not a valid option ESGF search option, possible "
-            f"values are {SEARCH_ESGF_OPTIONS}"
-        ) from None
+    if value not in SEARCH_DATA_OPTIONS:
+        msg = (
+            f"`{value}` is not a valid option for `search_data`, possible "
+            f"values are {SEARCH_DATA_OPTIONS}"
+        )
+        raise ValidationError(msg)
     return value
 
 
 def validate_diagnostics(
-    diagnostics: Union[Iterable[str], str, None],
-) -> Optional[set[str]]:
+    diagnostics: Iterable[str] | str | None,
+) -> set[str] | None:
     """Validate diagnostic location."""
     if diagnostics is None:
         return None
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.strip().split(" ")
-    return {
-        pattern if TASKSEP in pattern else pattern + TASKSEP + "*"
-        for pattern in diagnostics or ()
+    try:
+        validated_diagnostics = {
+            pattern if TASKSEP in pattern else pattern + TASKSEP + "*"
+            for pattern in diagnostics or ()
+        }
+    except TypeError as err:
+        msg = (
+            f"Expected str or Iterable[str] for diagnostics, got "
+            f"`{diagnostics}`"
+        )
+        raise ValidationError(msg) from err
+    return validated_diagnostics
+
+
+def validate_cmor_tables(value: dict) -> None:
+    """Validate the CMOR table configuration."""
+    # This has the side-effect of updating `esmvalcore.cmor.tables.CMOR_TABLES`.
+    #
+    # Relying on global state is not nice, preferably we should get rid of any
+    # global state except the defaults for starting a new session in
+    # `esmvalcore.config.CFG`. https://github.com/esMValGroup/esMValCore/issues/2954
+    #
+    # Having side effects when updating an `esmvalcore.config.Session` object
+    # that changes global state of the `esmvalcore` package is nasty and should
+    # preferably be avoided. This would require passing around session objects
+    # instead of relying on global state (e.g. esmvalcore.config.CFG,
+    # esmvalcore.cmor.tables.CMOR_TABLES).
+    esmvalcore.cmor.table.CMOR_TABLES = {
+        project: esmvalcore.cmor.table.get_tables(
+            session={"projects": value},  # type: ignore[arg-type]
+            project=project,
+        )
+        for project in value
     }
 
 
-# TODO: remove in v2.14.0
-def validate_extra_facets_dir(value):
-    """Validate extra_facets_dir."""
-    if isinstance(value, tuple):
-        msg = (
-            "Specifying `extra_facets_dir` as tuple has been deprecated in "
-            "ESMValCore version 2.12.0 and is scheduled for removal in "
-            "version 2.14.0. Please use a list instead."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
-        value = list(value)
-    return validate_pathlist(value)
+def validate_projects(
+    value: dict,
+) -> dict[str, dict[str, Any]]:
+    """Validate projects mapping."""
+    mapping = validate_dict(value)
+    options_for_project: dict[str, Callable[[Any], Any]] = {
+        "cmor_table": validate_dict,
+        "data": validate_dict,  # TODO: try to create data sources here
+        "extra_facets": validate_dict,
+        "preprocessor_filename_template": validate_string,
+    }
+    for project, project_config in mapping.items():
+        if "cmor_table" not in project_config:
+            project_config["cmor_table"] = {
+                "type": "esmvalcore.cmor.table.NoInfo",
+            }
+        for option, val in project_config.items():
+            if option not in options_for_project:
+                msg = (
+                    f"`{option}` is not a valid option for the `projects` "
+                    f"configuration of project `{project}`, possible options "
+                    f"are {list(options_for_project)}"
+                )
+                raise ValidationError(msg) from None
+            mapping[project][option] = options_for_project[option](val)
+    validate_cmor_tables(mapping)
+    return mapping
 
 
 _validators = {
     "auxiliary_data_dir": validate_path,
     "check_level": validate_check_level,
     "compress_netcdf": validate_bool,
-    "config_developer_file": validate_config_developer,
     "dask": validate_dict,
     "diagnostics": validate_diagnostics,
-    "download_dir": validate_path,
-    "drs": validate_drs,
     "exit_on_warning": validate_bool,
-    "extra_facets_dir": validate_extra_facets_dir,
     "log_level": validate_string,
     "logging": validate_dict,
     "max_datasets": validate_int_positive_or_none,
@@ -337,18 +340,15 @@ _validators = {
     "output_dir": validate_path,
     "output_file_type": validate_string,
     "profile_diagnostic": validate_bool,
+    "projects": validate_projects,
     "remove_preproc_dir": validate_bool,
     "resume_from": validate_pathlist,
-    "rootpath": validate_rootpath,
     "run_diagnostic": validate_bool,
     "save_intermediary_cubes": validate_bool,
-    "search_esgf": validate_search_esgf,
+    "search_data": validate_search_data,
     "skip_nonexistent": validate_bool,
     # From recipe
     "write_ncl_interface": validate_bool,
-    # TODO: remove in v2.14.0
-    # config location
-    "config_file": validate_path,
 }
 
 
@@ -375,43 +375,17 @@ def _handle_deprecation(
         f"been deprecated in ESMValCore version {deprecated_version} and is "
         f"scheduled for removal in version {remove_version}.{more_info}"
     )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
-
-
-# TODO: remove in v2.14.0
-def deprecate_config_file(validated_config, value, validated_value):
-    """Deprecate ``config_file`` option.
-
-    Parameters
-    ----------
-    validated_config: ValidatedConfig
-        ``ValidatedConfig`` instance which will be modified in place.
-    value: Any
-        Raw input value for ``config_file`` option.
-    validated_value: Any
-        Validated value for ``config_file`` option.
-
-    """
-    validated_config  # noqa
-    value  # noqa
-    validated_value  # noqa
-    option = "config_file"
-    deprecated_version = "2.12.0"
-    remove_version = "2.14.0"
-    more_info = " Please use the option `config_dir` instead."
-    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+    # This function is called by the deprecation functions, which are called by
+    # ValidatedConfig.__setitem__, so the calling site is 4 levels away.
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=4)
 
 
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecators: dict[str, Callable] = {
-    "config_file": deprecate_config_file,  # TODO: remove in v2.14.0
-}
+_deprecators: dict[str, Callable] = {}
 
 
 # Default values for deprecated options
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecated_options_defaults: dict[str, Any] = {
-    "config_file": None,  # TODO: remove in v2.14.0
-}
+_deprecated_options_defaults: dict[str, Any] = {}

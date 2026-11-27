@@ -4,7 +4,7 @@ import iris.cube
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.ciesm import Cl
+from esmvalcore.cmor._fixes.cmip6.ciesm import Cl, Snw
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
@@ -16,16 +16,21 @@ def test_get_cl_fix():
     assert fix == [Cl(None), GenericFix(None)]
 
 
+def test_get_snw_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CIESM", "LImon", "snw")
+    assert fix == [Snw(None), GenericFix(None)]
+
+
 @pytest.fixture
 def cl_cube():
     """``cl`` cube."""
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [1.0],
         var_name="cl",
         standard_name="cloud_area_fraction_in_atmosphere_layer",
         units="%",
     )
-    return cube
 
 
 def test_cl_fix():
@@ -62,3 +67,14 @@ def test_pr_fix():
     out_cube = fix.fix_data(cube)
     assert out_cube.data == [2.82e-05]
     assert out_cube.units == "kg m-2 s-1"
+
+
+def test_snw_fix_data():
+    """Test `Snw.fix_data` scales values by 100."""
+    cube = iris.cube.Cube(
+        [0.01, 0.5],
+        var_name="snw",
+        units="kg m-2",
+    )
+    out_cube = Snw(None).fix_data(cube)
+    np.testing.assert_allclose(out_cube.data, [1.0, 50.0])

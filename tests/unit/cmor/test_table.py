@@ -10,13 +10,19 @@ class TestVariableInfo(unittest.TestCase):
 
     def setUp(self):
         """Prepare for testing."""
-        self.info = VariableInfo("table_type", "var")
+        self.info = VariableInfo("table_type")
+        self.info.short_name = "var"
         self.value = "value"
         self.coords = {
             "dim0": CoordinateInfo("dim0"),
             "dim1": CoordinateInfo("dim1"),
             "dim2": CoordinateInfo("dim2"),
         }
+
+    def test_repr(self) -> None:
+        """Test __repr__."""
+        result = repr(self.info)
+        assert result == "<VariableInfo defining variable 'var'>"
 
     def test_constructor(self):
         """Test basic constructor."""
@@ -117,8 +123,10 @@ class TestCoordinateInfo(unittest.TestCase):
 
     def test_read_var_name(self):
         """Test var_name."""
+        # There does not appear to be a "var_name" field in any of the CMOR
+        # tables. Could the var_name attribute be removed?
         info = CoordinateInfo("var")
-        info.read_json({"var_name": self.value})
+        info.read_json({"out_name": self.value})
         self.assertEqual(info.var_name, self.value)
 
     def test_read_out_name(self):

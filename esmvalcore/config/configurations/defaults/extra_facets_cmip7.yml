@@ -1,0 +1,10 @@
+# Extra facets for the CMIP7 project.
+---
+projects:
+  CMIP7:
+    extra_facets:
+      "*":
+        # Default DRS version prefix for CMIP7.
+        "*":
+          "*":
+            drs_specs: MIP-DRS7

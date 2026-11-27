@@ -3,6 +3,7 @@
 from typing import Literal
 
 import iris
+import iris.coord_systems
 import iris.fileformats
 import numpy as np
 from iris.coords import AuxCoord, CellMethod, DimCoord
@@ -19,14 +20,14 @@ def _make_vcoord(data, dtype=None):
         data = np.asarray(data, dtype=dtype)
 
     # Create a pressure vertical coordinate.
-    kwargs = dict(
-        standard_name="air_pressure",
-        long_name="Pressure",
-        var_name="plev",
-        units="hPa",
-        attributes=dict(positive="down"),
-        coord_system=None,
-    )
+    kwargs = {
+        "standard_name": "air_pressure",
+        "long_name": "Pressure",
+        "var_name": "plev",
+        "units": "hPa",
+        "attributes": {"positive": "down"},
+        "coord_system": None,
+    }
 
     try:
         zcoord = DimCoord(data, **kwargs)
@@ -36,11 +37,11 @@ def _make_vcoord(data, dtype=None):
     return zcoord
 
 
-def _make_cube(
+def _make_cube(  # noqa: PLR0915,C901
     data: np.ndarray,
     aux_coord: bool = True,
     dim_coord: bool = True,
-    dtype=None,
+    dtype=None,  # noqa: ANN001
     grid: Literal["regular", "rotated", "mesh"] = "regular",
 ) -> iris.cube.Cube:
     """Create a 3d synthetic test cube."""
@@ -57,16 +58,19 @@ def _make_cube(
 
     # Create the cube.
     cm = CellMethod(
-        method="mean", coords="time", intervals="20 minutes", comments=None
+        method="mean",
+        coords="time",
+        intervals="20 minutes",
+        comments=None,
     )
-    kwargs = dict(
-        standard_name="air_temperature",
-        long_name="Air Temperature",
-        var_name="ta",
-        units="K",
-        attributes=dict(cube="attribute"),
-        cell_methods=(cm,),
-    )
+    kwargs = {
+        "standard_name": "air_temperature",
+        "long_name": "Air Temperature",
+        "var_name": "ta",
+        "units": "K",
+        "attributes": {"cube": "attribute"},
+        "cell_methods": (cm,),
+    }
     cube = iris.cube.Cube(data, **kwargs)
 
     # Create a synthetic test vertical coordinate.
@@ -74,32 +78,32 @@ def _make_cube(
         cube.add_dim_coord(_make_vcoord(z, dtype=dtype), 0)
 
     if grid == "rotated":
-        # Create a synthetic test latitude coordinate.
+        # Create a synthetic test grid_latitude coordinate.
         data = np.arange(y, dtype=dtype) + 1
-        cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-        kwargs = dict(
-            standard_name="grid_latitude",
-            long_name="latitude in rotated pole grid",
-            var_name="rlat",
-            units="degrees",
-            attributes=dict(latitude="attribute"),
-            coord_system=cs,
-        )
+        cs = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
+        kwargs = {
+            "standard_name": "grid_latitude",
+            "long_name": "latitude in rotated pole grid",
+            "var_name": "rlat",
+            "units": "degrees",
+            "attributes": {"latitude": "attribute"},
+            "coord_system": cs,
+        }
         ycoord = DimCoord(data, **kwargs)
         if data.size > 1:
             ycoord.guess_bounds()
         cube.add_dim_coord(ycoord, 1)
 
-        # Create a synthetic test longitude coordinate.
+        # Create a synthetic test grid_longitude coordinate.
         data = np.arange(x, dtype=dtype) + 1
-        kwargs = dict(
-            standard_name="grid_longitude",
-            long_name="longitude in rotated pole grid",
-            var_name="rlon",
-            units="degrees",
-            attributes=dict(longitude="attribute"),
-            coord_system=cs,
-        )
+        kwargs = {
+            "standard_name": "grid_longitude",
+            "long_name": "longitude in rotated pole grid",
+            "var_name": "rlon",
+            "units": "degrees",
+            "attributes": {"longitude": "attribute"},
+            "coord_system": cs,
+        }
         xcoord = DimCoord(data, **kwargs)
         if data.size > 1:
             xcoord.guess_bounds()
@@ -172,14 +176,14 @@ def _make_cube(
         # Create a synthetic test latitude coordinate.
         data = np.arange(y, dtype=dtype) + 1
         cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-        kwargs = dict(
-            standard_name="latitude",
-            long_name="Latitude",
-            var_name="lat",
-            units="degrees_north",
-            attributes=dict(latitude="attribute"),
-            coord_system=cs,
-        )
+        kwargs = {
+            "standard_name": "latitude",
+            "long_name": "Latitude",
+            "var_name": "lat",
+            "units": "degrees_north",
+            "attributes": {"latitude": "attribute"},
+            "coord_system": cs,
+        }
         ycoord = DimCoord(data, **kwargs)
         if data.size > 1:
             ycoord.guess_bounds()
@@ -187,14 +191,14 @@ def _make_cube(
 
         # Create a synthetic test longitude coordinate.
         data = np.arange(x, dtype=dtype) + 1
-        kwargs = dict(
-            standard_name="longitude",
-            long_name="Longitude",
-            var_name="lon",
-            units="degrees_east",
-            attributes=dict(longitude="attribute"),
-            coord_system=cs,
-        )
+        kwargs = {
+            "standard_name": "longitude",
+            "long_name": "Longitude",
+            "var_name": "lon",
+            "units": "degrees_east",
+            "attributes": {"longitude": "attribute"},
+            "coord_system": cs,
+        }
         xcoord = DimCoord(data, **kwargs)
         if data.size > 1:
             xcoord.guess_bounds()
@@ -205,12 +209,12 @@ def _make_cube(
     if aux_coord:
         hsize = y * x if grid == "mesh" else y
         data = np.arange(np.prod((z, hsize)), dtype=dtype).reshape(z, hsize)
-        kwargs = dict(
-            long_name="Pressure Slice",
-            var_name="aplev",
-            units="hPa",
-            attributes=dict(positive="down"),
-        )
+        kwargs = {
+            "long_name": "Pressure Slice",
+            "var_name": "aplev",
+            "units": "hPa",
+            "attributes": {"positive": "down"},
+        }
         zycoord = AuxCoord(data, **kwargs)
         cube.add_aux_coord(zycoord, (0, 1))
 

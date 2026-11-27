@@ -1,6 +1,6 @@
 """Fixes for AWI-CM-1-1-MR model."""
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):

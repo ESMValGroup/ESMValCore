@@ -2,8 +2,9 @@
 
 import dask.array as da
 
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
+
 from .bnu_esm import Cl as BaseCl
 
 Cl = BaseCl

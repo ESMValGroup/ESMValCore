@@ -1,20 +1,26 @@
 """Derivation of variable `sm`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cf_units
 import numpy as np
 from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
 
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
+
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sm`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [{"short_name": "mrsos"}]
-        return required
+        return [{"short_name": "mrsos"}]
 
     @staticmethod
     def calculate(cubes):

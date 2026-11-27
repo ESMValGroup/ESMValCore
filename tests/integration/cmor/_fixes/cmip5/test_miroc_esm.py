@@ -82,7 +82,8 @@ class TestAll(unittest.TestCase):
                 [0, 1],
                 standard_name="time",
                 units=Unit(
-                    "days since 0000-01-01 00:00:00", calendar="gregorian"
+                    "days since 0000-01-01 00:00:00",
+                    calendar="gregorian",
                 ),
             ),
             0,
@@ -144,7 +145,8 @@ class TestAll(unittest.TestCase):
         time_coord = fixed_cube.coord("time")
         np.testing.assert_allclose(time_coord.points, [-711841.5, -711810.5])
         np.testing.assert_allclose(
-            time_coord.bounds, [[-711857.0, -711826.0], [-711826.0, -711796.5]]
+            time_coord.bounds,
+            [[-711857.0, -711826.0], [-711826.0, -711796.5]],
         )
 
     def test_fix_metadata_wrong_time_no_bounds(self):

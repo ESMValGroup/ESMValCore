@@ -1,13 +1,21 @@
 """Fixes for EC-Earth model."""
 
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import iris
 import numpy as np
 from dask import array as da
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord, cube_to_aux_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
+    add_scalar_height_coord,
+    cube_to_aux_coord,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class Sic(Fix):
@@ -127,7 +135,7 @@ class Areacello(Fix):
         return iris.cube.CubeList(
             [
                 areacello,
-            ]
+            ],
         )
 
 
@@ -135,7 +143,8 @@ class Pr(Fix):
     """Fixes for pr."""
 
     def fix_metadata(
-        self, cubes: Iterable[iris.cube.Cube]
+        self,
+        cubes: Iterable[iris.cube.Cube],
     ) -> iris.cube.CubeList:
         """Fix time coordinate.
 

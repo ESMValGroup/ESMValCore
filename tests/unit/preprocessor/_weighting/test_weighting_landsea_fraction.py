@@ -1,5 +1,7 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
 
+import re
+
 import iris
 import iris.fileformats
 import numpy as np
@@ -71,16 +73,20 @@ LAND_FRACTION = [
         CUBE_3,
         None,
         [
-            "Ancillary variables land/sea area fraction not found in cube. "
-            "Check ancillary data availability."
+            (
+                "Ancillary variables land/sea area fraction not found in cube. "
+                "Check ancillary data availability."
+            ),
         ],
     ),
     (
         CUBE_4,
         None,
         [
-            "Ancillary variables land/sea area fraction not found in cube. "
-            "Check ancillary data availability."
+            (
+                "Ancillary variables land/sea area fraction not found in cube. "
+                "Check ancillary data availability."
+            ),
         ],
     ),
     (CUBE_ANCILLARY_3, FRAC_SFTLF, []),
@@ -88,7 +94,7 @@ LAND_FRACTION = [
 ]
 
 
-@pytest.mark.parametrize("cube,out,err", LAND_FRACTION)
+@pytest.mark.parametrize(("cube", "out", "err"), LAND_FRACTION)
 def test_get_land_fraction(cube, out, err):
     """Test calculation of land fraction."""
     (land_fraction, errors) = weighting._get_land_fraction(cube)
@@ -118,14 +124,24 @@ WEIGHTING_LANDSEA_FRACTION = [
 ]
 
 
-@pytest.mark.parametrize("cube,area_type,out", WEIGHTING_LANDSEA_FRACTION)
+def test_weighting_landsea_fraction_invalid_area_type_fail() -> None:
+    msg = r"Expected 'land' or 'sea' for area_type"
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        weighting.weighting_landsea_fraction(CUBE_3, "invalid")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("cube", "area_type", "out"),
+    WEIGHTING_LANDSEA_FRACTION,
+)
 def test_weighting_landsea_fraction(cube, area_type, out):
     """Test landsea fraction weighting preprocessor."""
     # Exceptions
     if isinstance(out, type):
         with pytest.raises(out):
             weighted_cube = weighting.weighting_landsea_fraction(
-                cube, area_type
+                cube,
+                area_type,
             )
         return
 

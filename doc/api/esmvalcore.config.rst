@@ -17,8 +17,6 @@ object:
     >>> CFG
     Config({'auxiliary_data_dir': PosixPath('/home/user/auxiliary_data'),
             'compress_netcdf': False,
-            'config_developer_file': None,
-            'drs': {'CMIP5': 'default', 'CMIP6': 'default'},
             'exit_on_warning': False,
             'log_level': 'info',
             'max_parallel_tasks': None,
@@ -26,9 +24,6 @@ object:
             'output_file_type': 'png',
             'profile_diagnostic': False,
             'remove_preproc_dir': True,
-            'rootpath': {'CMIP5': '~/default_inputpath',
-                         'CMIP6': '~/default_inputpath',
-                         'default': '~/default_inputpath'},
             'save_intermediary_cubes': False)
 
 All configuration parameters are listed :ref:`here <config_options>`.
@@ -68,6 +63,21 @@ type of your input if possible:
     >>> CFG['max_parallel_tasks'] = '8'  # str
     >>> type(CFG['max_parallel_tasks'])
     int
+
+It is also possible to temporarily use different configuration options using
+the :meth:`~esmvalcore.config.Config.context` context manager:
+
+.. code-block:: python
+
+    >>> with CFG.context({"output_dir": "/path/to/output"}, log_level="debug"):
+    ...     print(CFG["output_dir"])
+    ...     print(CFG["log_level"])
+    PosixPath('/path/to/output')
+    debug
+    >>> print(CFG["output_dir"])
+    PosixPath('/home/user/esmvaltool_output')
+    >>> print(CFG["log_level"])
+    info
 
 By default, the configuration is loaded from YAML files in the user's home
 directory at ``~/.config/esmvaltool``.

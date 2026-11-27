@@ -2,8 +2,8 @@
 
 import pytest
 
-import esmvalcore.cmor._fixes.shared as shared
-import esmvalcore.cmor.fixes as fixes
+from esmvalcore.cmor import fixes
+from esmvalcore.cmor._fixes import shared
 
 
 @pytest.mark.parametrize(

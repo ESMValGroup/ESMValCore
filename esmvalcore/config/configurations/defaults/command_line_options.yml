@@ -1,0 +1,9 @@
+# Default values for configuration options typically set from the command line.
+
+check_level: default
+diagnostics: null
+max_datasets: null
+max_years: null
+resume_from: []
+run_diagnostic: true
+skip_nonexistent: false

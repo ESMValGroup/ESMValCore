@@ -5,23 +5,29 @@ authors:
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `rlnst`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rlds"},
             {"short_name": "rlus"},
             {"short_name": "rlut"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -32,15 +38,13 @@ class DerivedVariable(DerivedVariableBase):
         to surface and outer space.
         """
         rlds_cube = cubes.extract_cube(
-            Constraint(name="surface_downwelling_longwave_flux_in_air")
+            Constraint(name="surface_downwelling_longwave_flux_in_air"),
         )
         rlus_cube = cubes.extract_cube(
-            Constraint(name="surface_upwelling_longwave_flux_in_air")
+            Constraint(name="surface_upwelling_longwave_flux_in_air"),
         )
         rlut_cube = cubes.extract_cube(
-            Constraint(name="toa_outgoing_longwave_flux")
+            Constraint(name="toa_outgoing_longwave_flux"),
         )
 
-        rlnst_cube = rlut_cube + (rlds_cube - rlus_cube)
-
-        return rlnst_cube
+        return rlut_cube + (rlds_cube - rlus_cube)

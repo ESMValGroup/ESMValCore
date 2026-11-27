@@ -1,23 +1,29 @@
 """Derivation of variable `netcre`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ._baseclass import DerivedVariableBase
 from .lwcre import DerivedVariable as Lwcre
 from .swcre import DerivedVariable as Swcre
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `netcre`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rlut"},
             {"short_name": "rlutcs"},
             {"short_name": "rsut"},
             {"short_name": "rsutcs"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):

@@ -1,6 +1,6 @@
 """Fixes for CMCC-CM2-SR5 model."""
 
-from ..common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 
 
 class Cl(ClFixHybridPressureCoord):

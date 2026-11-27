@@ -1,7 +1,7 @@
 """Fixes for CIESM model."""
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -60,4 +60,16 @@ class Pr(Fix):
         """
         if float(cube.core_data()[:10].mean()) < 1.0e-5:
             cube.data = cube.core_data() * 1000.0
+        return cube
+
+
+class Snw(Fix):
+    """Fixes for snw."""
+
+    def fix_data(self, cube):
+        """Fix data.
+
+        The snow values are a factor of 100 too small.
+        """
+        cube.data = cube.core_data() * 100.0
         return cube

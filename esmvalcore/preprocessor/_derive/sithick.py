@@ -1,17 +1,24 @@
 """Derivation of variable `sithick`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sithick`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {
                 "short_name": "sit",
             },
@@ -19,7 +26,6 @@ class DerivedVariable(DerivedVariableBase):
                 "short_name": "sic",
             },
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -43,5 +49,4 @@ class DerivedVariable(DerivedVariableBase):
         siconc = cubes.extract_cube(Constraint(name="sea_ice_area_fraction"))
         siconc.convert_units("1.0")
 
-        sithick = sivol / siconc
-        return sithick
+        return sivol / siconc

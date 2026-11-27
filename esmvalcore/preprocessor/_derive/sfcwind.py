@@ -1,21 +1,27 @@
 """Derivation of variable `sfcWind`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sfcWind`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "uas"},
             {"short_name": "vas"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -26,6 +32,4 @@ class DerivedVariable(DerivedVariableBase):
         uas_cube = cubes.extract_cube(NameConstraint(var_name="uas"))
         vas_cube = cubes.extract_cube(NameConstraint(var_name="vas"))
 
-        sfcwind_cube = (uas_cube**2 + vas_cube**2) ** 0.5
-
-        return sfcwind_cube
+        return (uas_cube**2 + vas_cube**2) ** 0.5

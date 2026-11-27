@@ -26,6 +26,11 @@
     },
     {
       "affiliation": "AWI, Germany",
+      "name": "Grusdt, Britta",
+      "orcid": "0000-0001-7938-3734"
+    },
+    {
+      "affiliation": "AWI, Germany",
       "name": "Koldunov, Nikolay",
       "orcid": "0000-0002-3365-8146"
     },
@@ -219,6 +224,30 @@
       "affiliation": "ECCC, Canada",
       "name": "Garcia Perdomo, Karen",
       "orcid": "0009-0004-2333-3358"
+    },
+    {
+      "affiliation": "SMHI, Sweden",
+      "name": "Lenhardt, Julien",
+      "orcid": "https://orcid.org/0000-0002-9949-3989"
+    },
+    {
+      "affiliation": "Climate Resource, Australia",
+      "name": "Lewis, Jared",
+      "orcid": "https://orcid.org/0000-0002-8155-8924"
+    },
+    {
+      "affiliation": "METU, Turkey",
+      "name": "Acar, Ali Osman",
+      "orcid": "0000-0002-9813-8387"
+    },
+    {
+      "affiliation": "BSC, Spain",
+      "name": "Ghosh, Supriyo",
+      "orcid": "0000-0003-0581-9907"
+    },
+    {
+      "affiliation": "DLR, Germany",
+      "name": "Caspers, Laura"
     }
   ],
   "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
@@ -227,37 +256,40 @@
   },
   "title": "ESMValCore",
   "communities": [
-      {
-          "identifier": "is-enes3"
-      },
-      {
-          "identifier": "dlr_de"
-      },
-      {
-          "identifier": "ecfunded"
-      },
-      {
-          "identifier": "nlesc"
-      }
+    {
+      "identifier": "enes-ri"
+    },
+    {
+      "identifier": "is-enes3"
+    },
+    {
+      "identifier": "dlr_de"
+    },
+    {
+      "identifier": "ecfunded"
+    },
+    {
+      "identifier": "nlesc"
+    }
   ],
   "grants": [
-      {
-          "id": "10.13039/501100000780::282672"
-      },
-      {
-          "id": "10.13039/501100000780::641727"
-      },
-      {
-          "id": "10.13039/501100000780::641816"
-      },
-      {
-          "id": "10.13039/501100000780::727862"
-      },
-      {
-          "id": "10.13039/501100000780::776613"
-      },
-      {
-          "id": "10.13039/501100000780::824084"
-      }
+    {
+      "id": "10.13039/501100000780::282672"
+    },
+    {
+      "id": "10.13039/501100000780::641727"
+    },
+    {
+      "id": "10.13039/501100000780::641816"
+    },
+    {
+      "id": "10.13039/501100000780::727862"
+    },
+    {
+      "id": "10.13039/501100000780::776613"
+    },
+    {
+      "id": "10.13039/501100000780::824084"
+    }
   ]
 }

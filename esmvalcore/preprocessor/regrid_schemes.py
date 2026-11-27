@@ -2,16 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
-from iris.cube import Cube
-
-from esmvalcore.preprocessor._regrid_esmpy import (
-    ESMPyAreaWeighted,
-    ESMPyLinear,
-    ESMPyNearest,
-    ESMPyRegridder,
-)
 from esmvalcore.preprocessor._regrid_iris_esmf_regrid import IrisESMFRegrid
 from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredLinear,
@@ -19,14 +11,16 @@ from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredNearest,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from iris.cube import Cube
+
+
 __all__ = [
-    "ESMPyAreaWeighted",
-    "ESMPyLinear",
-    "ESMPyNearest",
-    "ESMPyRegridder",
-    "IrisESMFRegrid",
     "GenericFuncScheme",
     "GenericRegridder",
+    "IrisESMFRegrid",
     "UnstructuredLinear",
     "UnstructuredLinearRegridder",
     "UnstructuredNearest",
@@ -57,8 +51,8 @@ class GenericRegridder:
         src_cube: Cube,
         tgt_cube: Cube,
         func: Callable,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Initialize class instance."""
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
@@ -97,7 +91,7 @@ class GenericFuncScheme:
         Keyword arguments for the generic regridding function.
     """
 
-    def __init__(self, func: Callable, **kwargs):
+    def __init__(self, func: Callable, **kwargs: Any) -> None:
         """Initialize class instance."""
         self.func = func
         self.kwargs = kwargs

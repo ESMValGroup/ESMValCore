@@ -29,9 +29,9 @@ def test_get_all_recipes():
     assert isinstance(recipes, list)
 
 
-def test_recipe_list_find():
+def test_recipe_list_find(mocker):
     """Get all recipes."""
-    TAGS.set_tag_values(DIAGNOSTICS.load_tags())
+    mocker.patch.dict(TAGS, DIAGNOSTICS.load_tags())
 
     recipes = get_all_recipes(subdir="examples")
 

@@ -1,15 +1,19 @@
-from pathlib import Path
+from __future__ import annotations
 
-import iris.coords
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import iris.cube
 import pytest
 
-from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 
 @pytest.fixture
-def example_data(tmp_path, monkeypatch):
+def example_data_source(tmp_path: Path) -> dict[str, str]:
     cwd = Path(__file__).parent
     tas_src = cwd / "tas.nc"
     areacella_src = cwd / "areacella.nc"
@@ -49,13 +53,42 @@ def example_data(tmp_path, monkeypatch):
 
     areacella_tgt.parent.mkdir(parents=True, exist_ok=True)
     areacella_tgt.symlink_to(areacella_src)
+    return {
+        "type": "esmvalcore.io.local.LocalDataSource",
+        "rootpath": str(rootpath),
+        "dirname_template": "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}",
+        "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc",
+    }
 
-    monkeypatch.setitem(CFG, "rootpath", {"CMIP5": str(rootpath)})
-    monkeypatch.setitem(CFG, "drs", {"CMIP5": "ESGF"})
-    monkeypatch.setitem(CFG, "output_dir", tmp_path / "output_dir")
+
+@pytest.mark.parametrize("timerange", ["1850/185002", "*", "*/P2M", "1860/*"])
+def test_find_data(
+    example_data_source: dict[str, str],
+    session: Session,
+    timerange: str,
+) -> None:
+    tas = Dataset(
+        short_name="tas",
+        mip="Amon",
+        project="CMIP5",
+        dataset="CanESM2",
+        ensemble="r1i1p1",
+        exp="historical",
+        timerange=timerange,
+    )
+    tas.add_supplementary(short_name="areacella", mip="fx", ensemble="r0i0p0")
+    tas.session = session
+    tas.session["projects"]["CMIP5"]["data"] = {
+        "example-data-source": example_data_source,
+    }
+
+    assert len(tas.files) == 1
+    assert "timerange" in tas.files[0].facets
+    assert len(tas.supplementaries[0].files) == 1
+    assert "timerange" not in tas.supplementaries[0].files
 
 
-def test_load(example_data):
+def test_load(example_data_source: dict[str, str], session: Session) -> None:
     tas = Dataset(
         short_name="tas",
         mip="Amon",
@@ -66,6 +99,10 @@ def test_load(example_data):
         timerange="1850/185002",
     )
     tas.add_supplementary(short_name="areacella", mip="fx", ensemble="r0i0p0")
+    tas.session = session
+    tas.session["projects"]["CMIP5"]["data"] = {
+        "example-data-source": example_data_source,
+    }
 
     tas.augment_facets()
 

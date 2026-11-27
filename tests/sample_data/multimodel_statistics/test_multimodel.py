@@ -1,10 +1,12 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
+from __future__ import annotations
+
 import pickle
 import platform
 from itertools import groupby
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import cf_units
 import iris
@@ -14,6 +16,9 @@ from iris.coords import AuxCoord
 
 from esmvalcore.preprocessor import extract_time
 from esmvalcore.preprocessor._multimodel import multi_model_statistics
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -31,7 +36,7 @@ def assert_array_almost_equal(this, other, rtol=1e-7):
     np.testing.assert_allclose(this, other, rtol=rtol)
 
 
-def assert_coords_equal(this: list, other: list):
+def assert_coords_equal(this: list, other: list) -> None:
     """Assert coords list `this` equals coords list `other`."""
     for this_coord, other_coord in zip(this, other, strict=False):
         np.testing.assert_equal(this_coord.points, other_coord.points)
@@ -54,7 +59,10 @@ def fix_metadata(cubes):
         cube.coord("air_pressure").bounds = None
 
 
-def preprocess_data(cubes, time_slice: Optional[dict] = None):
+def preprocess_data(
+    cubes: Sequence[iris.cube.Cube],
+    time_slice: dict | None = None,
+) -> list[iris.cube.Cube]:
     """Regrid the data to the first cube and optional time-slicing."""
     # Increase TEST_REVISION anytime you make changes to this function.
     if time_slice:
@@ -68,9 +76,7 @@ def preprocess_data(cubes, time_slice: Optional[dict] = None):
         "scheme": iris.analysis.Nearest(),
     }
 
-    cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
-
-    return cubes
+    return [cube.regrid(**regrid_kwargs) for cube in cubes]
 
 
 def get_cache_key(value):
@@ -96,7 +102,7 @@ def timeseries_cubes_month(request):
     data = request.config.cache.get(cache_key, None)
 
     if data:
-        cubes = pickle.loads(data.encode("latin1"))
+        cubes = pickle.loads(data.encode("latin1"))  # noqa: S301
     else:
         # Increase TEST_REVISION anytime you make changes here.
         time_slice = {
@@ -112,7 +118,8 @@ def timeseries_cubes_month(request):
 
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(
-            cache_key, pickle.dumps(cubes).decode("latin1")
+            cache_key,
+            pickle.dumps(cubes).decode("latin1"),
         )
 
     fix_metadata(cubes)
@@ -128,7 +135,7 @@ def timeseries_cubes_day(request):
     data = request.config.cache.get(cache_key, None)
 
     if data:
-        cubes = pickle.loads(data.encode("latin1"))
+        cubes = pickle.loads(data.encode("latin1"))  # noqa: S301
 
     else:
         # Increase TEST_REVISION anytime you make changes here.
@@ -145,7 +152,8 @@ def timeseries_cubes_day(request):
 
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(
-            cache_key, pickle.dumps(cubes).decode("latin1")
+            cache_key,
+            pickle.dumps(cubes).decode("latin1"),
         )
 
     fix_metadata(cubes)
@@ -156,9 +164,7 @@ def timeseries_cubes_day(request):
     # groupby requires sorted list
     grouped = groupby(sorted(cubes, key=calendar), key=calendar)
 
-    cube_dict = {key: list(group) for key, group in grouped}
-
-    return cube_dict
+    return {key: list(group) for key, group in grouped}
 
 
 def multimodel_test(cubes, statistic, span, **kwargs):
@@ -166,7 +172,10 @@ def multimodel_test(cubes, statistic, span, **kwargs):
     statistics = [statistic]
 
     result = multi_model_statistics(
-        products=cubes, statistics=statistics, span=span, **kwargs
+        products=cubes,
+        statistics=statistics,
+        span=span,
+        **kwargs,
     )
     assert isinstance(result, dict)
     assert statistic in result
@@ -198,7 +207,8 @@ def multimodel_regression_test(cubes, span, name):
     else:
         # The test will fail if no regression data are available.
         iris.save(result_cube, filename)
-        raise RuntimeError(f"Wrote reference data to {filename.absolute()}")
+        msg = f"Wrote reference data to {filename.absolute()}"
+        raise RuntimeError(msg)
 
 
 @pytest.mark.use_sample_data
@@ -240,7 +250,7 @@ def test_multimodel_regression_day_365_day(timeseries_cubes_day, span):
 
 
 @pytest.mark.skip(
-    reason="Cannot calculate statistics with single cube in list"
+    reason="Cannot calculate statistics with single cube in list",
 )
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize("span", SPAN_PARAMS)
@@ -253,7 +263,7 @@ def test_multimodel_regression_day_360_day(timeseries_cubes_day, span):
 
 
 @pytest.mark.skip(
-    reason="Cannot calculate statistics with single cube in list"
+    reason="Cannot calculate statistics with single cube in list",
 )
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize("span", SPAN_PARAMS)
@@ -358,7 +368,12 @@ def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
     cubes[1] = cubes[1][0]  # use 0D time dim for one cube
 
-    msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    if span == "overlap":
+        msg = r"Cannot align time coordinates with strategy 'overlap'"
+    elif span == "full":
+        msg = r"Tried to align cubes in multi-model statistics"
+    else:
+        pytest.fail(f"Invalid span '{span}' given")
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic="mean")
 
@@ -384,7 +399,10 @@ def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
     )
     with pytest.raises(ValueError, match=msg):
         multimodel_test(
-            cubes, span=span, statistic="mean", ignore_scalar_coords=True
+            cubes,
+            span=span,
+            statistic="mean",
+            ignore_scalar_coords=True,
         )
 
 
@@ -431,7 +449,12 @@ def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     cubes[1].coord("time").points = 20.0
     cubes[1].coord("time").bounds = [0.0, 40.0]
 
-    msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    if span == "overlap":
+        msg = r"Cannot align time coordinates with strategy 'overlap'"
+    elif span == "full":
+        msg = r"Tried to align cubes in multi-model statistics"
+    else:
+        pytest.fail(f"Invalid span '{span}' given")
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic="mean")
 
@@ -454,7 +477,10 @@ def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
     cubes[1].coord("time").bounds = [0.0, 40.0]
 
     result = multimodel_test(
-        cubes, span=span, statistic="mean", ignore_scalar_coords=True
+        cubes,
+        span=span,
+        statistic="mean",
+        ignore_scalar_coords=True,
     )["mean"]
     assert result.shape == (3, 2)
 
@@ -476,7 +502,10 @@ def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
         cube.add_aux_coord(aux_coord, ())
 
     result = multimodel_test(
-        cubes, span=span, statistic="mean", ignore_scalar_coords=True
+        cubes,
+        span=span,
+        statistic="mean",
+        ignore_scalar_coords=True,
     )["mean"]
     assert result.shape == (3, 2)
 

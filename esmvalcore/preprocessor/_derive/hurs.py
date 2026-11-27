@@ -1,11 +1,18 @@
 """Derivation of variable `hurs`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cf_units
 import dask.array as da
 import iris
 from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 # Constants
 GAS_CONSTANT_WV = 461.5  # JK-1kg-1
@@ -16,13 +23,12 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `hurs`."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "tdps"},
             {"short_name": "tas"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -48,7 +54,9 @@ class DerivedVariable(DerivedVariableBase):
         hurs_cube.units = cf_units.Unit("%")
 
         hurs_cube.data = da.ma.where(
-            hurs_cube.core_data() > 100.0, 100.0, hurs_cube.core_data()
+            hurs_cube.core_data() > 100.0,
+            100.0,
+            hurs_cube.core_data(),
         )
 
         return hurs_cube

@@ -28,7 +28,10 @@ LAT_COORD_MULT = AuxCoord(
     standard_name="latitude",
 )
 LAT_COORD_SMALL = DimCoord(
-    [0.0], bounds=[-45.0, 45.0], var_name="lat", standard_name="latitude"
+    [0.0],
+    bounds=[-45.0, 45.0],
+    var_name="lat",
+    standard_name="latitude",
 )
 
 
@@ -43,14 +46,15 @@ def test_allvars_fix_metadata():
             ),
             Cube([1], dim_coords_and_dims=[(LAT_COORD_SMALL.copy(), 0)]),
             Cube(0.0),
-        ]
+        ],
     )
     fix = AllVars(None)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 4
     assert fixed_cubes[0].coord("latitude") != LAT_COORD
     np.testing.assert_allclose(
-        fixed_cubes[0].coord("latitude").points, [-20.0, 0.0, 10.0]
+        fixed_cubes[0].coord("latitude").points,
+        [-20.0, 0.0, 10.0],
     )
     np.testing.assert_allclose(
         fixed_cubes[0].coord("latitude").bounds,

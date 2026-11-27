@@ -2,8 +2,8 @@
 
 from iris.cube import CubeList
 
-from ..fix import Fix
-from ..shared import fix_ocean_depth_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import fix_ocean_depth_coord
 
 
 class AllVars(Fix):

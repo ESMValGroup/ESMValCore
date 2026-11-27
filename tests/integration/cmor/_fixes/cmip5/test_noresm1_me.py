@@ -62,7 +62,7 @@ CUBES_TO_FIX = [
 ]
 
 
-@pytest.mark.parametrize("cubes_in,cubes_out", CUBES_TO_FIX)
+@pytest.mark.parametrize(("cubes_in", "cubes_out"), CUBES_TO_FIX)
 def test_tas(cubes_in, cubes_out):
     """Test tas fixes."""
     fix = Tas(None)

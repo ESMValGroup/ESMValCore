@@ -3,6 +3,9 @@
 import dask
 import dask.array as da
 import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
 import numpy as np
 import pytest
 
@@ -19,29 +22,38 @@ from esmvalcore.preprocessor._regrid import (
 def clear_regridder_cache(monkeypatch):
     """Clear regridder cache before test runs."""
     monkeypatch.setattr(
-        esmvalcore.preprocessor._regrid, "_CACHED_REGRIDDERS", {}
+        esmvalcore.preprocessor._regrid,
+        "_CACHED_REGRIDDERS",
+        {},
     )
 
 
-def _make_coord(start: float, stop: float, step: int, *, name: str):
+def _make_coord(
+    start: float,
+    stop: float,
+    step: int,
+    *,
+    name: str,
+) -> iris.coords.DimCoord:
     """Create a latitude or longitude coordinate with bounds."""
     coord = iris.coords.DimCoord(
         np.linspace(start, stop, step),
         standard_name=name,
-        units="degrees",
+        units="degrees_north" if name == "latitude" else "degrees_east",
     )
     coord.guess_bounds()
     return coord
 
 
-def _make_cube(*, lat: tuple, lon: tuple):
+def _make_cube(*, lat: tuple, lon: tuple) -> iris.cube.Cube:
     """Create a cube with a latitude and longitude dimension."""
     lat_coord = _make_coord(*lat, name="latitude")
     lon_coord = _make_coord(*lon, name="longitude")
 
     return iris.cube.Cube(
         np.zeros(
-            [len(lat_coord.points), len(lon_coord.points)], dtype=np.float32
+            [len(lat_coord.points), len(lon_coord.points)],
+            dtype=np.float32,
         ),
         dim_coords_and_dims=[(lat_coord, 0), (lon_coord, 1)],
     )
@@ -106,7 +118,7 @@ def test_invalid_target_grid(scheme, cube_10x10, mocker):
     """Test `regrid.`."""
     target_grid = mocker.sentinel.target_grid
     msg = "Expecting a cube"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         regrid(cube_10x10, target_grid, scheme)
 
 
@@ -150,7 +162,10 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
         cache_weights=cache_weights,
     )
     cube_lin = regrid(
-        cube_10x10, cube_30x30, "linear", cache_weights=cache_weights
+        cube_10x10,
+        cube_30x30,
+        "linear",
+        cache_weights=cache_weights,
     )
     assert cube_gen.dtype == np.float32
     assert cube_lin.dtype == np.float32
@@ -159,8 +174,10 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
     if cache_weights:
         assert len(_cached_regridders) == 2
         key_1 = (
-            "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': "
-            "'mask'}",
+            (
+                "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': "
+                "'mask'}"
+            ),
             (18,),
             (36,),
             (30,),
@@ -174,8 +191,8 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
 
 
 @pytest.mark.parametrize(
-    "cube2_spec, expected",
-    (
+    ("cube2_spec", "expected"),
+    [
         # equal lat/lon
         (
             {
@@ -216,9 +233,9 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
             },
             False,
         ),
-    ),
+    ],
 )
-def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
+def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool) -> None:
     """Test for `_horizontal_grid_is_close`."""
     cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube2 = _make_cube(**cube2_spec)
@@ -226,10 +243,148 @@ def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     assert _horizontal_grid_is_close(cube1, cube2) == expected
 
 
+def test_horizontal_grid_is_close_aux_coords() -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    lat = cube1.coord("latitude")
+    lon = cube1.coord("longitude")
+    cube1.remove_coord(lat)
+    cube1.remove_coord(lon)
+    cube1.add_aux_coord(lat, 0)
+    cube1.add_aux_coord(lon, 1)
+
+    lat = cube2.coord("latitude")
+    lon = cube2.coord("longitude")
+    cube2.remove_coord(lat)
+    cube2.remove_coord(lon)
+    cube2.add_aux_coord(lat, 0)
+    cube2.add_aux_coord(lon, 1)
+
+    assert _horizontal_grid_is_close(cube1, cube2) is True
+
+
+@pytest.mark.parametrize("close", [True, False])
+def test_horizontal_grid_is_close_rotated(close: bool) -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cs = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
+    cube1 = iris.cube.Cube(
+        np.zeros((2, 3)),
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [1, 2],
+                    standard_name="grid_latitude",
+                    units="degrees",
+                    coord_system=cs,
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    [1, 2, 3],
+                    standard_name="grid_longitude",
+                    units="degrees",
+                    coord_system=cs,
+                ),
+                1,
+            ),
+        ],
+    )
+    cube2 = cube1.copy()
+    if not close:
+        cube2.coord("grid_latitude").points = (
+            cube2.coord("grid_latitude").points + 1.0
+        )
+
+    assert _horizontal_grid_is_close(cube1, cube2) is close
+
+
+def test_horizontal_grid_is_close_different_coord_system() -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cs1 = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
+    cs2 = iris.coord_systems.RotatedGeogCS(7.08, -166.92)
+    cube1 = iris.cube.Cube(
+        np.zeros((2, 3)),
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [1, 2],
+                    standard_name="grid_latitude",
+                    units="degrees",
+                    coord_system=cs1,
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    [1, 2, 3],
+                    standard_name="grid_longitude",
+                    units="degrees",
+                    coord_system=cs1,
+                ),
+                1,
+            ),
+        ],
+    )
+    cube2 = cube1.copy()
+    cube2.coord("grid_longitude").coord_system = cs2
+    cube2.coord("grid_latitude").coord_system = cs2
+
+    assert _horizontal_grid_is_close(cube1, cube2) is False
+
+
+def test_horizontal_grid_is_close_different_units() -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cs = iris.coord_systems.LambertConformal(
+        central_lat=49.5,
+        central_lon=10.5,
+        secant_latitudes=(49.5,),
+    )
+    cube1 = iris.cube.Cube(
+        np.zeros((2, 3)),
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [1, 2],
+                    standard_name="projection_x_coordinate",
+                    units="m",
+                    coord_system=cs,
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    [1, 2, 3],
+                    standard_name="projection_y_coordinate",
+                    units="m",
+                    coord_system=cs,
+                ),
+                1,
+            ),
+        ],
+    )
+    cube2 = cube1.copy()
+    cube2.coord("projection_x_coordinate").units = "km"
+    cube2.coord("projection_y_coordinate").units = "km"
+
+    assert _horizontal_grid_is_close(cube1, cube2) is False
+
+
+def test_horizontal_grid_is_close_no_coords() -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube1.remove_coord("latitude")
+
+    assert _horizontal_grid_is_close(cube1, cube2) is False
+
+
 def test_regrid_is_skipped_if_grids_are_the_same_dim_coord(mocker):
     """Test that regridding is skipped if the grids are the same."""
     mock_get_regridder = mocker.patch(
-        "esmvalcore.preprocessor._regrid._get_regridder", autospec=True
+        "esmvalcore.preprocessor._regrid._get_regridder",
+        autospec=True,
     )
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
 
@@ -244,7 +399,8 @@ def test_regrid_is_skipped_if_grids_are_the_same_dim_coord(mocker):
 def test_regrid_is_skipped_if_grids_are_the_same_aux_coord(mocker):
     """Test that regridding is skipped if the grids are the same."""
     mock_get_regridder = mocker.patch(
-        "esmvalcore.preprocessor._regrid._get_regridder", autospec=True
+        "esmvalcore.preprocessor._regrid._get_regridder",
+        autospec=True,
     )
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     lat = cube.coord("latitude")
@@ -379,7 +535,7 @@ def test_rechunk_on_increased_grid(grids):
         src_grid, tgt_grid = grids
         src_dims = (246, 91, 180)
         if src_grid == "unstructured":
-            src_dims = src_dims[:-2] + (np.prod(src_dims[-2:]),)
+            src_dims = (*src_dims[:-2], np.prod(src_dims[-2:]))
         tgt_grid_dims = (2, 361, 720)
         src_cube = globals()[f"make_test_cube_{src_grid}"](src_dims)
         tgt_grid = globals()[f"make_test_cube_{tgt_grid}"](tgt_grid_dims)
@@ -387,7 +543,7 @@ def test_rechunk_on_increased_grid(grids):
 
         expected = ((123, 123), (91,), (180,))
         if src_grid == "unstructured":
-            expected = expected[:-2] + (np.prod(expected[-2:]),)
+            expected = (*expected[:-2], np.prod(expected[-2:]))
         assert result.core_data().chunks == expected
 
 
@@ -445,7 +601,9 @@ def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
         mocker.sentinel.regridder
     )
     mock_load_scheme = mocker.patch.object(
-        esmvalcore.preprocessor._regrid, "_load_scheme", autospec=True
+        esmvalcore.preprocessor._regrid,
+        "_load_scheme",
+        autospec=True,
     )
 
     reg = _get_regridder(cube_10x10, cube_30x30, scheme, cache_weights=True)

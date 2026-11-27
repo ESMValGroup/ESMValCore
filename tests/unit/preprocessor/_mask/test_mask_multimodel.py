@@ -32,7 +32,8 @@ def assert_array_equal(array_1, array_2):
     """Assert that (masked) array 1 equals (masked) array 2."""
     if np.ma.is_masked(array_1) or np.ma.is_masked(array_2):
         np.testing.assert_array_equal(
-            np.ma.getmaskarray(array_1), np.ma.getmaskarray(array_2)
+            np.ma.getmaskarray(array_1),
+            np.ma.getmaskarray(array_2),
         )
         mask = np.ma.getmaskarray(array_1)
         np.testing.assert_array_equal(array_1[~mask], array_2[~mask])
@@ -49,16 +50,28 @@ def _get_cube(ndim):
         units="days since 1850-01-01",
     )
     lev_coord = iris.coords.DimCoord(
-        [10, 5], var_name="plev", standard_name="air_pressure", units="hPa"
+        [10, 5],
+        var_name="plev",
+        standard_name="air_pressure",
+        units="hPa",
     )
     lat_coord = iris.coords.DimCoord(
-        [1], var_name="lat", standard_name="latitude", units="degrees"
+        [1],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0, 1], var_name="lon", standard_name="longitude", units="degrees"
+        [0, 1],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     x_coord = iris.coords.DimCoord(
-        [-1], var_name="x", long_name="Arbitrary coordinate", units="no unit"
+        [-1],
+        var_name="x",
+        long_name="Arbitrary coordinate",
+        units="no unit",
     )
 
     if ndim == 0:
@@ -91,12 +104,15 @@ def _get_cube(ndim):
             (x_coord, 4),
         ]
     else:
-        assert False, f"Invalid ndim: {ndim}"
+        msg = f"Invalid ndim: {ndim}"
+        raise AssertionError(msg)
 
-    cube = iris.cube.Cube(
-        cube_data, var_name="y", long_name="Y", dim_coords_and_dims=coord_spec
+    return iris.cube.Cube(
+        cube_data,
+        var_name="y",
+        long_name="Y",
+        dim_coords_and_dims=coord_spec,
     )
-    return cube
 
 
 @pytest.fixture

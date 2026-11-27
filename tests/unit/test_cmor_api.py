@@ -1,4 +1,3 @@
-# flake8: noqa
 from unittest.mock import sentinel
 
 import esmvalcore.cmor.check
@@ -6,9 +5,6 @@ import esmvalcore.cmor.fix
 import esmvalcore.cmor.fixes
 import esmvalcore.cmor.table
 from esmvalcore.cmor.check import (
-    CheckLevels,
-    CMORCheck,
-    CMORCheckError,
     cmor_check,
     cmor_check_data,
     cmor_check_metadata,
@@ -16,9 +12,11 @@ from esmvalcore.cmor.check import (
 
 
 def test_cmor_check_metadata(mocker):
-    """Test ``cmor_check_metadata``"""
+    """Test ``cmor_check_metadata``."""
     mock_get_cmor_checker = mocker.patch.object(
-        esmvalcore.cmor.check, "_get_cmor_checker", autospec=True
+        esmvalcore.cmor.check,
+        "_get_cmor_checker",
+        autospec=True,
     )
     (
         mock_get_cmor_checker.return_value.return_value.check_metadata.return_value
@@ -29,7 +27,8 @@ def test_cmor_check_metadata(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
 
@@ -37,7 +36,8 @@ def test_cmor_check_metadata(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
@@ -48,9 +48,11 @@ def test_cmor_check_metadata(mocker):
 
 
 def test_cmor_check_data(mocker):
-    """Test ``cmor_check_data``"""
+    """Test ``cmor_check_data``."""
     mock_get_cmor_checker = mocker.patch.object(
-        esmvalcore.cmor.check, "_get_cmor_checker", autospec=True
+        esmvalcore.cmor.check,
+        "_get_cmor_checker",
+        autospec=True,
     )
     (
         mock_get_cmor_checker.return_value.return_value.check_data.return_value
@@ -61,7 +63,8 @@ def test_cmor_check_data(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
 
@@ -69,7 +72,8 @@ def test_cmor_check_data(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
@@ -80,7 +84,7 @@ def test_cmor_check_data(mocker):
 
 
 def test_cmor_check(mocker):
-    """Test ``cmor_check``"""
+    """Test ``cmor_check``."""
     mock_cmor_check_metadata = mocker.patch.object(
         esmvalcore.cmor.check,
         "cmor_check_metadata",
@@ -99,8 +103,9 @@ def test_cmor_check(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
-        sentinel.check_level,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
+        check_level=sentinel.check_level,
     )
 
     mock_cmor_check_metadata.assert_called_once_with(
@@ -108,7 +113,8 @@ def test_cmor_check(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     mock_cmor_check_data.assert_called_once_with(
@@ -116,7 +122,8 @@ def test_cmor_check(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     assert cube == sentinel.cube_after_check_data

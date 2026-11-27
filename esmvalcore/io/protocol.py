@@ -1,0 +1,117 @@
+"""Protocols for accessing data.
+
+This module defines the :class:`DataSource` and :class:`DataElement` protocols
+for finding and loading data. A data source can be used to find data elements
+matching specific facets. A data element represents some data that can be
+loaded as Iris cubes.
+
+To add support for a new data source, write two classes that implement these
+protocols and configure the tool to use the newly implemented data source as
+described in :mod:`esmvalcore.io`.
+
+.. deprecated:: 2.16.0
+    Data sources without the :attr:`DataSource.searchable_facets` attribute
+    are deprecated and will no longer be supported in ESMValCore v2.18.0.
+
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.cube
+
+    from esmvalcore.typing import FacetValue
+
+
+@runtime_checkable
+class DataElement(Protocol):
+    """A data element represents some data that can be loaded.
+
+    An :class:`esmvalcore.io.local.LocalFile` is an example of a data element.
+    """
+
+    name: str
+    """A unique name identifying the data."""
+
+    facets: dict[str, FacetValue]
+    """Facets are key-value pairs that can be used for searching the data."""
+
+    attributes: dict[str, Any]
+    """Attributes are key-value pairs describing the data."""
+
+    def __hash__(self) -> int:
+        """Return a number uniquely representing the data element."""
+
+    def prepare(self) -> None:
+        """Prepare the data for access."""
+
+    def to_iris(self) -> iris.cube.CubeList:
+        """Load the data as Iris cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            The loaded data.
+        """
+
+
+@runtime_checkable
+class DataSource(Protocol):
+    """A data source can be used to find data."""
+
+    name: str
+    """A name identifying the data source."""
+
+    project: str
+    """The project that the data source provides data for."""
+
+    priority: int
+    """The priority of the data source. Lower values have priority."""
+
+    debug_info: str
+    """A string containing debug information when no data is found."""
+
+    @property
+    def searchable_facets(self) -> frozenset[str]:
+        """Facets that can be used to search for data.
+
+        The values of these facets can be passed to :meth:`find_data` to
+        select data and are available in the
+        :attr:`~esmvalcore.io.protocol.DataElement.facets` of the data
+        elements that are found. For example, these are the facets in the
+        templates of a :class:`esmvalcore.io.local.LocalDataSource`.
+
+        .. versionadded:: 2.16.0
+        """
+
+    def find_data(self, **facets: FacetValue) -> Iterable[DataElement]:
+        """Find data.
+
+        Parameters
+        ----------
+        **facets :
+            Find data matching these facets.
+
+        Returns
+        -------
+        :obj:`typing.Iterable` of :obj:`esmvalcore.io.base.DataElement`
+            The data elements that have been found.
+        """
+
+
+# TODO: Remove in v2.18.0
+@runtime_checkable
+class _DataSourceWithoutSearchableFacets(Protocol):  # noqa: PYI046
+    """A data source without the ``searchable_facets`` attribute."""
+
+    name: str
+    project: str
+    priority: int
+    debug_info: str
+
+    def find_data(self, **facets: FacetValue) -> Iterable[DataElement]:
+        """Find data."""

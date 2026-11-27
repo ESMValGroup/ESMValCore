@@ -1,101 +1,189 @@
 """Configure logging."""
 
-import os
+from __future__ import annotations
+
+import contextlib
+import inspect
+import logging
 import sys
 import warnings
-from functools import partial
-from typing import Optional, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from iris.warnings import IrisUserWarning
 from loguru import logger
 
+import esmvalcore.exceptions
 
-def log_warnings(message, *args, **kwargs):
-    """Redirect warnings to loguru logger."""
-    # https://loguru.readthedocs.io/en/stable/resources/recipes.html#capturing-standard-stdout-stderr-and-warnings
-    if isinstance(message, IrisUserWarning):
-        # Iris does not correctly set the stack level for its warnings,
-        # so increase the depth by 1 to get the relevant location of the
-        # calling code.
-        logger.opt(depth=3).debug("{}: {}", type(message).__name__, message)
-    else:
-        logger.opt(depth=2).warning(message)
+if TYPE_CHECKING:
+    import os
+    from collections.abc import Iterable
+
+_WARNINGS_SHOWN_IN_MAIN_LOG = [
+    cls.__name__
+    for cls in vars(esmvalcore.exceptions).values()
+    if inspect.isclass(cls)
+    and issubclass(cls, esmvalcore.exceptions.ESMValCoreUserWarning)
+]
+
+_HANDLER_IDS: list[int] = []
+"""Loguru handlers added by :func:`configure_logging`."""
+
+_OUR_NAMES = ("esmvalcore", "esmvaltool", "intake-esgf", "py.warnings")
+_CMOR_NAMES = (
+    "esmvalcore.cmor.check",
+    "esmvalcore.cmor._fixes.fix.genericfix",
+)
+
+_CONSOLE_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss,SSS!UTC}</green> UTC [{process}] "
+    "<level>{level: <7}</level> <level>{message}</level>"
+)
+_BRIEF_FORMAT = "{level: <7} [{process}] {message}"
+_DEBUG_FORMAT = (
+    "{time:YYYY-MM-DD HH:mm:ss,SSS!UTC} UTC [{process}] {level: <7} "
+    "{name}:{line} {message}"
+)
 
 
-def filter_by_name(record: dict, names: set[str], keep: bool = True) -> bool:
-    return (record["name"] in names) == keep
+def _has_name(record: dict[str, Any], names: Iterable[str]) -> bool:
+    """Check if the record comes from (a child of) one of the loggers."""
+    return any(
+        record["name"] == name or record["name"].startswith(f"{name}.")
+        for name in names
+    )
+
+
+def _is_external_warning(record: dict[str, Any]) -> bool:
+    """Check if the record is a warning issued by an external package."""
+    if record["name"] != "py.warnings":
+        return False
+    return not any(
+        f" {warning}: " in record["message"]
+        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG
+    )
+
+
+def _main_log_filter(record: dict[str, Any]) -> bool:
+    """Filter for the console and the main log file."""
+    return (
+        _has_name(record, _OUR_NAMES)
+        and not _has_name(record, _CMOR_NAMES)
+        and not _has_name(record, ["intake-esgf"])
+        and not _is_external_warning(record)
+    )
+
+
+def _debug_log_filter(record: dict[str, Any]) -> bool:
+    """Filter for the debug log file."""
+    return _has_name(record, _OUR_NAMES)
+
+
+def _cmor_log_filter(record: dict[str, Any]) -> bool:
+    """Filter for the CMOR log file."""
+    return _has_name(record, _CMOR_NAMES)
+
+
+class _InterceptHandler(logging.Handler):
+    """Send log records from the standard library logging module to loguru.
+
+    See https://loguru.readthedocs.io/en/stable/overview.html#entirely-compatible-with-standard-logging
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            level: str | int = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+        logger.patch(
+            lambda r: r.update(name=record.name, line=record.lineno),
+        ).opt(exception=record.exc_info).log(level, record.getMessage())
+
+
+def _log_warning(
+    message: Warning | str,
+    category: type[Warning],
+    filename: str,
+    lineno: int,
+    file: object = None,  # noqa: ARG001
+    line: str | None = None,
+) -> None:
+    """Send warnings to loguru, like :func:`logging.captureWarnings`."""
+    text = warnings.formatwarning(message, category, filename, lineno, line)
+    logger.patch(
+        lambda r: r.update(name="py.warnings", line=lineno),
+    ).warning(text.rstrip())
 
 
 def configure_logging(
-    cfg_file: Optional[Union[os.PathLike, str]] = None,
-    output_dir: Optional[Union[os.PathLike, str]] = None,
-    console_log_level: str = "INFO",
-) -> list:
+    output_dir: os.PathLike | str | None = None,
+    console_log_level: str | None = None,
+) -> list[str]:
     """Configure logging.
 
     Parameters
     ----------
-    cfg_file : str, optional
-        Logging config file. If `None`, defaults to `configure-logging.yml`
-    output_dir : str, optional
+    output_dir:
         Output directory for the log files. If `None`, log only to the console.
-    console_log_level : str, optional
+    console_log_level:
         If `None`, use the default (INFO).
 
     Returns
     -------
-    log_files : list
+    :
         Filenames that will be logged to.
     """
-    log_level = console_log_level.upper()
-    logger.level("INFO", color="")
-    logger.level("DEBUG", color="<blue>")
-    debug_fmt = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS zz}</green> [{process}] <level>{level: <7}</level> <cyan>{name}</cyan>:<cyan>{line}</cyan>:<cyan>{function}</cyan> <level>{message}</level>"
-    console_fmt = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS zz}</green> [{process}] <level>{level: <7}</level> <level>{message}</level>"
-    cmor_modules = {
-        "esmvalcore.cmor.check",
-        "esmvalcore.cmor._fixes.fix.genericfix",
-    }
-    cmor = partial(filter_by_name, names=cmor_modules, keep=True)
-    no_cmor = partial(filter_by_name, names=cmor_modules, keep=False)
-    logger.remove()
-    logger.add(
-        sys.stdout,
-        level=log_level,
-        format=console_fmt,
-        filter=no_cmor,
-        enqueue=True,
-    )
-    if output_dir is None:
-        log_files = []
-    else:
-        main_log = os.path.join(output_dir, "main_log.txt")
-        debug_log = os.path.join(output_dir, "main_log_debug.txt")
-        cmor_log = os.path.join(output_dir, "cmor_log.txt")
-        log_files = [main_log, debug_log, cmor_log]
-        logger.add(
-            main_log,
-            level=log_level,
-            format=console_fmt,
-            filter=no_cmor,
-            enqueue=True,
-        )
-        logger.add(
-            debug_log,
-            level="DEBUG",
-            format=debug_fmt,
-            filter=no_cmor,
-            enqueue=True,
-        )
-        logger.add(
-            cmor_log,
-            level="DEBUG",
-            format=console_fmt,
-            filter=cmor,
-            enqueue=True,
-        )
+    level = "INFO" if console_log_level is None else console_log_level.upper()
+    logger.level(level)  # Raises ValueError for unknown levels.
 
-    # Patch the warnings module so it writes warnings to the loguru logger.
-    warnings.showwarning = log_warnings
+    # Only remove the handlers added by this function and the default
+    # loguru handler, so other handlers (e.g. from pytest) keep working.
+    for handler_id in _HANDLER_IDS:
+        logger.remove(handler_id)
+    _HANDLER_IDS.clear()
+    with contextlib.suppress(ValueError):
+        logger.remove(0)
+
+    handler_id = logger.add(
+        sys.stdout,
+        level=level,
+        format=_CONSOLE_FORMAT,
+        filter=_main_log_filter,
+        backtrace=False,
+        diagnose=False,
+    )
+    _HANDLER_IDS.append(handler_id)
+    log_files = []
+    if output_dir is not None:
+        output_dir = Path(output_dir)
+        files = [
+            ("main_log.txt", "INFO", _BRIEF_FORMAT, _main_log_filter, False),
+            (
+                "main_log_debug.txt",
+                "DEBUG",
+                _DEBUG_FORMAT,
+                _debug_log_filter,
+                True,
+            ),
+            ("cmor_log.txt", "INFO", _BRIEF_FORMAT, _cmor_log_filter, False),
+        ]
+        # Only show variable values in tracebacks in the debug log.
+        for filename, file_level, fmt, filter_, diagnose in files:
+            path = str(output_dir / filename)
+            handler_id = logger.add(
+                path,
+                level=file_level,
+                format=fmt,
+                filter=filter_,
+                encoding="utf-8",
+                mode="a",
+                backtrace=diagnose,
+                diagnose=diagnose,
+            )
+            _HANDLER_IDS.append(handler_id)
+            log_files.append(path)
+
+    # Send messages logged with the standard library and warnings to loguru.
+    logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
+    warnings.showwarning = _log_warning
 
     return log_files

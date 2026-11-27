@@ -1,8 +1,15 @@
 """Weighting preprocessor module."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
+
 import iris
 
 from ._supplementary_vars import register_supplementaries
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 
 def _get_land_fraction(cube):
@@ -18,7 +25,7 @@ def _get_land_fraction(cube):
         except iris.exceptions.AncillaryVariableNotFoundError:
             errors.append(
                 "Ancillary variables land/sea area fraction not "
-                "found in cube. Check ancillary data availability."
+                "found in cube. Check ancillary data availability.",
             )
             return (land_fraction, errors)
 
@@ -34,7 +41,10 @@ def _get_land_fraction(cube):
     variables=["sftlf", "sftof"],
     required="require_at_least_one",
 )
-def weighting_landsea_fraction(cube, area_type):
+def weighting_landsea_fraction(
+    cube: Cube,
+    area_type: Literal["land", "sea"],
+) -> Cube:
     """Weight fields using land or sea fraction.
 
     This preprocessor function weights a field with its corresponding land or
@@ -68,15 +78,15 @@ def weighting_landsea_fraction(cube, area_type):
         Land/sea fraction variables ``sftlf`` or ``sftof`` not found.
     """
     if area_type not in ("land", "sea"):
-        raise TypeError(
-            f"Expected 'land' or 'sea' for area_type, got '{area_type}'"
-        )
+        msg = f"Expected 'land' or 'sea' for area_type, got '{area_type}'"
+        raise TypeError(msg)
     (land_fraction, errors) = _get_land_fraction(cube)
     if land_fraction is None:
-        raise ValueError(
+        msg = (
             f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
             f"failed because of the following errors: {' '.join(errors)}"
         )
+        raise ValueError(msg)
     core_data = cube.core_data()
     if area_type == "land":
         cube.data = core_data * land_fraction

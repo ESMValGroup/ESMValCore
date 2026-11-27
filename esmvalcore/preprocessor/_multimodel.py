@@ -10,19 +10,22 @@ grouped execution by passing a groupby keyword.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from datetime import datetime
 from functools import reduce
-from typing import TYPE_CHECKING, Optional
+from pprint import pformat
+from typing import TYPE_CHECKING, Any, Literal
 
 import cf_units
 import iris
-import iris.coord_categorisation
+import iris.analysis
+import iris.coords
+import iris.cube
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import MergeError
 from iris.util import equalise_attributes, new_axis
+from loguru import logger
 
 from esmvalcore.iris_helpers import (
     date2num,
@@ -37,9 +40,10 @@ from esmvalcore.preprocessor._supplementary_vars import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from esmvalcore.preprocessor import PreprocessorFile
 
-from loguru import logger
 
 CONCAT_DIM = "multi-model"
 
@@ -95,13 +99,14 @@ def _unify_time_coordinates(cubes):
                 logger.warning(
                     "Multimodel encountered (sub)daily data and inconsistent "
                     "time units or calendars. Attempting to continue, but "
-                    "might produce unexpected results."
+                    "might produce unexpected results.",
                 )
         else:
-            raise ValueError(
+            msg = (
                 "Multimodel statistics preprocessor currently does not "
                 "support sub-daily data."
             )
+            raise ValueError(msg)
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord("time").points = date2num(dates, t_unit, coord.dtype)
@@ -112,10 +117,10 @@ def _unify_time_coordinates(cubes):
 def _guess_time_bounds(cube):
     """Guess time bounds if possible."""
     cube.coord("time").bounds = None
-    if cube.coord("time").shape == (1,):
+    if cube.coord("time").shape[0] < 2:
         logger.debug(
             "Encountered scalar time coordinate in multi_model_statistics: "
-            "cannot determine its bounds"
+            "cannot determine its bounds",
         )
     else:
         cube.coord("time").guess_bounds()
@@ -144,7 +149,8 @@ def _map_to_new_time(cube, time_points):
     # Try if the required time points can be obtained by slicing the cube.
     time_slice = np.isin(time_coord.points, time_points)
     if np.any(time_slice) and np.array_equal(
-        time_coord.points[time_slice], time_points
+        time_coord.points[time_slice],
+        time_points,
     ):
         (time_idx,) = cube.coord_dims("time")
         indices = tuple(
@@ -164,7 +170,8 @@ def _map_to_new_time(cube, time_points):
     # anyway).
     int_time_coords = []
     for coord in cube.coords(
-        dimensions=cube.coord_dims("time"), dim_coords=False
+        dimensions=cube.coord_dims("time"),
+        dim_coords=False,
     ):
         if np.issubdtype(coord.points.dtype, np.integer):
             int_time_coords.append(coord.name())
@@ -183,10 +190,11 @@ def _map_to_new_time(cube, time_points):
                 "data, use the preprocessor option "
                 "`ignore_scalar_coords=True`."
             )
-        raise ValueError(
+        msg = (
             f"Tried to align cubes in multi-model statistics, but failed for "
             f"cube {cube}\n and time points {time_points}.{additional_info}"
-        ) from excinfo
+        )
+        raise ValueError(msg) from excinfo
 
     # Change the dtype of int_time_coords to their original values
     for coord_name in int_time_coords:
@@ -214,10 +222,18 @@ def _align_time_coord(cubes, span):
     elif span == "full":
         new_time_points = reduce(np.union1d, all_time_arrays)
     else:
-        raise ValueError(
+        msg = (
             f"Invalid argument for span: {span!r}"
             "Must be one of 'overlap', 'full'."
         )
+        raise ValueError(msg)
+
+    if new_time_points.size == 0:
+        msg = (
+            f"Cannot align time coordinates with strategy '{span}', resulting "
+            f"time coordinate is empty. Input cubes:\n{pformat(cubes)}"
+        )
+        raise ValueError(msg)
 
     new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
 
@@ -285,15 +301,15 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
         # --> Get metadata that is identical across all cubes
         else:
             std_names = list(
-                {c.coord(coord_name).standard_name for c in cubes}
+                {c.coord(coord_name).standard_name for c in cubes},
             )
             long_names = list({c.coord(coord_name).long_name for c in cubes})
             var_names = list({c.coord(coord_name).var_name for c in cubes})
-            equal_names_metadata[coord_name] = dict(
-                standard_name=std_names[0] if len(std_names) == 1 else None,
-                long_name=long_names[0] if len(long_names) == 1 else None,
-                var_name=var_names[0] if len(var_names) == 1 else None,
-            )
+            equal_names_metadata[coord_name] = {
+                "standard_name": std_names[0] if len(std_names) == 1 else None,
+                "long_name": long_names[0] if len(long_names) == 1 else None,
+                "var_name": var_names[0] if len(var_names) == 1 else None,
+            }
 
     return equal_names_metadata
 
@@ -311,7 +327,8 @@ def _equalise_coordinate_metadata(cubes):
     # --> keep matching names of these coordinates
     # Note: ignores duplicate coordinates
     equal_names_metadata = _get_equal_coord_names_metadata(
-        cubes, equal_coords_metadata
+        cubes,
+        equal_coords_metadata,
     )
 
     # Modify all coordinates of all cubes accordingly
@@ -431,10 +448,11 @@ def _combine(cubes):
         # Note: str(exc) starts with "failed to merge into a single cube.\n"
         # --> remove this here for clear error message
         msg = "\n".join(str(exc).split("\n")[1:])
-        raise ValueError(
+        msg = (
             f"Multi-model statistics failed to merge input cubes into a "
             f"single array:\n{cubes}\n{msg}"
-        ) from exc
+        )
+        raise ValueError(msg) from exc
 
     return merged_cube
 
@@ -475,8 +493,8 @@ def _compute_eager(
     cubes: list,
     *,
     operator: iris.analysis.Aggregator,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> iris.cube.Cube:
     """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
@@ -493,13 +511,14 @@ def _compute_eager(
     try:
         result_cube = result_slices.concatenate_cube()
     except Exception as excinfo:
-        raise ValueError(
+        msg = (
             f"Multi-model statistics failed to concatenate results into a "
             f"single array. This happened for operator {operator} "
             f"with computed statistics {result_slices}. "
             f"This can happen e.g. if the calculation results in inconsistent "
             f"dtypes"
-        ) from excinfo
+        )
+        raise ValueError(msg) from excinfo
 
     result_cube.data = np.ma.array(result_cube.data)
 
@@ -510,8 +529,8 @@ def _compute(
     cube: iris.cube.Cube,
     *,
     operator: iris.analysis.Aggregator,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> iris.cube.Cube:
     """Compute statistic."""
     # This will always return a masked array
     with ignore_iris_vague_metadata_warnings():
@@ -550,9 +569,8 @@ def _multicube_statistics(
     coordinate. Inconsistent attributes will be removed.
     """
     if not cubes:
-        raise ValueError(
-            "Cannot perform multicube statistics for an empty list of cubes"
-        )
+        msg = "Cannot perform multicube statistics for an empty list of cubes"
+        raise ValueError(msg)
 
     # Avoid modifying inputs
     cubes = [cube.copy() for cube in cubes]
@@ -578,11 +596,12 @@ def _multicube_statistics(
     elif not any(time_coords):
         pass
     else:
-        raise ValueError(
+        msg = (
             "Multi-model statistics failed to merge input cubes into a single "
             "array: some cubes have a 'time' dimension, some do not have a "
             "'time' dimension."
         )
+        raise ValueError(msg)
 
     # Calculate statistics
     statistics_cubes = {}
@@ -649,10 +668,11 @@ def _get_operator_and_kwargs(statistic: str | dict) -> tuple[str, dict]:
     if isinstance(statistic, dict):
         statistic = dict(statistic)
         if "operator" not in statistic:
-            raise ValueError(
+            msg = (
                 f"`statistic` given as dictionary, but missing required key "
                 f"`operator`, got {statistic}"
             )
+            raise ValueError(msg)
         operator = statistic.pop("operator")
         kwargs = statistic
     else:
@@ -670,10 +690,10 @@ def _get_stat_identifier(statistic: str | dict) -> str:
 
 def multi_model_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
-    span: str,
+    span: Literal["overlap", "full"],
     statistics: list[str | dict],
-    output_products=None,
-    groupby: Optional[tuple] = None,
+    output_products: dict[str, PreprocessorFile] | None = None,
+    groupby: Sequence[str] | None = None,
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
@@ -750,9 +770,9 @@ def multi_model_statistics(
         Statistical operations to be computed, e.g., ``['mean', 'median']``.
         For some statistics like percentiles, it is also possible to pass
         additional keyword arguments, e.g., ``[{'operator': 'percentile',
-        'percent': 20}]``. All supported options are are given in
+        'percent': 20}]``. All supported options are given in
         :ref:`this table <supported_stat_operator>`.
-    output_products: dict
+    output_products:
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
@@ -793,7 +813,8 @@ def multi_model_statistics(
         # Avoid circular input: https://stackoverflow.com/q/16964467
         statistics_products = set()
         for group, input_prods in _group_products(products, by_key=groupby):
-            sub_output_products = output_products[group]
+            # Assume that output_products is not None if products are PreprocessorFiles.
+            sub_output_products = output_products[group]  # type: ignore[index]
 
             # Compute statistics on a single group
             group_statistics = _multiproduct_statistics(
@@ -808,18 +829,19 @@ def multi_model_statistics(
             statistics_products |= group_statistics
 
         return statistics_products
-    raise ValueError(
+    msg = (
         f"Input type for multi_model_statistics not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         f"got {products}"
     )
+    raise ValueError(msg)
 
 
 def ensemble_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     statistics: list[str | dict],
-    output_products,
-    span: str = "overlap",
+    output_products: dict[str, PreprocessorFile] | None,
+    span: Literal["overlap", "full"] = "overlap",
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
     """Compute ensemble statistics.
@@ -837,9 +859,9 @@ def ensemble_statistics(
         Statistical operations to be computed, e.g., ``['mean', 'median']``.
         For some statistics like percentiles, it is also possible to pass
         additional keyword arguments, e.g., ``[{'operator': 'percentile',
-        'percent': 20}]``. All supported options are are given in
+        'percent': 20}]``. All supported options are given in
         :ref:`this table <supported_stat_operator>`.
-    output_products: dict
+    output_products:
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
@@ -866,7 +888,15 @@ def ensemble_statistics(
     :func:`esmvalcore.preprocessor.multi_model_statistics` for
     the full description of the core statistics function.
     """
-    ensemble_grouping = ("project", "dataset", "exp", "sub_experiment")
+    ensemble_grouping = (
+        "project",
+        "exp",
+        "dataset",
+        "rcm_version",
+        "driver",
+        "grid",
+        "sub_experiment",
+    )
     return multi_model_statistics(
         products=products,
         span=span,

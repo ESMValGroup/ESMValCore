@@ -41,7 +41,6 @@ from esmvalcore.cmor._fixes.emac.emac import (
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 
@@ -55,15 +54,14 @@ def cubes_1d():
         units=Unit("day since 1950-01-01 00:00:00", calendar="gregorian"),
     )
     cube = Cube([1.0], dim_coords_and_dims=[(time_coord, 0)])
-    cubes = CubeList(
+    return CubeList(
         [
             cube.copy(),
             cube.copy(),
             cube.copy(),
             cube.copy(),
-        ]
+        ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -91,15 +89,14 @@ def cubes_2d():
         [[[1.0]]],
         dim_coords_and_dims=[(time_coord, 0), (lat_coord, 1), (lon_coord, 2)],
     )
-    cubes = CubeList(
+    return CubeList(
         [
             cube.copy(),
             cube.copy(),
             cube.copy(),
             cube.copy(),
-        ]
+        ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -174,7 +171,7 @@ def cubes_3d():
         long_name="surface pressure",
         units="Pa",
     )
-    cubes = CubeList(
+    return CubeList(
         [
             cube.copy(),
             cube.copy(),
@@ -185,9 +182,8 @@ def cubes_3d():
             hyai_cube,
             hybi_cube,
             aps_ave_cube,
-        ]
+        ],
     )
-    return cubes
 
 
 def _get_fix(mip, short_name, fix_name):
@@ -198,11 +194,10 @@ def _get_fix(mip, short_name, fix_name):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     vardef = get_var_info(project="EMAC", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.emac.emac, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets)
-    return fix
+    return cls(vardef, extra_facets=extra_facets)
 
 
 def get_fix(mip, short_name):
@@ -219,8 +214,7 @@ def fix_metadata(cubes, mip, short_name):
     fix = get_fix(mip, short_name)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, short_name)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def check_tas_metadata(cubes):
@@ -255,7 +249,8 @@ def check_time(cube):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "day since 1950-01-01 00:00:00", calendar="gregorian"
+        "day since 1950-01-01 00:00:00",
+        calendar="gregorian",
     )
     np.testing.assert_allclose(time.points, [54786.9916666667])
     assert time.bounds is None
@@ -326,10 +321,12 @@ def check_alevel(cube):
     """Check alevel coordinate of cube."""
     # atmosphere_hybrid_sigma_pressure_coordinate
     assert cube.coords(
-        "atmosphere_hybrid_sigma_pressure_coordinate", dim_coords=True
+        "atmosphere_hybrid_sigma_pressure_coordinate",
+        dim_coords=True,
     )
     lev = cube.coord(
-        "atmosphere_hybrid_sigma_pressure_coordinate", dim_coords=True
+        "atmosphere_hybrid_sigma_pressure_coordinate",
+        dim_coords=True,
     )
     assert lev.var_name == "lev"
     assert lev.standard_name == "atmosphere_hybrid_sigma_pressure_coordinate"
@@ -354,10 +351,12 @@ def check_alevel(cube):
 
     # Coefficient ap
     assert cube.coords(
-        "vertical coordinate formula term: ap(k)", dim_coords=False
+        "vertical coordinate formula term: ap(k)",
+        dim_coords=False,
     )
     ap_coord = cube.coord(
-        "vertical coordinate formula term: ap(k)", dim_coords=False
+        "vertical coordinate formula term: ap(k)",
+        dim_coords=False,
     )
     assert ap_coord.var_name == "ap"
     assert ap_coord.standard_name is None
@@ -377,10 +376,12 @@ def check_alevel(cube):
 
     # Coefficient b
     assert cube.coords(
-        "vertical coordinate formula term: b(k)", dim_coords=False
+        "vertical coordinate formula term: b(k)",
+        dim_coords=False,
     )
     b_coord = cube.coord(
-        "vertical coordinate formula term: b(k)", dim_coords=False
+        "vertical coordinate formula term: b(k)",
+        dim_coords=False,
     )
     assert b_coord.var_name == "b"
     assert b_coord.standard_name is None
@@ -554,7 +555,7 @@ def test_get_cube_cav():
         [
             Cube(0.0),
             Cube(0.0, var_name="temp2_cav"),
-        ]
+        ],
     )
     cube = fix.get_cube(cubes)
     assert cube.var_name == "temp2_cav"
@@ -567,7 +568,7 @@ def test_get_cube_ave():
         [
             Cube(0.0),
             Cube(0.0, var_name="temp2_ave"),
-        ]
+        ],
     )
     cube = fix.get_cube(cubes)
     assert cube.var_name == "temp2_ave"
@@ -580,7 +581,7 @@ def test_get_cube_cav_ave():
         [
             Cube(0.0, var_name="temp2_ave"),
             Cube(0.0, var_name="temp2_cav"),
-        ]
+        ],
     )
     cube = fix.get_cube(cubes)
     assert cube.var_name == "temp2_cav"
@@ -593,7 +594,7 @@ def test_get_cube_str_input():
         [
             Cube(0.0),
             Cube(0.0, var_name="x"),
-        ]
+        ],
     )
     cube = fix.get_cube(cubes, var_name="x")
     assert cube.var_name == "x"
@@ -607,7 +608,7 @@ def test_get_cube_list_input():
             Cube(0.0),
             Cube(0.0, var_name="x"),
             Cube(0.0, var_name="y"),
-        ]
+        ],
     )
     cube = fix.get_cube(cubes, var_name=["y", "x"])
     assert cube.var_name == "y"
@@ -668,7 +669,7 @@ def test_only_time(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(time_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -690,7 +691,8 @@ def test_only_time(monkeypatch):
     # Check time data
     np.testing.assert_allclose(new_time_coord.points, [0.0, 1.0])
     np.testing.assert_allclose(
-        new_time_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]]
+        new_time_coord.bounds,
+        [[-0.5, 0.5], [0.5, 1.5]],
     )
 
 
@@ -720,7 +722,7 @@ def test_only_plev(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(plev_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -758,7 +760,10 @@ def test_only_latitude(monkeypatch):
 
     # Create cube with only a single dimension
     lat_coord = DimCoord(
-        [0.0, 10.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 10.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     cubes = CubeList(
         [
@@ -768,7 +773,7 @@ def test_only_latitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lat_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -790,7 +795,8 @@ def test_only_latitude(monkeypatch):
     # Check latitude data
     np.testing.assert_allclose(new_lat_coord.points, [0.0, 10.0])
     np.testing.assert_allclose(
-        new_lat_coord.bounds, [[-5.0, 5.0], [5.0, 15.0]]
+        new_lat_coord.bounds,
+        [[-5.0, 5.0], [5.0, 15.0]],
     )
 
 
@@ -820,7 +826,7 @@ def test_only_longitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lon_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -842,12 +848,12 @@ def test_only_longitude(monkeypatch):
     # Check longitude data
     np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
     np.testing.assert_allclose(
-        new_lon_coord.bounds, [[-90.0, 90.0], [90.0, 270.0]]
+        new_lon_coord.bounds,
+        [[-90.0, 90.0], [90.0, 270.0]],
     )
 
 
 # Tests with sample data
-# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
 
 def test_sample_data_tas(test_data_path, tmp_path):
@@ -881,7 +887,9 @@ def test_sample_data_ta_plev(test_data_path, tmp_path, monkeypatch):
     # Note: raw_name needs to be modified since the sample file only contains
     # plev39, while Amon's ta needs plev19 by default
     monkeypatch.setitem(
-        fix.extra_facets, "raw_name", ["tm1_p39_cav", "tm1_p39_ave"]
+        fix.extra_facets,
+        "raw_name",
+        ["tm1_p39_cav", "tm1_p39_ave"],
     )
 
     filepath = test_data_path / "emac.nc"

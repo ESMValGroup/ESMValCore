@@ -3,6 +3,7 @@
 Integration tests for the :func:`esmvalcore.preprocessor._mask` module.
 """
 
+import re
 from pathlib import Path
 
 import dask.array as da
@@ -10,7 +11,8 @@ import iris
 import iris.fileformats
 import numpy as np
 import pytest
-from iris.coords import AuxCoord
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import (
     PreprocessorFile,
@@ -19,7 +21,11 @@ from esmvalcore.preprocessor import (
     mask_landsea,
     mask_landseaice,
 )
+from esmvalcore.preprocessor._mask import _get_fillvalues_mask
 from tests import assert_array_equal
+from tests.unit.preprocessor._mask.test_mask_multimodel import (
+    PreprocessorFile as MockedPreprocessorFile,
+)
 
 
 class Test:
@@ -74,7 +80,9 @@ class Test:
             (self.lons, 2),
         ]
         self.fx_mask = iris.cube.Cube(
-            fx_data, dim_coords_and_dims=self.fx_coords_spec, units="%"
+            fx_data,
+            dim_coords_and_dims=self.fx_coords_spec,
+            units="%",
         )
         self.mock_data = np.ma.empty((4, 3, 3))
         self.mock_data[:] = 10.0
@@ -95,7 +103,8 @@ class Test:
         fx_cube.var_name = "sftlf"
         fx_cube.standard_name = "land_area_fraction"
         new_cube_land = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         new_cube_land = add_supplementary_variables(new_cube_land, [fx_cube])
         result_land = mask_landsea(new_cube_land, "land")
@@ -106,7 +115,8 @@ class Test:
         fx_cube.var_name = "sftgif"
         fx_cube.standard_name = "land_ice_area_fraction"
         new_cube_ice = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         new_cube_ice = add_supplementary_variables(new_cube_ice, [fx_cube])
         result_ice = mask_landseaice(new_cube_ice, "ice")
@@ -124,14 +134,16 @@ class Test:
         self.fx_mask.var_name = "sftlf"
         self.fx_mask.standard_name = "land_area_fraction"
         new_cube_land = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         new_cube_land = add_supplementary_variables(
             new_cube_land,
             [self.fx_mask],
         )
         new_cube_sea = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         new_cube_sea = add_supplementary_variables(
             new_cube_sea,
@@ -164,10 +176,12 @@ class Test:
 
         # mask with shp files
         new_cube_land = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         new_cube_sea = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         result_land = mask_landsea(new_cube_land, "land")
         result_sea = mask_landsea(new_cube_sea, "sea")
@@ -190,7 +204,8 @@ class Test:
         else:
             cube_data = self.new_cube_data
         cube = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         self.fx_mask.var_name = "sftlf"
         self.fx_mask.standard_name = "land_area_fraction"
@@ -201,7 +216,8 @@ class Test:
 
         assert result.has_lazy_data() is lazy
         expected = np.ma.array(
-            np.full((3, 3, 2), 200.0), mask=np.ones((3, 3, 2), bool)
+            np.full((3, 3, 2), 200.0),
+            mask=np.ones((3, 3, 2), bool),
         )
         expected.mask[2, 1, :] = False
         assert_array_equal(result.data, expected)
@@ -214,7 +230,8 @@ class Test:
         else:
             cube_data = self.new_cube_data
         cube = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         cube.transpose([2, 1, 0])
 
@@ -222,7 +239,8 @@ class Test:
 
         assert result.has_lazy_data() is lazy
         expected = np.ma.array(
-            np.full((3, 3, 2), 200.0), mask=np.zeros((3, 3, 2), bool)
+            np.full((3, 3, 2), 200.0),
+            mask=np.zeros((3, 3, 2), bool),
         )
         assert_array_equal(result.data, expected)
 
@@ -253,7 +271,8 @@ class Test:
         self.fx_mask.var_name = "sftgif"
         self.fx_mask.standard_name = "land_ice_area_fraction"
         new_cube_ice = iris.cube.Cube(
-            cube_data, dim_coords_and_dims=self.cube_coords_spec
+            cube_data,
+            dim_coords_and_dims=self.cube_coords_spec,
         )
         new_cube_ice = add_supplementary_variables(
             new_cube_ice,
@@ -312,7 +331,10 @@ class Test:
         product_2.filename = filename_2
         product_2.cubes = [cube_2]
         results = mask_fillvalues(
-            {product_1, product_2}, 0.95, min_value=-1.0e10, time_window=1
+            {product_1, product_2},
+            0.95,
+            min_value=-1.0e10,
+            time_window=1,
         )
         result_1, result_2 = None, None
         for product in results:
@@ -365,7 +387,9 @@ class Test:
         product_2.filename = filename_2
         product_2.cubes = [cube_2]
         results = mask_fillvalues(
-            {product_1, product_2}, 0.0, min_value=-1.0e20
+            {product_1, product_2},
+            0.0,
+            min_value=-1.0e20,
         )
         result_1, result_2 = None, None
         for product in results:
@@ -441,4 +465,51 @@ class Test:
                 assert product.cubes[0].has_lazy_data() == lazy
                 assert not np.ma.is_masked(product.cubes[0].data)
             else:
-                assert False, f"Invalid filename: {product.filename}"
+                msg = f"Invalid filename: {product.filename}"
+                raise AssertionError(msg)
+
+    def test_mask_fillvalues_unsupported_ndim_fail(self) -> None:
+        """Test ``mask_fillvalues`` with unsupported data dimensions."""
+        cube = iris.cube.Cube(
+            self.mock_data[:, 0, 0],
+            dim_coords_and_dims=[(self.times, 0)],
+        )
+        products = [MockedPreprocessorFile(CubeList([cube]), "A")]
+        msg = r"Unable to handle 0 dimensional data"
+        with pytest.raises(NotImplementedError, match=re.escape(msg)):
+            mask_fillvalues(
+                products,
+                threshold_fraction=0.5,
+                min_value=None,
+                time_window=1,
+            )
+
+    @pytest.mark.parametrize(
+        "threshold_fraction",
+        [-1000.0, -0.1, 1.1, 1000.0],
+    )
+    def test_get_fillvalues_mask_invalid_threshold_fraction_fail(
+        self,
+        threshold_fraction: float,
+    ) -> None:
+        msg = r"should be between 0 and 1.0"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _get_fillvalues_mask(
+                Cube(0.0),
+                threshold_fraction=threshold_fraction,
+                min_value=0.0,
+                time_window=1,
+            )
+
+    def test_get_fillvalues_mask_invalid_time_window_fail(self) -> None:
+        time_coord = DimCoord([0.0], standard_name="time")
+        cube = Cube([0.0], dim_coords_and_dims=[(time_coord, 0)])
+
+        msg = r"Time window (in time units) larger than total time span. Stop."
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _get_fillvalues_mask(
+                cube,
+                threshold_fraction=0.5,
+                min_value=0.0,
+                time_window=2,
+            )

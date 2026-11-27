@@ -23,8 +23,8 @@ AIR_PRESSURE_POINTS = np.array(
                 [6.0, 7.0, 8.0, 9.0],
                 [10.0, 11.0, 12.0, 13.0],
             ],
-        ]
-    ]
+        ],
+    ],
 )
 AIR_PRESSURE_BOUNDS = np.array(
     [
@@ -39,8 +39,8 @@ AIR_PRESSURE_BOUNDS = np.array(
                 [[3.5, 11.0], [4.0, 13.0], [4.5, 15.0], [5.0, 17.0]],
                 [[5.5, 19.0], [6.0, 21.0], [6.5, 23.0], [7.0, 25.0]],
             ],
-        ]
-    ]
+        ],
+    ],
 )
 
 
@@ -74,10 +74,12 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.points, AIR_PRESSURE_POINTS
+        fixed_air_pressure_coord.points,
+        AIR_PRESSURE_POINTS,
     )
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.bounds, AIR_PRESSURE_BOUNDS
+        fixed_air_pressure_coord.bounds,
+        AIR_PRESSURE_BOUNDS,
     )
     surface_pressure_coord = fixed_cube.coord(var_name="ps")
     assert surface_pressure_coord.attributes == {}
@@ -90,7 +92,9 @@ def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     vardef = get_var_info("CMIP6", "Amon", "cl")
     nc_path = test_data_path / "common_cl_a.nc"
     var_names = hybrid_pressure_coord_fix_metadata(
-        nc_path, "cl", ClFixHybridPressureCoord(vardef)
+        nc_path,
+        "cl",
+        ClFixHybridPressureCoord(vardef),
     )
     assert "a_bnds" in var_names
 
@@ -100,23 +104,25 @@ def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(test_data_path):
     vardef = get_var_info("CMIP6", "Amon", "cl")
     nc_path = test_data_path / "common_cl_ap.nc"
     var_names = hybrid_pressure_coord_fix_metadata(
-        nc_path, "cl", ClFixHybridPressureCoord(vardef)
+        nc_path,
+        "cl",
+        ClFixHybridPressureCoord(vardef),
     )
     assert "ap_bnds" in var_names
 
 
 HEIGHT_POINTS = np.array([[[1.0, 1.0]], [[2.0, 3.0]]])
 HEIGHT_BOUNDS_WRONG = np.array(
-    [[[[0.5, 1.5], [0.5, 1.5]]], [[[1.5, 3.0], [2.5, 4.0]]]]
+    [[[[0.5, 1.5], [0.5, 1.5]]], [[[1.5, 3.0], [2.5, 4.0]]]],
 )
 HEIGHT_BOUNDS_RIGHT = np.array(
-    [[[[0.5, 1.5], [-0.5, 2.0]]], [[[1.5, 3.0], [2.0, 5.0]]]]
+    [[[[0.5, 1.5], [-0.5, 2.0]]], [[[1.5, 3.0], [2.0, 5.0]]]],
 )
 PRESSURE_POINTS = np.array(
     [
         [[101312.98512207, 101312.98512207]],
         [[101300.97123885, 101288.95835383]],
-    ]
+    ],
 )
 PRESSURE_BOUNDS = np.array(
     [
@@ -124,15 +130,15 @@ PRESSURE_BOUNDS = np.array(
             [
                 [101318.99243691, 101306.9780559],
                 [101331.00781103, 101300.97123885],
-            ]
+            ],
         ],
         [
             [
                 [101306.9780559, 101288.95835383],
                 [101300.97123885, 101264.93559234],
-            ]
+            ],
         ],
-    ]
+    ],
 )
 
 
@@ -181,7 +187,9 @@ def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
     vardef = get_var_info("CMIP6", "Amon", "cl")
     nc_path = test_data_path / "common_cl_hybrid_height.nc"
     hybrid_height_coord_fix_metadata(
-        nc_path, "cl", ClFixHybridHeightCoord(vardef)
+        nc_path,
+        "cl",
+        ClFixHybridHeightCoord(vardef),
     )
 
 
@@ -201,7 +209,10 @@ def siconc_cubes():
         units="degrees_north",
     )
     lon_coord = iris.coords.DimCoord(
-        [30.0], standard_name="longitude", var_name="lon", units="degrees_east"
+        [30.0],
+        standard_name="longitude",
+        var_name="lon",
+        units="degrees_east",
     )
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
     cube = iris.cube.Cube(
@@ -377,7 +388,8 @@ def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
     # Check ij points and bounds
     np.testing.assert_allclose(i_coord.points, [0, 1, 2])
     np.testing.assert_allclose(
-        i_coord.bounds, [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]]
+        i_coord.bounds,
+        [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
     )
     np.testing.assert_allclose(j_coord.points, [0, 1])
     np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
@@ -399,10 +411,11 @@ def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
                 [-22.00961894, 2.00961894, 14.01923789, -10.0],
                 [2.00961894, 11.47114317, 23.48076211, 14.01923789],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("latitude").bounds, latitude_bounds
+        fixed_cube.coord("latitude").bounds,
+        latitude_bounds,
     )
     longitude_bounds = np.array(
         [
@@ -416,10 +429,11 @@ def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
                 [99.375, 140.625, 140.625, 99.375],
                 [140.625, 99.375, 99.375, 140.625],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("longitude").bounds, longitude_bounds
+        fixed_cube.coord("longitude").bounds,
+        longitude_bounds,
     )
 
 
@@ -465,7 +479,8 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
     # Check ij points and bounds
     np.testing.assert_allclose(i_coord.points, [0, 1, 2])
     np.testing.assert_allclose(
-        i_coord.bounds, [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]]
+        i_coord.bounds,
+        [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
     )
     np.testing.assert_allclose(j_coord.points, [0, 1])
     np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
@@ -487,10 +502,11 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
                 [-22.00961894, 2.00961894, 14.01923789, -10.0],
                 [2.00961894, 11.47114317, 23.48076211, 14.01923789],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("latitude").bounds, latitude_bounds
+        fixed_cube.coord("latitude").bounds,
+        latitude_bounds,
     )
     longitude_bounds = np.array(
         [
@@ -504,10 +520,11 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
                 [99.375, 140.625, 140.625, 99.375],
                 [140.625, 99.375, 99.375, 140.625],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("longitude").bounds, longitude_bounds
+        fixed_cube.coord("longitude").bounds,
+        longitude_bounds,
     )
 
 
@@ -545,7 +562,8 @@ def test_ocean_fix_only_aux_coords(tos_cubes_no_ij_bounds):
     # Check ij points and bounds
     np.testing.assert_allclose(i_coord.points, [0, 1, 2])
     np.testing.assert_allclose(
-        i_coord.bounds, [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]]
+        i_coord.bounds,
+        [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
     )
     np.testing.assert_allclose(j_coord.points, [0, 1])
     np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
@@ -567,10 +585,11 @@ def test_ocean_fix_only_aux_coords(tos_cubes_no_ij_bounds):
                 [-22.00961894, 2.00961894, 14.01923789, -10.0],
                 [2.00961894, 11.47114317, 23.48076211, 14.01923789],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("latitude").bounds, latitude_bounds
+        fixed_cube.coord("latitude").bounds,
+        latitude_bounds,
     )
     longitude_bounds = np.array(
         [
@@ -584,10 +603,11 @@ def test_ocean_fix_only_aux_coords(tos_cubes_no_ij_bounds):
                 [99.375, 140.625, 140.625, 99.375],
                 [140.625, 99.375, 99.375, 140.625],
             ],
-        ]
+        ],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("longitude").bounds, longitude_bounds
+        fixed_cube.coord("longitude").bounds,
+        longitude_bounds,
     )
 
 
@@ -600,7 +620,7 @@ def tos_cubes_regular_grid_cubes():
 def test_ocean_fix_grid_regular(tos_cubes_regular_grid_cubes):
     """Test ``fix_metadata`` with cubes with regular coords."""
     cube_in = tos_cubes_regular_grid_cubes.extract_cube(
-        "sea_surface_temperature"
+        "sea_surface_temperature",
     )
     assert len(cube_in.coords("latitude")) == 1
     assert len(cube_in.coords("longitude")) == 1

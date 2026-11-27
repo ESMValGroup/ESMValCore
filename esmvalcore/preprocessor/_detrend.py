@@ -1,10 +1,21 @@
 """Preprocessor functions that remove trends from the data."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
+
 import dask.array as da
 import scipy.signal
 
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
-def detrend(cube, dimension="time", method="linear"):
+
+def detrend(
+    cube: Cube,
+    dimension: str = "time",
+    method: Literal["linear", "constant"] = "linear",
+) -> Cube:
     """
     Detrend data along a given dimension.
 

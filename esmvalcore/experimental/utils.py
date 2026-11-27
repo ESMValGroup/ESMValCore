@@ -1,19 +1,23 @@
 """ESMValCore utilities."""
 
-import os
+from __future__ import annotations
+
 import re
 from pathlib import Path
-from typing import Optional, Pattern, Tuple, Union
+from typing import TYPE_CHECKING
 
 from esmvalcore.config._diagnostics import DIAGNOSTICS
+from esmvalcore.experimental.recipe import Recipe
 
-from .recipe import Recipe
+if TYPE_CHECKING:
+    import os
+    from re import Pattern
 
 
 class RecipeList(list):
     """Container for recipes."""
 
-    def find(self, query: Pattern[str]):
+    def find(self, query: Pattern[str]) -> RecipeList:
         """Search for recipes matching the search query or pattern.
 
         Searches in the description, authors and project information fields.
@@ -42,7 +46,7 @@ class RecipeList(list):
         return matches
 
 
-def get_all_recipes(subdir: Optional[str] = None) -> list:
+def get_all_recipes(subdir: str | None = None) -> list:
     """Return a list of all available recipes.
 
     Parameters
@@ -63,7 +67,7 @@ def get_all_recipes(subdir: Optional[str] = None) -> list:
     return RecipeList(Recipe(file) for file in files)
 
 
-def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
+def get_recipe(name: os.PathLike | str) -> Recipe:
     """Get a recipe by its name.
 
     The function looks first in the local directory, and second in the
@@ -86,14 +90,11 @@ def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
     FileNotFoundError
         If the name cannot be resolved to a recipe file.
     """
-    filenames: Tuple[Union[str, os.PathLike], ...]
+    filenames: tuple[str | os.PathLike, ...]
 
     locations = Path(), DIAGNOSTICS.recipes
 
-    if isinstance(name, str):
-        filenames = (name, name + ".yml")
-    else:
-        filenames = (name,)
+    filenames = (name, name + ".yml") if isinstance(name, str) else (name,)
 
     for location in locations:
         for filename in filenames:
@@ -101,4 +102,5 @@ def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
             if try_path.exists():
                 return Recipe(try_path)
 
-    raise FileNotFoundError(f"Could not find `{name}` in {locations}.")
+    msg = f"Could not find `{name}` in {locations}."
+    raise FileNotFoundError(msg)

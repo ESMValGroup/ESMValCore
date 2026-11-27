@@ -1,9 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import yaml
 
 from esmvalcore._task import ResumeTask
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-def test_run(tmp_path):
+    from esmvalcore.config import Session
+
+
+def test_run(tmp_path: Path, session: Session) -> None:
     """Test `esmvalcore._task.ResumeTask.run`."""
     task_name = "diagnostic_name/var_name"
     prev_output_dir = tmp_path / "recipe_test_20210911_102100"
@@ -13,7 +22,7 @@ def test_run(tmp_path):
         f"/original/recipe_output/preproc/{task_name}/file.nc": {
             "filename": f"/original/recipe_output/preproc/{task_name}/file.nc",
             "attribute1": "value1",
-        }
+        },
     }
     prev_metadata_file = prev_preproc_dir / "metadata.yml"
     with prev_metadata_file.open("w", encoding="utf-8") as file:
@@ -28,7 +37,7 @@ def test_run(tmp_path):
         task_name,
     )
 
-    result = task.run()
+    result = task.run(session)
 
     metadata_file = preproc_dir / "metadata.yml"
 

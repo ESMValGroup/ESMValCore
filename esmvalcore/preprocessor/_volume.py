@@ -6,18 +6,22 @@ depth or height regions; constructing volumetric averages;
 
 from __future__ import annotations
 
-from typing import Iterable, Literal, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Literal
 
+import dask
 import dask.array as da
 import iris
+import iris.analysis.trajectory
+import iris.util
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
-from iris.cube import Cube
 from iris.util import broadcast_to_shape
 from loguru import logger
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._regrid import extract_levels
 from esmvalcore.preprocessor._shared import (
+    get_array_module,
     get_coord_weights,
     get_iris_aggregator,
     get_normalized_cube,
@@ -28,6 +32,11 @@ from esmvalcore.preprocessor._shared import (
 from esmvalcore.preprocessor._supplementary_vars import (
     register_supplementaries,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from iris.cube import Cube
 
 
 def extract_volume(
@@ -95,10 +104,11 @@ def extract_volume(
     elif interval_bounds == "right_closed":
         coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
     else:
-        raise ValueError(
+        msg = (
             'Depth extraction bounds can be set to "open", "closed", '
             f'"left_closed", or "right_closed". Got "{interval_bounds}".'
         )
+        raise ValueError(msg)
 
     z_constraint = iris.Constraint(coord_values=coord_values)
 
@@ -136,25 +146,26 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
 
     # Assert z has length > 0
     if not z_dim:
-        raise ValueError("Cannot compute volume with scalar Z-axis")
+        msg = "Cannot compute volume with scalar Z-axis"
+        raise ValueError(msg)
 
     # Guess bounds if missing
     if not depth.has_bounds():
         depth.guess_bounds()
     if depth.core_bounds().shape[-1] != 2:
-        raise ValueError(
+        msg = (
             f"Z axis bounds shape found {depth.core_bounds().shape}. "
             "Bounds should be 2 in the last dimension to compute the "
             "thickness."
         )
+        raise ValueError(msg)
 
     # Convert units to get the thickness in meters
     try:
         depth.convert_units("m")
     except ValueError as err:
-        raise ValueError(
-            f"Cannot compute volume using the Z-axis. {err}"
-        ) from err
+        msg = f"Cannot compute volume using the Z-axis. {err}"
+        raise ValueError(msg) from err
 
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
@@ -181,10 +192,16 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
 
     chunks = cube.core_data().chunks if cube.has_lazy_data() else None
     area_arr = broadcast_to_shape(
-        area_array, cube.shape, area_dim, chunks=chunks
+        area_array,
+        cube.shape,
+        area_dim,
+        chunks=chunks,
     )
     thickness_arr = broadcast_to_shape(
-        thickness, cube.shape, z_dim, chunks=chunks
+        thickness,
+        cube.shape,
+        z_dim,
+        chunks=chunks,
     )
     grid_volume = area_arr * thickness_arr
     if cube.has_lazy_data():
@@ -224,8 +241,8 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 def volume_statistics(
     cube: Cube,
     operator: str,
-    normalize: Optional[Literal["subtract", "divide"]] = None,
-    **operator_kwargs,
+    normalize: Literal["subtract", "divide"] | None = None,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a statistical operation over a volume.
 
@@ -272,7 +289,8 @@ def volume_statistics(
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
     if operator != "mean":
-        raise ValueError(f"Volume operator {operator} not recognised.")
+        msg = f"Volume operator {operator} not recognised."
+        raise ValueError(msg)
     # get z, y, x coords
     z_axis = cube.coord(axis="Z")
     y_axis = cube.coord(axis="Y")
@@ -282,12 +300,13 @@ def volume_statistics(
     xy_dims = tuple({*cube.coord_dims(y_axis), *cube.coord_dims(x_axis)})
     xyz_dims = tuple({*cube.coord_dims(z_axis), *xy_dims})
     if len(xyz_dims) > len(xy_dims) + 1:
-        raise ValueError(
+        msg = (
             f"X and Y axis coordinates depend on {xy_dims} dimensions, "
             f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
             "This may indicate Z axis depending on other dimension than "
             "space that could provoke invalid aggregation..."
         )
+        raise ValueError(msg)
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
@@ -316,8 +335,8 @@ def axis_statistics(
     cube: Cube,
     axis: str,
     operator: str,
-    normalize: Optional[Literal["subtract", "divide"]] = None,
-    **operator_kwargs,
+    normalize: Literal["subtract", "divide"] | None = None,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Perform statistics along a given axis.
 
@@ -329,8 +348,8 @@ def axis_statistics(
     coordinate bounds by default. For `sum`, the units of the resulting cube
     will be multiplied by corresponding coordinate units.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     cube:
         Input cube.
     axis:
@@ -361,16 +380,16 @@ def axis_statistics(
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(
-            f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
-        ) from err
+        msg = f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
+        raise ValueError(msg) from err
 
     # Multidimensional coordinates are currently not supported
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
-        raise NotImplementedError(
+        msg = (
             "axis_statistics not implemented for multidimensional coordinates."
         )
+        raise NotImplementedError(msg)
 
     # For weighted operations, create a dummy weights coordinate using the
     # bounds of the original coordinate (this handles units properly, e.g., for
@@ -420,8 +439,8 @@ def depth_integration(cube: Cube) -> Cube:
     thickness. The units of the resulting cube are multiplied by the
     z-coordinate units.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     cube:
         Input cube.
 
@@ -438,8 +457,8 @@ def depth_integration(cube: Cube) -> Cube:
 
 def extract_transect(
     cube: Cube,
-    latitude: None | float | Iterable[float] = None,
-    longitude: None | float | Iterable[float] = None,
+    latitude: float | Iterable[float] | None = None,
+    longitude: float | Iterable[float] | None = None,
 ) -> Cube:
     """Extract data along a line of constant latitude or longitude.
 
@@ -487,25 +506,26 @@ def extract_transect(
     """
     # ###
     coord_dim2 = False
-    second_coord_range: None | list = None
+    second_coord_range: list | None = None
     lats = cube.coord("latitude")
     lons = cube.coord("longitude")
 
     if lats.ndim == 2:
-        raise ValueError(
-            "extract_transect: Not implemented for irregular arrays!"
-            + "\nTry regridding the data first."
+        msg = (
+            "extract_transect: Not implemented for irregular arrays!\n"
+            "Try regridding the data first."
         )
+        raise ValueError(msg)
 
     if isinstance(latitude, float) and isinstance(longitude, float):
-        raise ValueError(
+        msg = (
             "extract_transect: Can't slice along lat and lon at the same time"
         )
+        raise ValueError(msg)  # noqa: TRY004
 
     if isinstance(latitude, list) and isinstance(longitude, list):
-        raise ValueError(
-            "extract_transect: Can't reduce lat and lon at the same time"
-        )
+        msg = "extract_transect: Can't reduce lat and lon at the same time"
+        raise ValueError(msg)  # noqa: TRY004
 
     for dim_name, dim_cut, coord in zip(
         ["latitude", "longitude"],
@@ -534,7 +554,8 @@ def extract_transect(
 
     if second_coord_range is not None:
         slices[coord_dim2] = slice(
-            second_coord_range[0], second_coord_range[1]
+            second_coord_range[0],
+            second_coord_range[1],
         )
     return cube[tuple(slices)]
 
@@ -584,20 +605,120 @@ def extract_trajectory(
         Latitude and longitude have different dimensions.
 
     """
-    from iris.analysis.trajectory import interpolate
-
     if len(latitudes) != len(longitudes):
-        raise ValueError(
-            "Longitude & Latitude coordinates have different lengths"
-        )
+        msg = "Longitude & Latitude coordinates have different lengths"
+        raise ValueError(msg)
 
     if len(latitudes) == len(longitudes) == 2:
         minlat, maxlat = np.min(latitudes), np.max(latitudes)
         minlon, maxlon = np.min(longitudes), np.max(longitudes)
 
-        longitudes = np.linspace(minlon, maxlon, num=number_points)
-        latitudes = np.linspace(minlat, maxlat, num=number_points)
+        longitudes_arr = np.linspace(minlon, maxlon, num=number_points)
+        latitudes_arr = np.linspace(minlat, maxlat, num=number_points)
 
-    points = [("latitude", latitudes), ("longitude", longitudes)]
-    interpolated_cube = interpolate(cube, points)  # Very slow!
-    return interpolated_cube
+    points = [("latitude", latitudes_arr), ("longitude", longitudes_arr)]
+    return iris.analysis.trajectory.interpolate(cube, points)  # Very slow!
+
+
+def _get_first_unmasked_data(
+    array: np.ndarray | da.Array,
+    axis: int,
+) -> np.ndarray | da.Array:
+    """Get first unmasked value of an array along an axis.
+
+    Note: this uses fancy indexing, which is not supported by Dask (yet).
+
+    """
+    npx = get_array_module(array)
+
+    # Use identity indices for axes != axis
+    indices = npx.meshgrid(
+        *[npx.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
+        indexing="ij",
+    )
+    indices = list(indices)
+
+    # Use index of first unmasked data for selected axis
+    mask = npx.ma.getmaskarray(array)
+    numerical_mask = npx.where(mask, -1.0, 1.0)
+    indices_first_positive = npx.argmax(numerical_mask, axis=axis)
+    indices.insert(axis, indices_first_positive)
+
+    # Compute Dask arrays to enable fancy indexing
+    indices, np_array = dask.compute(indices, array)
+    first_unmasked_data = np_array[tuple(indices)]
+
+    # Ensure that new array uses same chunks as original array
+    if isinstance(array, da.Array):
+        chunks = tuple(array.chunks[i] for i in range(array.ndim) if i != axis)
+        first_unmasked_data = da.array(first_unmasked_data).rechunk(chunks)
+
+    return first_unmasked_data
+
+
+@register_supplementaries(variables=["ps"], required="require_at_least_one")
+@preserve_float_dtype
+def extract_surface_from_atm(
+    cube: Cube,
+) -> Cube:
+    """Extract surface from 3D atmospheric variable based on surface pressure.
+
+    Parameters
+    ----------
+    cube:
+        Input cube. Needs :class:`~iris.coords.AncillaryVariable` ``surface_air_pressure``.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Collapsed cube.
+    """
+    # Declare the required variables:
+    #   - 3D atmospheric variable to extract at the surface
+    #   - surface air pressure (ps)
+    try:
+        ps_cube = cube.ancillary_variable("surface_air_pressure")
+    except iris.exceptions.AncillaryVariableNotFoundError as exc:
+        msg = "Surface air pressure could not be found"
+        raise ValueError(msg) from exc
+
+    # Fill masked data if necessary (interpolation fails with masked data)
+    (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
+    npx = get_array_module(cube.core_data())
+    if iris.util.is_masked(cube.core_data()):
+        mask = npx.ma.getmaskarray(cube.core_data())
+        first_unmasked_data = _get_first_unmasked_data(
+            cube.core_data(),
+            axis=z_axis,
+        )
+        dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
+        first_unmasked_data = iris.util.broadcast_to_shape(
+            first_unmasked_data,
+            cube.shape,
+            dim_map,
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+        )
+        cube.data = npx.where(mask, first_unmasked_data, cube.core_data())
+
+    # Interpolation
+    target_levels = npx.expand_dims(ps_cube.core_data(), axis=z_axis)
+    var_cube = extract_levels(
+        cube,
+        levels=target_levels,
+        scheme="linear_extrapolate",
+        coordinate="air_pressure",
+        rtol=1e-7,
+        atol=None,
+    )
+    if cube.var_name is not None:
+        var_cube.var_name = cube.var_name + "s"
+
+    # Remove remaining interpolated dimension of size 1.
+    slices = [
+        0 if var_cube.shape[dim] == 1 and dim == z_axis else slice(None)
+        for dim in range(var_cube.ndim)
+    ]
+    var_cube = var_cube[tuple(slices)]
+    logger.debug("Extracting surface using surface air pressure.")
+
+    return var_cube

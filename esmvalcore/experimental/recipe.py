@@ -1,20 +1,26 @@
 """Recipe metadata."""
 
-import os
+from __future__ import annotations
+
 import pprint
 import shutil
 from pathlib import Path
-from typing import Dict, Optional
+from typing import TYPE_CHECKING
 
 import yaml
 from loguru import logger
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
-from esmvalcore.config import CFG, Session
+from esmvalcore._recipe.writer import to_yaml
+from esmvalcore.config import CFG
+from esmvalcore.experimental._logging import log_to_dir
+from esmvalcore.experimental.recipe_info import RecipeInfo
+from esmvalcore.experimental.recipe_output import RecipeOutput
 
-from ._logging import log_to_dir
-from .recipe_info import RecipeInfo
-from .recipe_output import RecipeOutput
+if TYPE_CHECKING:
+    import os
+
+    from esmvalcore.config import Session
 
 
 class Recipe:
@@ -28,14 +34,15 @@ class Recipe:
         Path to the recipe.
     """
 
-    def __init__(self, path: os.PathLike):
+    def __init__(self, path: os.PathLike) -> None:
         self.path = Path(path)
         if not self.path.exists():
-            raise FileNotFoundError(f"Cannot find recipe: `{path}`.")
+            msg = f"Cannot find recipe: `{path}`."
+            raise FileNotFoundError(msg)
 
-        self._engine: Optional[RecipeEngine] = None
-        self._data: Optional[Dict] = None
-        self.last_session: Optional[Session] = None
+        self._engine: RecipeEngine | None = None
+        self._data: dict | None = None
+        self.last_session: Session | None = None
         self.info = RecipeInfo(self.data, filename=self.path.name)
 
     def __repr__(self) -> str:
@@ -49,6 +56,22 @@ class Recipe:
     def _repr_html_(self) -> str:
         """Return html representation."""
         return self.render()
+
+    def to_yaml(self, file: os.PathLike | None = None) -> str:
+        """Write recipe to a YAML file.
+
+        Parameters
+        ----------
+        file:
+            If provided, the recipe will be written to this file too.
+
+        Returns
+        -------
+        :
+            The YAML representation of the recipe as a string.
+
+        """
+        return to_yaml(self.data, file=file)
 
     def render(self, template=None):
         """Render output as html.
@@ -68,7 +91,7 @@ class Recipe:
     def data(self) -> dict:
         """Return dictionary representation of the recipe."""
         if self._data is None:
-            with open(self.path, "r", encoding="utf-8") as yaml_file:
+            with open(self.path, encoding="utf-8") as yaml_file:
                 self._data = yaml.safe_load(yaml_file)
         return self._data
 
@@ -93,14 +116,16 @@ class Recipe:
         logger.info(pprint.pformat(session))
 
         return RecipeEngine(
-            raw_recipe=self.data, session=session, recipe_file=self.path
+            raw_recipe=self.data,
+            session=session,
+            recipe_file=self.path,
         )
 
     def run(
         self,
-        task: Optional[str] = None,
-        session: Optional[Session] = None,
-    ):
+        task: str | None = None,
+        session: Session | None = None,
+    ) -> RecipeOutput:
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -108,17 +133,17 @@ class Recipe:
 
         Parameters
         ----------
-        task : str
+        task
             Specify the name of the diagnostic or preprocessor to run a
             single task.
-        session : :obj:`Session`, optional
+        session
             Defines the config parameters and location where the recipe
             output will be stored. If ``None``, a new session will be
             started automatically.
 
         Returns
         -------
-        output : dict
+        :
             Returns output of the recipe as instances of :obj:`OutputItem`
             grouped by diagnostic task.
         """
@@ -146,18 +171,19 @@ class Recipe:
 
         Returns
         -------
-        output : dict
+        output
             Returns output of the recipe as instances of :obj:`OutputFile`
             grouped by diagnostic task.
         """
         if self._engine is None:
-            raise AttributeError("Run the recipe first using `.run()`.")
+            msg = "Run the recipe first using `.run()`."
+            raise AttributeError(msg)
 
         output = self._engine.get_output()
         task_output = output["task_output"]
 
         return RecipeOutput(
             task_output=task_output,
-            session=self.last_session,
+            session=self.last_session,  # type: ignore[arg-type]
             info=self.info,
         )

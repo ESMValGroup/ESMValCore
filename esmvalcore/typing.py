@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-from numbers import Number
-from typing import Dict, Iterable, Sequence, Union
+from collections.abc import Iterable, Sequence
 
 import dask.array as da
 import numpy as np
 from iris.cube import Cube
 
-FacetValue = Union[str, Sequence[str], Number]
+type FacetValue = str | Sequence[str] | int | float
 """Type describing a single facet."""
 
-Facets = Dict[str, FacetValue]
+type Facets = dict[str, FacetValue]
 """Type describing a collection of facets."""
 
-NetCDFAttr = Union[str, Number, Iterable]
+type NetCDFAttr = str | int | float | Iterable
 """Type describing netCDF attributes.
 
 `NetCDF attributes
@@ -23,5 +22,5 @@ NetCDFAttr = Union[str, Number, Iterable]
 be strings, numbers or sequences.
 """
 
-DataType = Union[np.ndarray, da.Array, Cube]
+type DataType = np.ndarray | da.Array | Cube
 """Type describing data."""

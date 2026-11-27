@@ -56,16 +56,24 @@ def test_allvars_r2i1p1f1():
 @pytest.fixture
 def sfcwind_cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[10.0]],
@@ -84,16 +92,24 @@ def sfcwind_cubes():
 @pytest.fixture
 def tas_cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[10.0]],
