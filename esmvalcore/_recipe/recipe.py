@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+import operator
 import os
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from functools import partial
 from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -217,14 +219,10 @@ def _update_count(settings: dict) -> None:
         ):
             if "above_threshold" in step_settings:
                 threshold = step_settings.pop("above_threshold")
-                settings[step]["function"] = (
-                    lambda value, threshold=threshold: value > threshold
-                )
+                settings[step]["function"] = partial(operator.lt, threshold)
             if "below_threshold" in step_settings:
                 threshold = step_settings.pop("below_threshold")
-                settings[step]["function"] = (
-                    lambda value, threshold=threshold: value < threshold
-                )
+                settings[step]["function"] = partial(operator.gt, threshold)
 
 
 def _select_dataset(dataset_name: str, datasets: Sequence[Dataset]) -> Dataset:
