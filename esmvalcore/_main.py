@@ -42,21 +42,46 @@ from loguru import logger
 if TYPE_CHECKING:
     from esmvalcore.config import Session
 
-# set up logging
-
-HEADER = (
-    r"""
-______________________________________________________________________
+BANNER = r"""
+▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
           _____ ____  __  ____     __    _ _____           _
          | ____/ ___||  \/  \ \   / /_ _| |_   _|__   ___ | |
          |  _| \___ \| |\/| |\ \ / / _` | | | |/ _ \ / _ \| |
          | |___ ___) | |  | | \ V / (_| | | | | (_) | (_) | |
          |_____|____/|_|  |_|  \_/ \__,_|_| |_|\___/ \___/|_|
-______________________________________________________________________
-
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
 """
-    + __doc__
-)
+
+# The colors of the columns of the banner, like the warming stripes by Ed
+# Hawkins (University of Reading, https://showyourstripes.info, CC BY 4.0).
+# Each column shows the global mean temperature over about 2.5 years from 1850
+# to 2025 in the HadCRUT5 data set (Met Office Hadley Centre and Climatic
+# Research Unit, https://www.metoffice.gov.uk/hadobs/hadcrut5/).
+STRIPES = (
+    "08519c", "2171b5", "2171b5", "08519c", "08306b", "08306b", "08519c",
+    "08519c", "08519c", "2171b5", "08519c", "6baed6", "2171b5", "08519c",
+    "08306b", "08519c", "08306b", "08306b", "08519c", "08519c", "2171b5",
+    "08306b", "08519c", "08306b", "08306b", "08519c", "2171b5", "08306b",
+    "2171b5", "2171b5", "4292c6", "2171b5", "6baed6", "4292c6", "6baed6",
+    "9ecae1", "c6dbef", "deebf7", "9ecae1", "6baed6", "6baed6", "9ecae1",
+    "6baed6", "9ecae1", "9ecae1", "6baed6", "6baed6", "6baed6", "6baed6",
+    "9ecae1", "9ecae1", "c6dbef", "fee0d2", "deebf7", "deebf7", "fee0d2",
+    "fcbba1", "fee0d2", "fc9272", "fb6a4a", "fb6a4a", "ef3b2c", "cb181d",
+    "ef3b2c", "cb181d", "a50f15", "67000d", "67000d", "67000d", "67000d",
+)  # fmt: skip
+
+
+def _color_banner(banner: str) -> str:
+    """Color the columns of the banner with loguru markup."""
+    return "\n".join(
+        "".join(
+            char if char == " " else f"<fg #{color}>{char}</>"
+            for char, color in zip(line, STRIPES, strict=False)
+        )
+        # A backslash in front of a tag escapes it, so escape the backslash.
+        .replace("\\<", "\\\\<")
+        for line in banner.split("\n")
+    )
 
 
 def parse_resume(resume, recipe):
@@ -699,7 +724,8 @@ class ESMValTool:
     def _log_header(self, log_files, cli_config_dir):
         from . import __version__
 
-        logger.info(HEADER)
+        logger.opt(raw=True, colors=True).info(_color_banner(BANNER))
+        logger.opt(raw=True).info(f"\n{__doc__}\n")
         logger.info("Package versions")
         logger.info("----------------")
         logger.info("ESMValCore: {}", __version__)

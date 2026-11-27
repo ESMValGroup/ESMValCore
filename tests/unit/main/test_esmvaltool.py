@@ -15,7 +15,7 @@ import esmvalcore.config._config_object
 import esmvalcore.config._logging
 import esmvalcore.io.esgf
 from esmvalcore import __version__
-from esmvalcore._main import HEADER, ESMValTool
+from esmvalcore._main import BANNER, ESMValTool, _color_banner
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 
 if TYPE_CHECKING:
@@ -333,14 +333,15 @@ def test_header(
             cli_config_dir,
         )
 
-    assert len(caplog.messages) in [8, 9]
-    assert caplog.messages[0] == HEADER
-    assert caplog.messages[1] == "Package versions"
-    assert caplog.messages[2] == "----------------"
-    assert caplog.messages[3] == f"ESMValCore: {__version__}"
-    assert caplog.messages[4] == "MyEntry: v42.42.42"
-    assert caplog.messages[5] == "----------------"
-    assert caplog.messages[6] == "\n".join(
+    assert len(caplog.messages) in [9, 10]
+    assert caplog.messages[0] == BANNER
+    assert caplog.messages[1] == f"\n{esmvalcore._main.__doc__}\n"
+    assert caplog.messages[2] == "Package versions"
+    assert caplog.messages[3] == "----------------"
+    assert caplog.messages[4] == f"ESMValCore: {__version__}"
+    assert caplog.messages[5] == "MyEntry: v42.42.42"
+    assert caplog.messages[6] == "----------------"
+    assert caplog.messages[7] == "\n".join(
         [
             "Reading configuration files from:",
             f"{Path(esmvalcore.config.__file__).parent}/configurations/defaults (defaults)",
@@ -352,6 +353,12 @@ def test_header(
     assert caplog.messages[-1] == (
         "Writing program log files to:\npath_to_log_file1\npath_to_log_file2"
     )
+
+
+def test_color_banner() -> None:
+    """Test that each column gets its color and backslashes are escaped."""
+    markup = _color_banner("a \\\n_")
+    assert markup == "<fg #08519c>a</> <fg #2171b5>\\\\</>\n<fg #08519c>_</>"
 
 
 @mock.patch("os.path.isfile")
