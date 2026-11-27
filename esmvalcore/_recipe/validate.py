@@ -378,6 +378,19 @@ def _describe(
     return describers.get(error.validator, _describe_other)(error)
 
 
+def _find_schema_issues(
+    recipe: object,
+    session: Session | None,
+) -> list[RecipeIssue]:
+    """Find the problems that the JSON Schema reports."""
+    issues = []
+    validator = jsonschema.Draft7Validator(generate_recipe_schema(session))
+    for error in validator.iter_errors(_normalize(recipe)):
+        for relevant, alternatives in _relevant_errors(error):
+            issues.extend(_describe(relevant, alternatives))
+    return issues
+
+
 # Positions of aliases, by the id of the node that contains the alias and
 # the index of the alias in a sequence or the id of its key in a mapping.
 _Aliases = dict[tuple[int, int], "_Mark"]
@@ -505,12 +518,12 @@ def _find_child(
     return found
 
 
-def _find_position(
+def _yaml_position(
     root: yaml.Node,
     aliases: _Aliases,
     path: tuple[str | int, ...],
 ) -> _Mark | None:
-    """Find the position of a path in a recipe.
+    """Find the position of a path in the YAML text of a recipe.
 
     For an item of a mapping, this is the position of its key. For an item
     inside an anchored node, this is the position of the alias that leads to
@@ -527,6 +540,52 @@ def _find_position(
         position = via_alias or position
         via_alias = via_alias or alias
     return position
+
+
+def _dict_position(recipe: object, path: tuple[str | int, ...]) -> list[int]:
+    """Find the position of a path in a loaded recipe.
+
+    Keys that are not in the recipe come after the keys that are.
+    """
+    position = []
+    node = recipe
+    for key in path:
+        if isinstance(node, dict):
+            keys = list(node)
+            position.append(keys.index(key) if key in keys else len(keys))
+            node = node.get(key)
+        elif isinstance(node, list) and isinstance(key, int):
+            position.append(key)
+            node = node[key] if key < len(node) else None
+        else:
+            position.append(0)
+            node = None
+    return position
+
+
+def _locate(
+    issues: list[RecipeIssue],
+    root: yaml.Node,
+    aliases: _Aliases,
+) -> list[RecipeIssue]:
+    """Add line and column numbers to issues."""
+    located = []
+    for issue in issues:
+        position = (
+            None
+            if issue.line is not None
+            else _yaml_position(root, aliases, issue.path)
+        )
+        located.append(
+            issue
+            if position is None
+            else dataclasses.replace(
+                issue,
+                line=position.line + 1,
+                column=position.column + 1,
+            ),
+        )
+    return located
 
 
 def _load(text: str) -> tuple[Any, _Composed | None]:
@@ -789,6 +848,13 @@ def _ambiguous_scalar(value: str, tag: str) -> str | None:
     )
 
 
+def _find_yaml_issues(composed: _Composed) -> list[RecipeIssue]:
+    """Find YAML that is ignored, deprecated, or ambiguous."""
+    checker = _YAMLChecker(composed)
+    checker.check(composed.root, ())
+    return checker.issues
+
+
 def _mapping(data: object, key: str) -> dict:
     """Get a mapping from a recipe, or an empty one if it is not there."""
     value = data.get(key) if isinstance(data, dict) else None
@@ -968,7 +1034,7 @@ def _find_unknown_reference_datasets(recipe: object) -> list[RecipeIssue]:
 
 def _find_missing_facets(
     recipe: object,
-    config: Config | Session,
+    session: Session | None,
 ) -> list[RecipeIssue]:
     """Find datasets without the facets that their project requires.
 
@@ -976,6 +1042,7 @@ def _find_missing_facets(
     of the project. Facets that may come from the extra facets of the
     project are not required in the recipe.
     """
+    config = CFG if session is None else session
     issues = []
     for dataset in _datasets(recipe):
         facets = dataset.facets
@@ -1049,7 +1116,7 @@ def _can_check_cmor(facets: dict, config: Config | Session) -> bool:
 
 def _find_unavailable_variables(
     recipe: object,
-    config: Config | Session,
+    session: Session | None,
     *,
     check_variables: bool = True,
 ) -> list[RecipeIssue]:
@@ -1060,6 +1127,7 @@ def _find_unavailable_variables(
     come from the extra facets are not checked. If ``check_variables`` is
     false, only the MIPs are checked.
     """
+    config = CFG if session is None else session
     issues = []
     datasets = ((g, d) for g in _variable_groups(recipe) for d in g.datasets)
     for group, dataset in datasets:
@@ -1189,7 +1257,7 @@ def _align_metadata_issue(
 
 def _find_unavailable_align_metadata_targets(
     recipe: object,
-    config: Config | Session,
+    session: Session | None,
 ) -> list[RecipeIssue]:
     """Find targets of ``align_metadata`` that are not in the CMOR tables.
 
@@ -1198,6 +1266,7 @@ def _find_unavailable_align_metadata_targets(
     :func:`esmvalcore._recipe.recipe._update_align_metadata`. If ``strict`` is
     false, only the target project is checked.
     """
+    config = CFG if session is None else session
     preprocessors = _mapping(recipe, "preprocessors")
     issues = []
     for dataset in _datasets(recipe):
@@ -1287,7 +1356,7 @@ def _find_invalid_timeranges(recipe: object) -> list[RecipeIssue]:
 
 def _find_missing_scripts(
     recipe: object,
-    config: Config | Session,
+    session: Session | None,
 ) -> list[RecipeIssue]:
     """Find diagnostic scripts that do not exist.
 
@@ -1296,6 +1365,7 @@ def _find_missing_scripts(
     of ESMValTool. Without ESMValTool, the scripts are not checked. If the
     diagnostics are not run, a missing script is only a warning.
     """
+    config = CFG if session is None else session
     severity: Literal["error", "warning"] = (
         "error" if config.get("run_diagnostic", True) else "warning"
     )
@@ -1523,39 +1593,6 @@ def _find_invalid_step_settings(recipe: object) -> list[RecipeIssue]:
     return issues
 
 
-def _locate(
-    issues: list[RecipeIssue],
-    root: yaml.Node,
-    aliases: _Aliases,
-) -> list[RecipeIssue]:
-    """Add line and column numbers to issues and sort them by position."""
-    located = []
-    for issue in issues:
-        position = (
-            None
-            if issue.line is not None
-            else _find_position(root, aliases, issue.path)
-        )
-        located.append(
-            issue
-            if position is None
-            else dataclasses.replace(
-                issue,
-                line=position.line + 1,
-                column=position.column + 1,
-            ),
-        )
-    return sorted(
-        located,
-        key=lambda i: (
-            i.line is None,
-            i.line or 0,
-            i.column or 0,
-            [str(key) for key in i.path],
-        ),
-    )
-
-
 def validate_recipe(
     text: str,
     session: Session | None = None,
@@ -1593,6 +1630,48 @@ def validate_recipe(
     return _validate(recipe, composed, session, required_facets=True)
 
 
+_Check = collections.abc.Callable[..., list[RecipeIssue]]
+"""A check of a recipe.
+
+It takes the recipe as its first argument and, if it has a ``session``
+argument, the session that the recipe will be run with.
+"""
+
+
+def _run_checks(
+    checks: list[_Check],
+    recipe: object,
+    session: Session | None,
+) -> list[RecipeIssue]:
+    """Run checks, reporting a check that fails as a warning.
+
+    A bug in a check should not stop a recipe from running, or hide the
+    problems that the other checks find.
+    """
+    issues = []
+    for find in checks:
+        kwargs = (
+            {"session": session}
+            if "session" in inspect.signature(find).parameters
+            else {}
+        )
+        try:
+            issues.extend(find(recipe, **kwargs))
+        except Exception as exc:
+            name = getattr(find, "func", find).__name__
+            logger.debug("Check %s failed", name, exc_info=True)
+            issues.append(
+                RecipeIssue(
+                    (),
+                    f"failed to run check '{name}': {exc!r}. This is a bug, "
+                    "please report it at "
+                    "https://github.com/ESMValGroup/ESMValCore/issues.",
+                    severity="warning",
+                ),
+            )
+    return issues
+
+
 def _validate(
     recipe: object,
     composed: _Composed | None,
@@ -1605,105 +1684,52 @@ def _validate(
     Datasets that do not have all facets needed to find their data are fine
     in the Python API, because the missing facets can be added later.
     """
-    config = CFG if session is None else session
-    checks = [
-        functools.partial(_find_schema_issues, recipe, session),
-        functools.partial(_find_incomplete_datasets, recipe),
+    checks: list[_Check] = [
+        _find_incomplete_datasets,
+        _find_invalid_timeranges,
+        *([_find_missing_facets] if required_facets else []),
+        _find_missing_scripts,
+        _find_schema_issues,
+        _find_scripts_named_like_variables,
+        _find_unavailable_align_metadata_targets,
+        functools.partial(
+            _find_unavailable_variables,
+            check_variables=required_facets,
+        ),
+        _find_unknown_ancestors,
+        _find_unknown_preprocessors,
+        _find_unknown_reference_datasets,
+        _find_unknown_types,
     ]
-    if required_facets:
-        checks.append(functools.partial(_find_missing_facets, recipe, config))
-    checks.extend(
-        [
-            functools.partial(
-                _find_unavailable_variables,
-                recipe,
-                config,
-                check_variables=required_facets,
-            ),
-            functools.partial(
-                _find_unavailable_align_metadata_targets,
-                recipe,
-                config,
-            ),
-            *(
-                functools.partial(find, recipe)
-                for find in (
-                    _find_unknown_types,
-                    _find_invalid_timeranges,
-                    _find_unknown_reference_datasets,
-                    _find_unknown_preprocessors,
-                    _find_unknown_ancestors,
-                    _find_scripts_named_like_variables,
-                )
-            ),
-            functools.partial(_find_missing_scripts, recipe, config),
-        ],
-    )
     # Datasets in the `datasets` section belong to every variable group, so
     # checks of datasets and the schema can report the same issue repeatedly.
-    issues = list(dict.fromkeys(_run_checks(checks)))
-    # Only report settings that do not work if the schema found no problem
-    # with them, to avoid reporting the same problem twice.
+    issues = list(dict.fromkeys(_run_checks(checks, recipe, session)))
+    # Only report settings that do not work if the schema found no error in
+    # them, to avoid reporting the same problem twice.
     issues.extend(
         issue
         for issue in _run_checks(
-            [functools.partial(_find_invalid_step_settings, recipe)],
+            [_find_invalid_step_settings],
+            recipe,
+            session,
         )
-        if not any(i.path[: len(issue.path)] == issue.path for i in issues)
+        if not any(
+            i.severity == "error" and i.path[: len(issue.path)] == issue.path
+            for i in issues
+        )
     )
     if composed is not None:
-        issues.extend(
-            _run_checks([functools.partial(_find_yaml_issues, composed)]),
-        )
+        issues.extend(_run_checks([_find_yaml_issues], composed, session))
         issues = _locate(issues, composed.root, composed.aliases)
-    return issues
-
-
-def _find_schema_issues(
-    recipe: object,
-    session: Session | None,
-) -> list[RecipeIssue]:
-    """Find the problems that the JSON Schema reports."""
-    issues = []
-    validator = jsonschema.Draft7Validator(generate_recipe_schema(session))
-    for error in validator.iter_errors(_normalize(recipe)):
-        for relevant, alternatives in _relevant_errors(error):
-            issues.extend(_describe(relevant, alternatives))
-    return issues
-
-
-def _find_yaml_issues(composed: _Composed) -> list[RecipeIssue]:
-    """Find YAML that is ignored, deprecated, or ambiguous."""
-    checker = _YAMLChecker(composed)
-    checker.check(composed.root, ())
-    return checker.issues
-
-
-def _run_checks(
-    checks: list[functools.partial[list[RecipeIssue]]],
-) -> list[RecipeIssue]:
-    """Run checks, reporting a check that fails as a warning.
-
-    A bug in a check should not stop a recipe from running, or hide the
-    problems that the other checks find.
-    """
-    issues = []
-    for find in checks:
-        try:
-            issues.extend(find())
-        except Exception as exc:
-            name = find.func.__name__
-            logger.debug("Check %s failed", name, exc_info=True)
-            issues.append(
-                RecipeIssue(
-                    (),
-                    f"failed to run check '{name}': {exc!r}. This is a bug, "
-                    "please report it at "
-                    "https://github.com/ESMValGroup/ESMValCore/issues.",
-                    severity="warning",
-                ),
-            )
-    return issues
+    return sorted(
+        issues,
+        key=lambda i: (
+            i.line is None,
+            i.line or 0,
+            i.column or 0,
+            _dict_position(recipe, i.path),
+        ),
+    )
 
 
 def ensure_valid_recipe(

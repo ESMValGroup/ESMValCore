@@ -127,6 +127,67 @@ def test_statistics_invalid_kwargs() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("severity", "n_issues"),
+    [("error", 1), ("warning", 2)],
+)
+def test_statistics_invalid_kwargs_after_other_issue(
+    mocker: MockerFixture,
+    severity: Literal["error", "warning"],
+    n_issues: int,
+) -> None:
+    """Test that only errors hide problems with the same settings."""
+    path = ("preprocessors", "pp", "annual_statistics", "percent")
+    other = RecipeIssue(path, "other issue.", severity=severity)
+    mocker.patch.object(
+        validate,
+        "_find_schema_issues",
+        autospec=True,
+        return_value=[other],
+    )
+    messages = _messages(
+        {"annual_statistics": {"operator": "mean", "percent": 50}},
+    )
+    assert str(other) in messages
+    assert len(messages) == n_issues
+
+
+@pytest.mark.parametrize(
+    ("path", "position"),
+    [
+        ((), []),
+        (("b",), [0]),
+        (("a", 10), [1, 10]),
+        (("a", 2, "x"), [1, 2, 0]),
+        (("c", "d"), [2, 0]),
+        (("b", "y", "z"), [0, 1, 0]),
+    ],
+)
+def test_dict_position(
+    path: tuple[str | int, ...],
+    position: list[int],
+) -> None:
+    recipe = {"b": {"x": 1}, "a": [{}] * 3}
+    assert validate._dict_position(recipe, path) == position
+
+
+def test_issues_sorted_by_position_in_recipe() -> None:
+    """Test that issues are sorted by the recipe, not by the check."""
+    recipe = copy.deepcopy(SMALL_RECIPE)
+    variables = {
+        "tas": {"mip": "Amonn"},
+        "pr": {"mip": "Amon", "timerange": "2000/abc"},
+    }
+    recipe["diagnostics"]["example"]["variables"] = variables
+    recipe["preprocessors"]["pp"] = {"regird": {}}
+    paths = [i.path for i in _issues(recipe)]
+    assert paths == [
+        ("preprocessors", "pp", "regird"),
+        ("diagnostics", "example", "variables", "tas", "mip"),
+        ("diagnostics", "example", "variables", "pr", "timerange"),
+    ]
+
+
 def test_statistics_invalid_kwargs_one_period() -> None:
     """Test that a message that ends with a period gets no second one."""
     settings = {"statistics": ["percentile"]}
