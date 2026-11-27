@@ -63,17 +63,17 @@ def _console_prefix() -> tuple[str, str | None]:
     Returns
     -------
     :
-        The time (UTC) and the INFO level, formatted like the log messages,
+        The local time and the INFO level, formatted like the log messages,
         and the name of the current task, if any.
     """
-    time = dt.datetime.now(dt.UTC).strftime("%H:%M:%S")
+    time = dt.datetime.now(dt.UTC).astimezone().strftime("%H:%M:%S")
     return f"{time} {'INFO':<7}", _TASK.get()
 
 
 def _console_format(record: Record) -> str:
     """Format messages for the console and the main log file.
 
-    Messages show the time (UTC), the level, and the message, prefixed with
+    Messages show the local time, the level, and the message, prefixed with
     the name of the task that logged it, if any. Continuation lines of
     multi-line messages are indented to the start of the message.
     """
@@ -95,7 +95,7 @@ def _console_format(record: Record) -> str:
         # colors of messages logged with `logger.opt(colors=True)` there.
         message = "{message}"
     return (
-        "{time:HH:mm:ss!UTC} <level>{level: <7}</level> "
+        "{time:HH:mm:ss} <level>{level: <7}</level> "
         "<cyan>{extra[_console_task]}</cyan>"
         f"<level>{message}</level>\n"
         "{exception}"
@@ -104,7 +104,7 @@ def _console_format(record: Record) -> str:
 
 _BRIEF_FORMAT = "{level: <7} [{process}] {message}"
 _DEBUG_FORMAT = (
-    "{time:YYYY-MM-DD HH:mm:ss,SSS!UTC} UTC [{process}] {level: <7} "
+    "{time:YYYY-MM-DD HH:mm:ss,SSS Z} [{process}] {level: <7} "
     "{name}:{line} {message}"
 )
 

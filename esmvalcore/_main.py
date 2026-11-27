@@ -125,11 +125,11 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
             recipe_file,
         )
 
-    timestamp1 = dt.datetime.now(dt.UTC)
-    timestamp_format = "%Y-%m-%d %H:%M:%S"
+    timestamp1 = dt.datetime.now(dt.UTC).astimezone()
+    timestamp_format = "%Y-%m-%d %H:%M:%S %Z"
 
     logger.info(
-        "Starting the Earth System Model Evaluation Tool at time: {} UTC",
+        "Starting the Earth System Model Evaluation Tool at time: {}",
         timestamp1.strftime(timestamp_format),
     )
 
@@ -177,9 +177,9 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
     # run
     recipe.run()
     # End time timing
-    timestamp2 = dt.datetime.now(dt.UTC)
+    timestamp2 = dt.datetime.now(dt.UTC).astimezone()
     logger.info(
-        "Ending the Earth System Model Evaluation Tool at time: {} UTC",
+        "Ending the Earth System Model Evaluation Tool at time: {}",
         timestamp2.strftime(timestamp_format),
     )
     logger.info("Time for running the recipe was: {}", timestamp2 - timestamp1)
