@@ -7,6 +7,7 @@ import iris
 import netCDF4
 import numpy as np
 import pytest
+import zarr
 from dask.delayed import Delayed
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
@@ -158,3 +159,82 @@ def test_save_optimized_lon_time(cube, filename):
     loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
     _check_chunks(filename, [1, 2, 2])
+
+
+@pytest.fixture
+def zarr_filename(tmp_path):
+    return tmp_path / "test.zarr"
+
+
+def _open_zarr_array(path):
+    return zarr.open_array(path / "sample", mode="r")
+
+
+def test_save_zarr(cube, zarr_filename):
+    delayed = save([cube], zarr_filename)
+    assert delayed is None
+    loaded_cube = iris.load_cube(zarr_filename)
+    _compare_cubes(cube, loaded_cube)
+    array = _open_zarr_array(zarr_filename)
+    assert array.chunks == (2, 2, 2)
+    assert array.shards is None
+    assert array.compressors == ()
+
+
+def test_delayed_save_zarr(cube, zarr_filename):
+    cube.data = cube.lazy_data().rechunk((1, 2, 2))
+    delayed = save([cube], zarr_filename, compute=False)
+    assert isinstance(delayed, Delayed)
+    delayed.compute()
+    loaded_cube = iris.load_cube(zarr_filename)
+    _compare_cubes(cube, loaded_cube)
+    assert _open_zarr_array(zarr_filename).chunks == (1, 2, 2)
+
+
+def test_save_zarr_overwrite(cube, zarr_filename):
+    save([cube], zarr_filename)
+    cube.data = cube.data + 1.0
+    save([cube], zarr_filename)
+    loaded_cube = iris.load_cube(zarr_filename)
+    _compare_cubes(cube, loaded_cube)
+
+
+def test_save_zarr_compress(cube, zarr_filename):
+    save([cube], zarr_filename, compress=True)
+    loaded_cube = iris.load_cube(zarr_filename)
+    _compare_cubes(cube, loaded_cube)
+    assert _open_zarr_array(zarr_filename).compressors
+
+
+def test_save_zarr_optimized_no_shards(cube, zarr_filename):
+    save([cube], zarr_filename, optimize_access="map", shards=None)
+    loaded_cube = iris.load_cube(zarr_filename)
+    _compare_cubes(cube, loaded_cube)
+    array = _open_zarr_array(zarr_filename)
+    assert array.chunks == (2, 2, 1)
+    assert array.shards is None
+
+
+@pytest.mark.parametrize(
+    ("optimize_access", "chunks", "shards"),
+    [
+        ("map", (2, 2, 1), (2, 2, 2)),
+        ("timeseries", (1, 1, 2), (2, 1, 2)),
+        ("longitude time", (1, 2, 2), (2, 2, 2)),
+    ],
+)
+def test_save_zarr_optimized(
+    cube,
+    zarr_filename,
+    optimize_access,
+    chunks,
+    shards,
+):
+    # Shards are the Dask chunks, rounded up to a whole number of chunks.
+    cube.data = cube.lazy_data().rechunk((2, 1, 2))
+    save([cube], zarr_filename, optimize_access=optimize_access)
+    loaded_cube = iris.load_cube(zarr_filename)
+    _compare_cubes(cube, loaded_cube)
+    array = _open_zarr_array(zarr_filename)
+    assert array.chunks == chunks
+    assert array.shards == shards
