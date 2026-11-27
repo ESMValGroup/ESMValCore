@@ -32,6 +32,19 @@ class DerivedVariable(DerivedVariableBase):
                 {"short_name": "cVeg", "mip": "Lmon"},
                 {"short_name": "cSoil", "mip": "Emon"},
             ]
+        elif project == "CMIP7":
+            required = [
+                {
+                    "short_name": "cVeg",
+                    "branding_suffix": "tavg-u-hxy-lnd",
+                    "mip": "land",
+                },
+                {
+                    "short_name": "cSoil",
+                    "branding_suffix": "tavg-u-hxy-lnd",
+                    "mip": "land",
+                },
+            ]
         else:
             msg = (
                 f"Project {project} cannot be used for derivation of 'ctotal'"
@@ -42,24 +55,11 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute total ecosystem carbon storage."""
-        try:
-            c_soil_cube = cubes.extract_cube(
-                Constraint(name="soil_carbon_content"),
+        c_soil_cube = cubes.extract_cube(
+                Constraint(varname="cSoil"),
             )
-        except iris.exceptions.ConstraintMismatchError:
-            try:
-                c_soil_cube = cubes.extract_cube(
-                    Constraint(name="soil_mass_content_of_carbon"),
-                )
-            except iris.exceptions.ConstraintMismatchError as exc:
-                msg = (
-                    f"No cube from {cubes} can be loaded with "
-                    f"standard name CMIP5: soil_carbon_content "
-                    f"or CMIP6: soil_mass_content_of_carbon"
-                )
-                raise ValueError(msg) from exc
         c_veg_cube = cubes.extract_cube(
-            Constraint(name="vegetation_carbon_content"),
+            Constraint(varname="cVeg"),
         )
         c_total_cube = c_soil_cube + c_veg_cube
         c_total_cube.standard_name = None
