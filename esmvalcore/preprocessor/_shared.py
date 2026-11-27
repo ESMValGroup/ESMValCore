@@ -7,7 +7,6 @@ Utility functions that can be used for multiple preprocessor steps
 from __future__ import annotations
 
 import inspect
-import logging
 import warnings
 from collections import defaultdict
 from functools import lru_cache, wraps
@@ -20,6 +19,7 @@ from iris.coords import CellMeasure, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
+from loguru import logger
 
 from esmvalcore.iris_helpers import (
     has_regular_grid,
@@ -32,8 +32,6 @@ if TYPE_CHECKING:
     from iris.coords import Coord
 
     from esmvalcore.typing import DataType
-
-logger = logging.getLogger(__name__)
 
 
 def guess_bounds(cube, coords):
@@ -497,7 +495,7 @@ def try_adding_calculated_cell_area(cube: Cube) -> None:
         return
 
     logger.debug(
-        "Found no cell measure 'cell_area' in cube %s. Check availability of "
+        "Found no cell measure 'cell_area' in cube {}. Check availability of "
         "supplementary variables",
         cube.summary(shorten=True),
     )
@@ -534,7 +532,7 @@ def try_adding_calculated_cell_area(cube: Cube) -> None:
     else:
         logger.error(
             "Supplementary variables are needed to calculate grid cell "
-            "areas for irregular or unstructured grid of cube %s",
+            "areas for irregular or unstructured grid of cube {}",
             cube.summary(shorten=True),
         )
         raise CoordinateMultiDimError(cube.coord("latitude"))
@@ -565,7 +563,7 @@ def _compute_area_weights(cube):
         weights = iris.analysis.cartography.area_weights(cube, **kwargs)
         for warning in caught_warnings:
             logger.debug(
-                "%s while computing area weights of the following cube:\n%s",
+                "{} while computing area weights of the following cube:\n{}",
                 warning.message,
                 cube,
             )

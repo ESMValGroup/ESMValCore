@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import dask.array as da
@@ -17,8 +16,6 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 def _mask_xy(x_arr, y_arr):

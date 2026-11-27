@@ -1,13 +1,9 @@
 """Fix base classes for EMAC on-the-fly CMORizer."""
 
-import logging
-
 from iris import NameConstraint
 from iris.exceptions import ConstraintMismatchError
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-
-logger = logging.getLogger(__name__)
 
 
 class EmacFix(NativeDatasetFix):

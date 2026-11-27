@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
@@ -10,8 +9,6 @@ import scipy.signal
 
 if TYPE_CHECKING:
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 def detrend(

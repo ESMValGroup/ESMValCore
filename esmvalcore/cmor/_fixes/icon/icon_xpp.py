@@ -1,7 +1,5 @@
 """CMOR-like reformatting of ICON-XPP (NWP physics)."""
 
-import logging
-
 from iris.cube import CubeList
 from scipy import constants
 
@@ -12,8 +10,6 @@ from ._base_fixes import (
     NegateData,
     OceanBasinVariable,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class AllVars(AllVarsBase):

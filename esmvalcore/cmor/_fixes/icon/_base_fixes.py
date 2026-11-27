@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import logging
 import os
 import shutil
 import warnings
@@ -24,6 +23,7 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
 from iris.mesh import Connectivity, MeshXY
+from loguru import logger
 
 import esmvalcore.io.local
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
@@ -33,8 +33,6 @@ from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 if TYPE_CHECKING:
     from iris.coords import Coord
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 class IconFix(NativeDatasetFix):
@@ -272,7 +270,7 @@ class IconFix(NativeDatasetFix):
             if self.extra_facets.get(facet) is None:
                 continue
             path_to_add = self._get_path_from_facet(facet)
-            logger.debug("Adding cubes from %s", path_to_add)
+            logger.debug("Adding cubes from {}", path_to_add)
             new_cubes = self._load_cubes(path_to_add)
             cubes.extend(new_cubes)
 
@@ -292,7 +290,7 @@ class IconFix(NativeDatasetFix):
 
         # Load file
         self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-        logger.debug("Loaded ICON grid file from %s", grid_path)
+        logger.debug("Loaded ICON grid file from {}", grid_path)
         return self._horizontal_grids[grid_name]
 
     @staticmethod
@@ -333,7 +331,7 @@ class IconFix(NativeDatasetFix):
                 icon_grid_facets["frequency"] = "fx"
                 files = ds.find_data(**icon_grid_facets)
                 if files:
-                    logger.debug("Using ICON grid file '%s'", files[0])
+                    logger.debug("Using ICON grid file '{}'", files[0])
                     return files[0].to_iris()
         return None
 
@@ -359,11 +357,11 @@ class IconFix(NativeDatasetFix):
             now = datetime.now().timestamp()
             age = now - mtime
             if age < self.CACHE_VALIDITY:
-                logger.debug("Using cached ICON grid file '%s'", grid_path)
+                logger.debug("Using cached ICON grid file '{}'", grid_path)
                 valid_cache = True
             else:
                 logger.debug(
-                    "Existing cached ICON grid file '%s' is outdated",
+                    "Existing cached ICON grid file '{}' is outdated",
                     grid_path,
                 )
 
@@ -372,7 +370,7 @@ class IconFix(NativeDatasetFix):
             self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             tmp_path = self._tmp_local_file(grid_path)
             logger.debug(
-                "Attempting to download ICON grid file from '%s' to '%s'",
+                "Attempting to download ICON grid file from '{}' to '{}'",
                 grid_url,
                 tmp_path,
             )
@@ -386,8 +384,8 @@ class IconFix(NativeDatasetFix):
                     copyfileobj(response.raw, file)
             shutil.move(tmp_path, grid_path)
             logger.info(
-                "Successfully downloaded ICON grid file from '%s' to '%s' "
-                "and moved it to '%s'",
+                "Successfully downloaded ICON grid file from '{}' to '{}' "
+                "and moved it to '{}'",
                 grid_url,
                 tmp_path,
                 grid_path,
@@ -484,9 +482,9 @@ class IconFix(NativeDatasetFix):
 
         # Reuse mesh if possible
         if grid_name in self._meshes:
-            logger.debug("Reusing ICON mesh for grid %s", grid_name)
+            logger.debug("Reusing ICON mesh for grid {}", grid_name)
         else:
-            logger.debug("Creating ICON mesh for grid %s", grid_name)
+            logger.debug("Creating ICON mesh for grid {}", grid_name)
             self._meshes[grid_name] = self._create_mesh(cube)
 
         return self._meshes[grid_name]
@@ -721,7 +719,7 @@ class AllVarsBase(IconFix):
         else:
             logger.debug(
                 "Cannot add pressure level information to ICON data; "
-                "variables '%s' and/or '%s' are not available",
+                "variables '{}' and/or '{}' are not available",
                 pfull_var,
                 phalf_var,
             )
@@ -748,8 +746,8 @@ class AllVarsBase(IconFix):
             cube.add_aux_coord(alt_coord, np.arange(cube.ndim)[-2:])
         else:
             logger.debug(
-                "Cannot add altitude information to ICON data; variables '%s' "
-                "and/or '%s' are not available",
+                "Cannot add altitude information to ICON data; variables '{}' "
+                "and/or '{}' are not available",
                 zgfull_var,
                 zghalf_var,
             )
@@ -806,7 +804,7 @@ class AllVarsBase(IconFix):
         # Add latitude coordinate if not already present
         if not cube.coords(var_name=lat_var):
             logger.debug(
-                "ICON data does not contain latitude variable '%s', trying to "
+                "ICON data does not contain latitude variable '{}', trying to "
                 "add it via grid file",
                 lat_var,
             )
@@ -832,7 +830,7 @@ class AllVarsBase(IconFix):
         # Add longitude coordinate if not already present
         if not cube.coords(var_name=lon_var):
             logger.debug(
-                "ICON data does not contain longitude variable '%s', trying "
+                "ICON data does not contain longitude variable '{}', trying "
                 "to add it via grid file",
                 lon_var,
             )
@@ -890,7 +888,7 @@ class AllVarsBase(IconFix):
             if is_point_measurement:
                 logger.debug(
                     "ICON data describes point measurements: time coordinate "
-                    "will not be shifted back by 1/2 of output interval (%s)",
+                    "will not be shifted back by 1/2 of output interval ({})",
                     self.extra_facets["frequency"],
                 )
                 return
@@ -939,7 +937,7 @@ class AllVarsBase(IconFix):
             axis=-1,
         )
         logger.debug(
-            "Shifted ICON time coordinate back by 1/2 of output interval (%s)",
+            "Shifted ICON time coordinate back by 1/2 of output interval ({})",
             self.extra_facets["frequency"],
         )
 

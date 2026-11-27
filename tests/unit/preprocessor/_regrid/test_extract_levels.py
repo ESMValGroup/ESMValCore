@@ -255,15 +255,15 @@ class Test(tests.Test):
         self.cube.add_ancillary_variable(ancillary_3d, (0, 1, 2))
         result_data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
         result = _make_cube(result_data)
-        with self.assertLogs(level="WARNING") as cm:
+        with self.caplog.at_level("WARNING"):
             _preserve_fx_vars(self.cube, result)
         self.assertEqual(
-            cm.records[0].getMessage(),
+            self.caplog.messages[0],
             "Discarding use of z-axis dependent cell measure "
             "volcello in variable ta, as z-axis has been interpolated",
         )
         self.assertEqual(
-            cm.records[1].getMessage(),
+            self.caplog.messages[1],
             "Discarding use of z-axis dependent ancillary variable "
             "zfull in variable ta, as z-axis has been interpolated",
         )

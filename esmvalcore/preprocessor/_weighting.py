@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Literal
 
 import iris
@@ -11,8 +10,6 @@ from ._supplementary_vars import register_supplementaries
 
 if TYPE_CHECKING:
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 def _get_land_fraction(cube):

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
@@ -14,8 +13,6 @@ from ._shared import (
 
 if TYPE_CHECKING:
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 @preserve_float_dtype

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any
 
 import dask.array as da
@@ -12,6 +11,7 @@ from iris import Constraint
 from iris.coords import DimCoord
 from iris.cube import CubeList
 from iris.mesh import Connectivity, MeshXY
+from loguru import logger
 
 from esmvalcore.cmor._fixes.icon.icon import AllVars as AllVars_ICON
 from esmvalcore.cmor._fixes.icon.icon import IconFix
@@ -19,8 +19,6 @@ from esmvalcore.cmor._fixes.shared import fix_ocean_depth_coord
 
 if TYPE_CHECKING:
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 class Oras5Fix(IconFix):
@@ -152,7 +150,7 @@ class Oras5Fix(IconFix):
 
         # Load file
         self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-        logger.debug("Loaded ORAS5 grid file from %s", grid_path)
+        logger.debug("Loaded ORAS5 grid file from {}", grid_path)
         return self._horizontal_grids[grid_name]
 
     def get_mesh(self, cube: Cube) -> MeshXY:
@@ -191,9 +189,9 @@ class Oras5Fix(IconFix):
 
         # Reuse mesh if possible
         if grid_name in self._meshes:
-            logger.debug("Reusing ORAS5 mesh for grid %s", grid_name)
+            logger.debug("Reusing ORAS5 mesh for grid {}", grid_name)
         else:
-            logger.debug("Creating ORAS5 mesh for grid %s", grid_name)
+            logger.debug("Creating ORAS5 mesh for grid {}", grid_name)
             self._meshes[grid_name] = self._create_mesh(cube)
 
         return self._meshes[grid_name]
@@ -315,7 +313,7 @@ class AllVars(Oras5Fix, AllVars_ICON):
         # Use 'cell_area' as dummy cube to extract desired coordinates
         # Reuse coordinates, if already processed
         if "unstructured_" + coord_name in self._horizontal_grids:
-            logger.debug("Reusing %s coordinate.", coord_name)
+            logger.debug("Reusing {} coordinate.", coord_name)
             coord = self._horizontal_grids["unstructured_" + coord_name]
         else:
             horizontal_grid = self.get_horizontal_grid(cube)

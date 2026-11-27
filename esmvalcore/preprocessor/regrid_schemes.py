@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any
 
 from esmvalcore.preprocessor._regrid_iris_esmf_regrid import IrisESMFRegrid
@@ -17,7 +16,6 @@ if TYPE_CHECKING:
 
     from iris.cube import Cube
 
-logger = logging.getLogger(__name__)
 
 __all__ = [
     "GenericFuncScheme",

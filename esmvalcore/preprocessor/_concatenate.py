@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, NamedTuple, Self
 
 import cftime
 import iris.exceptions
 import numpy as np
 from iris.cube import CubeList
+from loguru import logger
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.io.esgf.facets import FACETS
@@ -20,8 +20,6 @@ if TYPE_CHECKING:
 
     from iris.coords import Coord, DimCoord
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
@@ -105,7 +103,7 @@ def _remove_time_overlaps(cubes: CubeList) -> CubeList:
     for new_cube in map(_TrackedCube.from_cube, cubes[1:]):
         if new_cube.start > current_cube.end:
             # no overlap, use current cube and start again from new cube
-            logger.debug("Using %s", current_cube.cube)
+            logger.debug("Using {}", current_cube.cube)
             new_cubes.append(current_cube.cube)
             current_cube = new_cube
             continue
@@ -113,8 +111,8 @@ def _remove_time_overlaps(cubes: CubeList) -> CubeList:
         if current_cube.end > new_cube.end:
             # current cube ends after new one, just forget new cube
             logger.debug(
-                "Discarding %s because the time range "
-                "is already covered by %s",
+                "Discarding {} because the time range "
+                "is already covered by {}",
                 new_cube.cube,
                 current_cube.cube,
             )
@@ -124,7 +122,7 @@ def _remove_time_overlaps(cubes: CubeList) -> CubeList:
             # forget current cube
             current_cube = new_cube
             logger.debug(
-                "Discarding %s because the time range is covered by %s",
+                "Discarding {} because the time range is covered by {}",
                 current_cube.cube,
                 new_cube.cube,
             )
@@ -142,14 +140,14 @@ def _remove_time_overlaps(cubes: CubeList) -> CubeList:
             + 1
         )
         logger.debug(
-            "Using %s shortened to %s due to overlap",
+            "Using {} shortened to {} due to overlap",
             current_cube.cube,
             current_cube.times.cell(cut_index).point,
         )
         new_cubes.append(current_cube.cube[:cut_index])
         current_cube = new_cube
 
-    logger.debug("Using %s", current_cube.cube)
+    logger.debug("Using {}", current_cube.cube)
     new_cubes.append(current_cube.cube)
 
     return new_cubes
@@ -186,12 +184,12 @@ def _raise_concatenation_exception(cubes: Sequence[Cube]) -> None:
         CubeList(cubes).concatenate_cube()
     except iris.exceptions.ConcatenateError as exc:
         msg = str(exc)
-        logger.error("Can not concatenate cubes into a single one: %s", msg)
+        logger.error("Can not concatenate cubes into a single one: {}", msg)
         logger.error("Resulting cubes:")
         for cube in cubes:
             logger.error(cube)
             time = cube.coord("time")
-            logger.error("From %s to %s", time.cell(0), time.cell(-1))
+            logger.error("From {} to {}", time.cell(0), time.cell(-1))
 
         msg = f"Can not concatenate cubes: {msg}"
         raise ValueError(msg) from exc

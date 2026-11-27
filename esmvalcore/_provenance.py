@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import logging
 import os
 from functools import total_ordering
 from pathlib import Path
@@ -23,8 +22,6 @@ if TYPE_CHECKING:
     import prov.model
 
     from esmvalcore._task import BaseTask
-
-logger = logging.getLogger(__name__)
 
 ESMVALTOOL_URI_PREFIX = "https://www.esmvaltool.org/"
 

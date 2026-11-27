@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from iris import Constraint
+from loguru import logger
 
 from esmvalcore.preprocessor._regrid import regrid
 
@@ -13,8 +13,6 @@ from ._baseclass import DerivedVariableBase
 
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets
-
-logger = logging.getLogger(__name__)
 
 
 class DerivedVariable(DerivedVariableBase):

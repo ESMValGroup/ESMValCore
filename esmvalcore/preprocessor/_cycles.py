@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import iris
 import iris.coord_categorisation
+from loguru import logger
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 if TYPE_CHECKING:
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 def amplitude(cube: Cube, coords: str | list[str]) -> Cube:
@@ -60,7 +58,7 @@ def amplitude(cube: Cube, coords: str | list[str]) -> Cube:
         if cube.coords(coord_name):
             continue
         logger.debug(
-            "Trying to add coordinate '%s' to cube via iris."
+            "Trying to add coordinate '{}' to cube via iris."
             "coord_categorisation",
             coord_name,
         )
@@ -69,7 +67,7 @@ def amplitude(cube: Cube, coords: str | list[str]) -> Cube:
                 cube,
                 "time",
             )
-            logger.debug("Added temporal coordinate '%s'", coord_name)
+            logger.debug("Added temporal coordinate '{}'", coord_name)
         else:
             msg = (
                 f"Coordinate '{coord_name}' is not a coordinate of cube "

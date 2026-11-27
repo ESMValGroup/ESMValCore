@@ -42,7 +42,6 @@ from __future__ import annotations
 
 import copy
 import itertools
-import logging
 import os
 import os.path
 import re
@@ -56,6 +55,7 @@ import iris.cube
 import iris.fileformats.cf
 import isodate
 from cf_units import Unit
+from loguru import logger
 from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
@@ -68,8 +68,6 @@ if TYPE_CHECKING:
     from netCDF4 import Variable
 
     from esmvalcore.typing import Facets, FacetValue
-
-logger = logging.getLogger(__name__)
 
 
 def _get_from_pattern(
@@ -574,7 +572,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         self.debug_info = "No files found matching glob pattern " + "\n".join(
             str(g) for g in globs
         )
-        logger.debug("Looking for files matching %s", globs)
+        logger.debug("Looking for files matching {}", globs)
 
         files: list[LocalFile] = []
         for glob_ in globs:
@@ -677,7 +675,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
                 else "it cannot be read from file name"
             )
             logger.debug(
-                "Opening file %s to determine time range because %s",
+                "Opening file {} to determine time range because {}",
                 file,
                 reason,
             )

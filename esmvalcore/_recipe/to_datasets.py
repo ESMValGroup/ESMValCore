@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
+
+from loguru import logger
 
 from esmvalcore._recipe.check import get_no_data_message
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
@@ -29,7 +30,6 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
     from esmvalcore.typing import Facets, FacetValue
 
-logger = logging.getLogger(__name__)
 
 _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
@@ -204,7 +204,7 @@ def _fix_cmip5_fx_ensemble(dataset: Dataset) -> None:
         if copy.files:
             dataset.facets["ensemble"] = "r0i0p0"
             logger.info(
-                "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                "Corrected wrong 'ensemble' from '{}' to '{}' for {}",
                 original_ensemble,
                 dataset["ensemble"],
                 dataset.summary(shorten=True),
@@ -370,7 +370,7 @@ def _get_datasets_for_variable(
 ) -> list[Dataset]:
     """Read the datasets from a variable definition in the recipe."""
     logger.debug(
-        "Populating list of datasets for variable %s in diagnostic %s",
+        "Populating list of datasets for variable {} in diagnostic {}",
         variable_group,
         diagnostic_name,
     )
@@ -395,7 +395,7 @@ def _get_datasets_for_variable(
                 dataset["variable_group"] = variable_group
                 dataset["diagnostic"] = diagnostic_name
                 dataset["recipe_dataset_index"] = idx  # type: ignore
-                logger.debug("Found %s", dataset.summary(shorten=True))
+                logger.debug("Found {}", dataset.summary(shorten=True))
                 datasets.append(dataset)
                 idx += 1
 
@@ -437,7 +437,7 @@ def _dataset_from_files(  # noqa: C901
 
     if any(_isglob(f) for f in dataset.facets.values()):
         logger.debug(
-            "Expanding dataset globs for dataset %s, this may take a while..",
+            "Expanding dataset globs for dataset {}, this may take a while..",
             dataset.summary(shorten=True),
         )
 
@@ -483,8 +483,8 @@ def _dataset_from_files(  # noqa: C901
             result.append(new_ds)
         else:
             logger.debug(
-                "Not all necessary input variables to derive '%s' are "
-                "available for dataset %s",
+                "Not all necessary input variables to derive '{}' are "
+                "available for dataset {}",
                 dataset["short_name"],
                 updated_facets,
             )
@@ -571,7 +571,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
         _fix_cmip5_fx_ensemble(input_dataset)
         if input_facets.get("optional") and not input_dataset.files:
             logger.info(
-                "Skipping: no data found for %s which is marked as 'optional'",
+                "Skipping: no data found for {} which is marked as 'optional'",
                 input_dataset,
             )
         else:

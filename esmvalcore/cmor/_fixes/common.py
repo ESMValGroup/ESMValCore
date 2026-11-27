@@ -1,9 +1,8 @@
 """Common fixes used for multiple datasets."""
 
-import logging
-
 import iris
 import numpy as np
+from loguru import logger
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
@@ -12,8 +11,6 @@ from .shared import (
     add_scalar_areatype_coord,
     fix_bounds,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class ClFixHybridHeightCoord(Fix):
@@ -133,7 +130,7 @@ class OceanFixGrid(Fix):
             logger.warning(
                 "OceanFixGrid is designed to work on any data with an "
                 "irregular ocean grid, but it was only tested on 3D (time, "
-                "latitude, longitude) data so far; got %dD data",
+                "latitude, longitude) data so far; got {}D data",
                 cube.ndim,
             )
 

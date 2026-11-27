@@ -1,7 +1,7 @@
 # Default logging configuration.
 
-# Note that most logging options are still configured in the file
-# esmvalcore/config/logging.yml and are not yet configurable for users.
+# Note that most logging options are still configured in
+# esmvalcore/config/_logging.py and are not yet configurable for users.
 
 logging:
   log_progress_interval: 0.

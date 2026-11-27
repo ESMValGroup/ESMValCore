@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from enum import IntEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
@@ -15,6 +14,7 @@ import iris.exceptions
 import iris.util
 import numpy as np
 import yaml
+from loguru import logger
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
     from iris.coords import Coord
     from iris.cube import Cube
+    from loguru import Logger
 
     from esmvalcore.cmor.table import CoordinateInfo
 
@@ -104,7 +105,7 @@ class CMORCheck:
         self._cube = cube
         self._failerr = fail_on_error
         self._check_level = check_level
-        self._logger = logging.getLogger(__name__)
+        self._logger = logger
         self._errors = []
         self._warnings = []
         self._debug_messages = []
@@ -119,7 +120,7 @@ class CMORCheck:
         """Cube uses unstructured grid."""
         return has_unstructured_grid(self._cube)
 
-    def check_metadata(self, logger: logging.Logger | None = None) -> Cube:
+    def check_metadata(self, logger: Logger | None = None) -> Cube:
         """Check the cube metadata.
 
         It will also report some warnings in case of minor errors.
@@ -162,7 +163,7 @@ class CMORCheck:
 
         return self._cube
 
-    def check_data(self, logger: logging.Logger | None = None) -> Cube:
+    def check_data(self, logger: Logger | None = None) -> Cube:
         """Check the cube data.
 
         Assumes that metadata is correct, so you must call check_metadata prior

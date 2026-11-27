@@ -29,7 +29,6 @@ Have fun!
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
 
-import logging
 import os
 import re
 import sys
@@ -38,26 +37,62 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import fire
+from loguru import logger
 
 if TYPE_CHECKING:
     from esmvalcore.config import Session
 
-# set up logging
-logger = logging.getLogger(__name__)
-
-HEADER = (
-    r"""
-______________________________________________________________________
+BANNER = r"""
+▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
           _____ ____  __  ____     __    _ _____           _
          | ____/ ___||  \/  \ \   / /_ _| |_   _|__   ___ | |
          |  _| \___ \| |\/| |\ \ / / _` | | | |/ _ \ / _ \| |
          | |___ ___) | |  | | \ V / (_| | | | | (_) | (_) | |
          |_____|____/|_|  |_|  \_/ \__,_|_| |_|\___/ \___/|_|
-______________________________________________________________________
-
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
 """
-    + __doc__
-)
+
+# The colors of the columns of the banner, like the warming stripes by Ed
+# Hawkins (University of Reading, https://showyourstripes.info, CC BY 4.0).
+# Each column shows the global mean temperature over about 2.5 years from 1850
+# to 2025 in the HadCRUT5 data set (Met Office Hadley Centre and Climatic
+# Research Unit, https://www.metoffice.gov.uk/hadobs/hadcrut5/).
+STRIPES = (
+    "08519c", "2171b5", "2171b5", "08519c", "08306b", "08306b", "08519c",
+    "08519c", "08519c", "2171b5", "08519c", "6baed6", "2171b5", "08519c",
+    "08306b", "08519c", "08306b", "08306b", "08519c", "08519c", "2171b5",
+    "08306b", "08519c", "08306b", "08306b", "08519c", "2171b5", "08306b",
+    "2171b5", "2171b5", "4292c6", "2171b5", "6baed6", "4292c6", "6baed6",
+    "9ecae1", "c6dbef", "deebf7", "9ecae1", "6baed6", "6baed6", "9ecae1",
+    "6baed6", "9ecae1", "9ecae1", "6baed6", "6baed6", "6baed6", "6baed6",
+    "9ecae1", "9ecae1", "c6dbef", "fee0d2", "deebf7", "deebf7", "fee0d2",
+    "fcbba1", "fee0d2", "fc9272", "fb6a4a", "fb6a4a", "ef3b2c", "cb181d",
+    "ef3b2c", "cb181d", "a50f15", "67000d", "67000d", "67000d", "67000d",
+)  # fmt: skip
+
+
+def _color_banner(banner: str) -> str:
+    """Color the columns of the banner with loguru markup."""
+    return "\n".join(
+        "".join(
+            char if char == " " else f"<fg #{color}>{char}</>"
+            for char, color in zip(line, STRIPES, strict=False)
+        )
+        # A backslash in front of a tag escapes it, so escape the backslash.
+        .replace("\\<", "\\\\<")
+        for line in banner.split("\n")
+    )
+
+
+def _color_links(text: str) -> str:
+    """Color the hyperlinks and email addresses in the text with markup."""
+    # Escape any tags in the text and leave out trailing punctuation from the
+    # links.
+    return re.sub(
+        r"https?://\S*[^\s.,;:)]|[\w.+-]+@[\w-]+(?:\.[\w-]+)+",
+        r"<blue><u>\g<0></u></blue>",
+        text.replace("<", r"\<"),
+    )
 
 
 def parse_resume(resume, recipe):
@@ -101,29 +136,29 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
             recipe_file,
         )
 
-    timestamp1 = dt.datetime.now(dt.UTC)
-    timestamp_format = "%Y-%m-%d %H:%M:%S"
+    timestamp1 = dt.datetime.now(dt.UTC).astimezone()
+    timestamp_format = "%Y-%m-%d %H:%M:%S %Z"
 
     logger.info(
-        "Starting the Earth System Model Evaluation Tool at time: %s UTC",
+        "Starting the Earth System Model Evaluation Tool at time: {}",
         timestamp1.strftime(timestamp_format),
     )
 
     logger.info(70 * "-")
-    logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", session.run_dir)
-    logger.info("WORKDIR    = %s", session.work_dir)
-    logger.info("PREPROCDIR = %s", session.preproc_dir)
-    logger.info("PLOTDIR    = %s", session.plot_dir)
+    logger.info("RECIPE     = {}", recipe_file)
+    logger.info("RUNDIR     = {}", session.run_dir)
+    logger.info("WORKDIR    = {}", session.work_dir)
+    logger.info("PREPROCDIR = {}", session.preproc_dir)
+    logger.info("PLOTDIR    = {}", session.plot_dir)
     logger.info(70 * "-")
-    logger.debug("Using configuration:\n%s", yaml.safe_dump(dict(session)))
+    logger.debug("Using configuration:\n{}", yaml.safe_dump(dict(session)))
     logger.debug(
-        "Running recipe:\n%s",
+        "Running recipe:\n{}",
         recipe_file.read_text(encoding="utf-8"),
     )
 
     n_processes = session["max_parallel_tasks"] or available_cpu_count()
-    logger.info("Running tasks using at most %s processes", n_processes)
+    logger.info("Running tasks using at most {} processes", n_processes)
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
@@ -149,16 +184,16 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
 
     # parse recipe
     recipe = read_recipe_file(recipe_file, session)
-    logger.debug("Recipe summary:\n%s", recipe)
+    logger.debug("Recipe summary:\n{}", recipe)
     # run
     recipe.run()
     # End time timing
-    timestamp2 = dt.datetime.now(dt.UTC)
+    timestamp2 = dt.datetime.now(dt.UTC).astimezone()
     logger.info(
-        "Ending the Earth System Model Evaluation Tool at time: %s UTC",
+        "Ending the Earth System Model Evaluation Tool at time: {}",
         timestamp2.strftime(timestamp_format),
     )
-    logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
+    logger.info("Time for running the recipe was: {}", timestamp2 - timestamp1)
 
 
 class Config:
@@ -308,13 +343,13 @@ class Config:
             f.relative_to(config_dir) for f in config_dir.rglob("*.yml")
         }
         if source_file not in available_files:
-            esmvalcore.config._logging.configure_logging(  # noqa: SLF001
-                console_log_level="info",
-            )
+            from esmvalcore.config._logging import configure_logging
+
+            configure_logging(console_log_level="info")
             self.list()
             logger.error(
                 (
-                    "Configuration file '%s' not found, choose from one of the "
+                    "Configuration file '{}' not found, choose from one of the "
                     "available files listed above"
                 ),
                 source_file,
@@ -340,17 +375,17 @@ class Config:
 
         configure_logging(console_log_level="info")
 
-        logger.info("Copying file %s to path %s", in_file, out_file)
+        logger.info("Copying file {} to path {}", in_file, out_file)
         if out_file.is_file():
             if overwrite:
-                logger.info("Overwriting file %s.", out_file)
+                logger.info("Overwriting file {}.", out_file)
             else:
-                logger.error("Copy aborted. File %s already exists.", out_file)
+                logger.error("Copy aborted. File {} already exists.", out_file)
                 sys.exit(1)
 
         target_folder = out_file.parent
         if not target_folder.is_dir():
-            logger.info("Creating folder %s", target_folder)
+            logger.info("Creating folder {}", target_folder)
             target_folder.mkdir(parents=True, exist_ok=True)
 
         shutil.copy2(in_file, out_file)
@@ -437,7 +472,7 @@ class Recipes:
             raise RecipeError(msg)
         logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
-        logger.info("Recipe %s successfully copied", recipe)
+        logger.info("Recipe {} successfully copied", recipe)
 
     def show(self, recipe: str) -> None:
         """Show the given recipe in console.
@@ -494,7 +529,7 @@ class ESMValTool:
             )
             if hasattr(self, entry_point.name):
                 logger.error(
-                    "Registered command %s already exists",
+                    "Registered command {} already exists",
                     entry_point.name,
                 )
                 continue
@@ -628,7 +663,7 @@ class ESMValTool:
 
         if session.cmor_log.read_text(encoding="utf-8"):
             logger.warning(
-                "Input data is not (fully) CMOR-compliant, see %s for details",
+                "Input data is not (fully) CMOR-compliant, see {} for details",
                 session.cmor_log,
             )
 
@@ -700,24 +735,25 @@ class ESMValTool:
     def _log_header(self, log_files, cli_config_dir):
         from . import __version__
 
-        logger.info(HEADER)
+        logger.opt(raw=True, colors=True).info(_color_banner(BANNER))
+        logger.opt(raw=True, colors=True).info(_color_links(f"\n{__doc__}\n"))
         logger.info("Package versions")
         logger.info("----------------")
-        logger.info("ESMValCore: %s", __version__)
+        logger.info("ESMValCore: {}", __version__)
         for project, version in self._extra_packages.items():
-            logger.info("%s: %s", project, version)
+            logger.info("{}: {}", project, version)
         logger.info("----------------")
         logger.info(
-            "Reading configuration files from:\n%s",
+            "Reading configuration files from:\n{}",
             self._get_config_info(cli_config_dir),
         )
         old_config_file = Path.home() / ".esmvaltool" / "config-user.yml"
         if old_config_file.exists():
             logger.warning(
-                "Ignoring old configuration file at %s",
+                "Ignoring old configuration file at {}",
                 old_config_file,
             )
-        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+        logger.info("Writing program log files to:\n{}", "\n".join(log_files))
 
 
 def run():
@@ -732,37 +768,45 @@ def run():
 
     fire.core.Display = display
 
+    # Only show warnings and errors until the command configures logging.
+    from esmvalcore.config._logging import configure_logging
+
+    configure_logging(console_log_level="warning")
+
     try:
         fire.Fire(ESMValTool())
     except fire.core.FireExit:
         raise
     except SuppressedError as exc:
         # Hide the stack trace for RecipeErrors
-        if not logger.handlers:
-            # Add a logging handler if main failed to do so.
-            logging.basicConfig()
-        logger.error("%s", exc)
-        logger.debug("Stack trace for debugging:", exc_info=True)
+        logger.error("{}", exc)
+        logger.opt(exception=True).debug("Stack trace for debugging:")
         sys.exit(1)
-    except Exception:
-        if not logger.handlers:
-            # Add a logging handler if main failed to do so.
-            logging.basicConfig()
+    except Exception:  # noqa: BLE001
         logger.exception(
             "Program terminated abnormally, see stack trace "
             "below for more information:",
         )
-        logger.info(
-            "\n"
-            "If you have a question or need help, please start a new "
-            "discussion on "
-            "https://github.com/ESMValGroup/ESMValTool/discussions"
-            "\n"
-            "If you suspect this is a bug, please open an issue on "
-            "https://github.com/ESMValGroup/ESMValTool/issues"
-            "\n"
-            "To make it easier to find out what the problem is, please "
-            "consider attaching the files run/recipe_*.yml and "
-            "run/main_log_debug.txt from the output directory.",
-        )
+        # Log each line separately, because the console only shows the colors
+        # of single line messages.
+        for line in (
+            (
+                "If you have a question or need help, please start a new "
+                "discussion on "
+                "https://github.com/ESMValGroup/ESMValTool/discussions"
+            ),
+            (
+                "If you suspect this is a bug, please open an issue on "
+                "https://github.com/ESMValGroup/ESMValTool/issues"
+            ),
+            (
+                "To make it easier to find out what the problem is, please "
+                "consider attaching the files run/recipe_*.yml and "
+                "run/main_log_debug.txt from the output directory."
+            ),
+        ):
+            logger.opt(colors=True).info(_color_links(line))
         sys.exit(1)
+    finally:
+        # Wait until all queued log messages have been written.
+        logger.complete()

@@ -1,13 +1,12 @@
 """Fixes for IPSLCM6 TS output format."""
 
-import logging
 import subprocess
 import time
 
+from loguru import logger
+
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
-
-logger = logging.getLogger(__name__)
 
 # The key used in extra_facets file for providing the
 # variable name (in NetCDF file) that match the CMOR variable name
@@ -37,7 +36,7 @@ class AllVars(Fix):
             "non-sense",
         ) + ".nc" not in str(file):
             # No need to filter the file
-            logger.debug("Not filtering for %s", file)
+            logger.debug("Not filtering for {}", file)
             return file
 
         if not self.extra_facets.get("use_cdo", False):
@@ -45,7 +44,7 @@ class AllVars(Fix):
             # licence policy doesn't allow to include it in dependencies
             # Or he considers that plain Iris load is quick enough for
             # that file
-            logger.debug("In ipsl-cm6.py : CDO not activated for %s", file)
+            logger.debug("In ipsl-cm6.py : CDO not activated for {}", file)
             return file
 
         # Proceed with CDO selvar
@@ -57,10 +56,13 @@ class AllVars(Fix):
             add_unique_suffix=add_unique_suffix,
         )
         tim1 = time.time()
-        logger.debug("Using CDO for selecting %s in %s", varname, file)
+        logger.debug("Using CDO for selecting {} in {}", varname, file)
         command = ["cdo", f"-selvar,{varname}", str(file), str(outfile)]
         subprocess.run(command, check=True)
-        logger.debug("CDO selection done in %.2f seconds", time.time() - tim1)
+        logger.debug(
+            "CDO selection done in {:.2f} seconds",
+            time.time() - tim1,
+        )
         return outfile
 
     def fix_metadata(self, cubes):

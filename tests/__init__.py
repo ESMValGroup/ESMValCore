@@ -1,9 +1,12 @@
 """Provides testing capabilities for :mod:`esmvaltool` package."""
 
+from __future__ import annotations
+
 import unittest
 from unittest import mock
 
 import numpy as np
+import pytest
 from cf_units import Unit
 from iris.coords import (
     AncillaryVariable,
@@ -26,6 +29,11 @@ def assert_array_equal(a, b):
 
 class Test(unittest.TestCase):
     """Provides esmvaltool specific testing functionality."""
+
+    @pytest.fixture(autouse=True)
+    def _caplog(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Make the :func:`caplog` fixture available as ``self.caplog``."""
+        self.caplog = caplog
 
     def _remove_testcase_patches(self):
         """Remove per-testcase patches installed by :meth:`patch`."""

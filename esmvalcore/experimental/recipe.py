@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 import pprint
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import yaml
+from loguru import logger
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
 from esmvalcore._recipe.writer import to_yaml
@@ -21,8 +21,6 @@ if TYPE_CHECKING:
     import os
 
     from esmvalcore.config import Session
-
-logger = logging.getLogger(__name__)
 
 
 class Recipe:

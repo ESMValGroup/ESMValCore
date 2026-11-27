@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from contextlib import suppress
 from typing import TYPE_CHECKING, ClassVar
 
@@ -20,8 +19,6 @@ from .shared import (
 if TYPE_CHECKING:
     from iris.coords import Coord
     from iris.cube import Cube, CubeList
-
-logger = logging.getLogger(__name__)
 
 
 class NativeDatasetFix(Fix):

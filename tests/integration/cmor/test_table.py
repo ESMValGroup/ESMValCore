@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -246,12 +245,6 @@ class TestCMIP6Info:
         monkeypatch: pytest.MonkeyPatch,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
-        # attach the root logger handler added by caplog
-        monkeypatch.setattr(
-            esmvalcore.cmor.table.logger,
-            "handlers",
-            logging.getLogger().handlers,
-        )
         invalid_file = tmp_path / "invalid.json"
         invalid_file.write_text("invalid content", encoding="utf-8")
         with pytest.raises(ValueError):
@@ -439,12 +432,6 @@ class TestCMIP5Info:
         monkeypatch: pytest.MonkeyPatch,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
-        # attach the root logger handler added by caplog
-        monkeypatch.setattr(
-            esmvalcore.cmor.table.logger,
-            "handlers",
-            logging.getLogger().handlers,
-        )
         invalid_file = tmp_path / "invalid"
         invalid_file.write_text("invalid content", encoding="utf-8")
         with pytest.raises(ValueError):

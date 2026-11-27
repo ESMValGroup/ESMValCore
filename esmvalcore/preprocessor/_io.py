@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import logging
 import os
 import warnings
 from itertools import groupby
@@ -17,6 +16,7 @@ import ncdata
 import xarray as xr
 import yaml
 from iris.cube import Cube, CubeList
+from loguru import logger
 
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.exceptions import ESMValCoreLoadWarning
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 
     from dask.delayed import Delayed
 
-logger = logging.getLogger(__name__)
 
 GLOBAL_FILL_VALUE = 1e20
 
@@ -300,7 +299,7 @@ def save(  # noqa: C901
         cube.has_lazy_data() for cube in cubes
     ):
         logger.debug(
-            "Not saving cubes %s to %s to avoid data loss. "
+            "Not saving cubes {} to {} to avoid data loss. "
             "The cube is probably unchanged.",
             cubes,
             filename,
@@ -309,7 +308,7 @@ def save(  # noqa: C901
 
     for cube in cubes:
         logger.debug(
-            "Saving cube:\n%s\nwith %s data to %s",
+            "Saving cube:\n{}\nwith {} data to {}",
             cube,
             "lazy" if cube.has_lazy_data() else "realized",
             filename,
@@ -338,7 +337,7 @@ def save(  # noqa: C901
     if alias:
         for cube in cubes:
             logger.debug(
-                "Changing var_name from %s to %s",
+                "Changing var_name from {} to {}",
                 cube.var_name,
                 alias,
             )

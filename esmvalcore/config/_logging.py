@@ -2,20 +2,25 @@
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
+import datetime as dt
 import inspect
 import logging
-import logging.config
-import os
-import time
+import sys
+import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
-import yaml
+from loguru import logger
 
 import esmvalcore.exceptions
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    import os
+    from collections.abc import Generator, Iterable
+
+    from loguru import Record
 
 _WARNINGS_SHOWN_IN_MAIN_LOG = [
     cls.__name__
@@ -24,94 +29,217 @@ _WARNINGS_SHOWN_IN_MAIN_LOG = [
     and issubclass(cls, esmvalcore.exceptions.ESMValCoreUserWarning)
 ]
 
+_HANDLER_IDS: list[int] = []
+"""Loguru handlers added by :func:`configure_logging`."""
 
-class FilterMultipleNames:
-    """Only allow/disallow events from loggers with specific names."""
-
-    def __init__(
-        self,
-        names: Iterable[str],
-        mode: Literal["allow", "disallow"],
-    ) -> None:
-        """Initialize filter."""
-        self.names = names
-        self.starts_with_name = mode == "allow"
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Filter events."""
-        for name in self.names:
-            if record.name.startswith(name):
-                return self.starts_with_name
-        return not self.starts_with_name
+_OUR_NAMES = ("esmvalcore", "esmvaltool", "intake-esgf", "py.warnings")
+_CMOR_NAMES = (
+    "esmvalcore.cmor.check",
+    "esmvalcore.cmor._fixes.fix.genericfix",
+)
 
 
-class FilterExternalWarnings:
-    """Do not show warnings from external packages."""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Filter events."""
-        if record.name != "py.warnings":
-            return True
-        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG:
-            if f" {warning}: " in record.msg:
-                return True
-        return False
+_TASK: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "esmvalcore_task",
+    default=None,
+)
+"""Name of the task that is currently running."""
 
 
-def _purge_file_handlers(cfg: dict) -> None:
-    """Remove handlers with filename set.
+@contextlib.contextmanager
+def _log_task(name: str) -> Generator[None]:
+    """Show the task name with the messages logged inside this block."""
+    token = _TASK.set(name)
+    try:
+        with logger.contextualize(task=name):
+            yield
+    finally:
+        _TASK.reset(token)
 
-    This is used to remove file handlers which require an output
-    directory to be set.
+
+def _console_prefix() -> tuple[str, str | None]:
+    """Get the start of a console line, for output that is not logged.
+
+    Returns
+    -------
+    :
+        The local time and the INFO level, formatted like the log messages,
+        and the name of the current task, if any.
     """
-    cfg["handlers"] = {
-        name: handler
-        for name, handler in cfg["handlers"].items()
-        if "filename" not in handler
-    }
-    prev_root = cfg["root"]["handlers"]
-    cfg["root"]["handlers"] = [
-        name for name in prev_root if name in cfg["handlers"]
-    ]
+    time = dt.datetime.now(dt.UTC).astimezone().strftime("%H:%M:%S")
+    return f"{time} {'INFO':<7}", _TASK.get()
 
 
-def _get_log_files(
-    cfg: dict,
-    output_dir: os.PathLike | str | None = None,
-) -> list[str]:
-    """Initialize log files for the file handlers."""
-    log_files = []
-
-    handlers = cfg["handlers"]
-
-    for handler in handlers.values():
-        filename = handler.get("filename", None)
-
-        if filename:
-            if output_dir is None:
-                msg = "`output_dir` must be defined"
-                raise ValueError(msg)
-
-            if not os.path.isabs(filename):
-                handler["filename"] = os.path.join(output_dir, filename)
-
-            log_files.append(handler["filename"])
-
-    return log_files
+def _task_prefix(record: Record) -> str:
+    """Store the task name prefix of the message in the record's extra."""
+    task = record["extra"].get("task")
+    prefix = f"{task}: " if task else ""
+    record["extra"]["_task_prefix"] = prefix
+    return prefix
 
 
-def _update_stream_level(cfg: dict, level: str | None = None) -> None:
-    """Update the log level for the stream handlers."""
-    handlers = cfg["handlers"]
+def _console_format(record: Record) -> str:
+    """Format messages for the console and the main log file.
 
-    for handler in handlers.values():
-        if level is not None and "stream" in handler:
-            if handler["stream"] in ("ext://sys.stdout", "ext://sys.stderr"):
-                handler["level"] = level.upper()
+    Messages show the local time, the level, and the message, prefixed with
+    the name of the task that logged it, if any. Continuation lines of
+    multi-line messages are indented to the start of the message.
+    """
+    prefix = _task_prefix(record)
+    time_width = len("HH:mm:ss ")
+    level_width = max(7, len(record["level"].name)) + 1
+    indent = " " * (time_width + level_width + len(prefix))
+    if "\n" in record["message"]:
+        first, *rest = record["message"].split("\n")
+        # Do not indent empty lines, to avoid trailing whitespace.
+        record["extra"]["_console_message"] = "\n".join(
+            [first, *(indent + line if line else line for line in rest)],
+        )
+        message = "{extra[_console_message]}"
+    else:
+        # Use the message field when possible, because loguru only shows the
+        # colors of messages logged with `logger.opt(colors=True)` there.
+        message = "{message}"
+    return (
+        "{time:HH:mm:ss} <level>{level: <7}</level> "
+        "<cyan>{extra[_task_prefix]}</cyan>"
+        f"<level>{message}</level>\n"
+        "{exception}"
+    )
+
+
+_CMOR_FORMAT = "{level: <7} [{process}] {message}"
+
+
+def _debug_format(record: Record) -> str:
+    """Format messages for the debug log file.
+
+    Messages are prefixed with the name of the task that logged them, if any,
+    like in the main log file.
+    """
+    _task_prefix(record)
+    return (
+        "{time:YYYY-MM-DD HH:mm:ss,SSS Z} [{process}] {level: <7} "
+        "{name}:{line} {extra[_task_prefix]}{message}\n{exception}"
+    )
+
+
+def _has_name(record: Record, names: Iterable[str]) -> bool:
+    """Check if the record comes from (a child of) one of the loggers."""
+    return any(
+        record["name"] == name or record["name"].startswith(f"{name}.")
+        for name in names
+    )
+
+
+def _is_external_warning(record: Record) -> bool:
+    """Check if the record is a warning issued by an external package."""
+    if record["name"] != "py.warnings":
+        return False
+    return not any(
+        f" {warning}: " in record["message"]
+        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG
+    )
+
+
+def _main_log_filter(record: Record) -> bool:
+    """Filter for the console and the main log file."""
+    return (
+        _has_name(record, _OUR_NAMES)
+        and not _has_name(record, _CMOR_NAMES)
+        and not _has_name(record, ["intake-esgf"])
+        and not _is_external_warning(record)
+    )
+
+
+def _debug_log_filter(record: Record) -> bool:
+    """Filter for the debug log file."""
+    return _has_name(record, _OUR_NAMES)
+
+
+def _cmor_log_filter(record: Record) -> bool:
+    """Filter for the CMOR log file."""
+    return _has_name(record, _CMOR_NAMES)
+
+
+_LOG_FILES = {
+    # The main log file contains the same messages as the console.
+    "main_log.txt": ("INFO", _console_format, _main_log_filter),
+    "main_log_debug.txt": ("DEBUG", _debug_format, _debug_log_filter),
+    "cmor_log.txt": ("INFO", _CMOR_FORMAT, _cmor_log_filter),
+}
+"""Log files: their level, format, and filter."""
+
+
+class _InterceptHandler(logging.Handler):
+    """Send log records from the standard library logging module to loguru.
+
+    See https://loguru.readthedocs.io/en/stable/overview.html#entirely-compatible-with-standard-logging
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            level: str | int = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+        logger.patch(
+            lambda r: r.update(name=record.name, line=record.lineno),
+        ).opt(exception=record.exc_info).log(level, record.getMessage())
+
+
+def _log_warning(
+    message: Warning | str,
+    category: type[Warning],
+    filename: str,
+    lineno: int,
+    file: object = None,  # noqa: ARG001
+    line: str | None = None,
+) -> None:
+    """Send warnings to loguru, like :func:`logging.captureWarnings`."""
+    text = warnings.formatwarning(message, category, filename, lineno, line)
+    logger.patch(
+        lambda r: r.update(name="py.warnings", line=lineno),
+    ).warning(text.rstrip())
+
+
+def _add_log_files(
+    output_dir: os.PathLike | str,
+    filenames: Iterable[str] = _LOG_FILES,
+) -> dict[str, int]:
+    """Add handlers that write to log files in `output_dir`.
+
+    Returns
+    -------
+    :
+        A mapping from the path of each log file to its handler id.
+    """
+    handlers = {}
+    for filename in filenames:
+        level, fmt, filter_ = _LOG_FILES[filename]
+        # Only show variable values in tracebacks in the debug log.
+        diagnose = level == "DEBUG"
+        path = str(Path(output_dir) / filename)
+        handlers[path] = logger.add(
+            path,
+            level=level,
+            format=fmt,
+            filter=filter_,
+            encoding="utf-8",
+            mode="a",
+            backtrace=diagnose,
+            diagnose=diagnose,
+        )
+    return handlers
+
+
+def _capture_external_messages() -> None:
+    """Send messages from the standard library and warnings to loguru."""
+    logger.enable("esmvalcore")
+    logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
+    warnings.showwarning = _log_warning
 
 
 def configure_logging(
-    cfg_file: os.PathLike | str | None = None,
     output_dir: os.PathLike | str | None = None,
     console_log_level: str | None = None,
 ) -> list[str]:
@@ -119,8 +247,6 @@ def configure_logging(
 
     Parameters
     ----------
-    cfg_file:
-        Logging config file. If `None`, defaults to `configure-logging.yml`
     output_dir:
         Output directory for the log files. If `None`, log only to the console.
     console_log_level:
@@ -131,22 +257,34 @@ def configure_logging(
     :
         Filenames that will be logged to.
     """
-    if cfg_file is None:
-        cfg_file = Path(__file__).parent / "config-logging.yml"
+    level = "INFO" if console_log_level is None else console_log_level.upper()
+    logger.level(level)  # Raises ValueError for unknown levels.
+    # Only use colors for the less common levels, so they stand out.
+    logger.level("INFO", color="")
+    logger.level("DEBUG", color="<light-blue>")
 
-    cfg_file = Path(cfg_file).absolute()
+    # Only remove the handlers added by this function and the default
+    # loguru handler, so other handlers (e.g. from pytest) keep working.
+    for handler_id in _HANDLER_IDS:
+        logger.remove(handler_id)
+    _HANDLER_IDS.clear()
+    with contextlib.suppress(ValueError):
+        logger.remove(0)
 
-    with open(cfg_file, encoding="utf-8") as file_handler:
-        cfg = yaml.safe_load(file_handler)
+    handler_id = logger.add(
+        sys.stdout,
+        level=level,
+        format=_console_format,
+        filter=_main_log_filter,
+        backtrace=False,
+        diagnose=False,
+    )
+    _HANDLER_IDS.append(handler_id)
+    log_files = {}
+    if output_dir is not None:
+        log_files = _add_log_files(output_dir)
+        _HANDLER_IDS.extend(log_files.values())
 
-    if output_dir is None:
-        _purge_file_handlers(cfg)
+    _capture_external_messages()
 
-    log_files = _get_log_files(cfg, output_dir=output_dir)
-    _update_stream_level(cfg, level=console_log_level)
-
-    logging.config.dictConfig(cfg)
-    logging.Formatter.converter = time.gmtime
-    logging.captureWarnings(True)
-
-    return log_files
+    return list(log_files)

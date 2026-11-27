@@ -23,13 +23,13 @@ create a file with the following content in your configuration directory:
 from __future__ import annotations
 
 import copy
-import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 import intake_esgf
 import intake_esgf.exceptions
 import isodate
+from loguru import logger
 
 from esmvalcore.dataset import _isglob, _ismatch
 from esmvalcore.io.local import _parse_period
@@ -46,8 +46,6 @@ __all__ = [
     "IntakeESGFDataSource",
     "IntakeESGFDataset",
 ]
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -79,7 +77,7 @@ class IntakeESGFDataset(DataElement):
             self.catalog.to_path_dict(minimal_keys=False, quiet=True)
         except intake_esgf.exceptions.DatasetLoadError:
             logger.error(
-                "Failed to download dataset '%s' from the ESGF. Error messages:\n%s",
+                "Failed to download dataset '{}' from the ESGF. Error messages:\n{}",
                 self.name,
                 self.catalog.session_log(),
             )

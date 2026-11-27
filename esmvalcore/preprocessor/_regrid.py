@@ -5,7 +5,6 @@ from __future__ import annotations
 import functools
 import importlib
 import inspect
-import logging
 import os
 import re
 import ssl
@@ -31,6 +30,7 @@ from iris.analysis import (
 )
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
+from loguru import logger
 
 import esmvalcore.cmor.table
 from esmvalcore.cmor._fixes.shared import (
@@ -63,7 +63,6 @@ if TYPE_CHECKING:
 
     from esmvalcore.dataset import Dataset
 
-logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -572,7 +571,7 @@ def extract_location(
         msg = f"Requested location {location} can not be found."
         raise ValueError(msg)
     logger.info(
-        "Extracting data for %s (%s °N, %s °E)",
+        "Extracting data for {} ({} °N, {} °E)",
         geolocation,
         geolocation.latitude,
         geolocation.longitude,
@@ -753,7 +752,7 @@ def _load_scheme(
             raise ValueError(msg)
         loaded_scheme = schemes[scheme]
 
-    logger.debug("Loaded regridding scheme %s", loaded_scheme)
+    logger.debug("Loaded regridding scheme {}", loaded_scheme)
 
     return loaded_scheme
 
@@ -1349,8 +1348,8 @@ def _preserve_fx_vars(cube: iris.cube.Cube, result: iris.cube.Cube) -> None:
             measure_dims = set(cube.cell_measure_dims(measure))
             if vertical_dim.intersection(measure_dims):
                 logger.warning(
-                    "Discarding use of z-axis dependent cell measure %s "
-                    "in variable %s, as z-axis has been interpolated",
+                    "Discarding use of z-axis dependent cell measure {} "
+                    "in variable {}, as z-axis has been interpolated",
                     measure.var_name,
                     result.var_name,
                 )
@@ -1361,8 +1360,8 @@ def _preserve_fx_vars(cube: iris.cube.Cube, result: iris.cube.Cube) -> None:
             ancillary_dims = set(cube.ancillary_variable_dims(ancillary_var))
             if vertical_dim.intersection(ancillary_dims):
                 logger.warning(
-                    "Discarding use of z-axis dependent ancillary variable %s "
-                    "in variable %s, as z-axis has been interpolated",
+                    "Discarding use of z-axis dependent ancillary variable {} "
+                    "in variable {}, as z-axis has been interpolated",
                     ancillary_var.var_name,
                     result.var_name,
                 )

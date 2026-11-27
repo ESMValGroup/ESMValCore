@@ -7,7 +7,6 @@ variables to be sure that all known errors are fixed.
 
 from __future__ import annotations
 
-import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
@@ -20,8 +19,6 @@ from esmvalcore.io.local import LocalFile
 
 if TYPE_CHECKING:
     from esmvalcore.config import Session
-
-logger = logging.getLogger(__name__)
 
 
 def fix_file(  # noqa: PLR0913, PLR0917

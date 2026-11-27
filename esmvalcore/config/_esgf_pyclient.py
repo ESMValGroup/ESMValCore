@@ -3,15 +3,13 @@
 The configuration is read from the file ~/.esmvaltool/esgf-pyclient.yml.
 """
 
-import logging
 import os
 import stat
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 CONFIG_FILE = Path.home() / ".esmvaltool" / "esgf-pyclient.yml"
 
@@ -19,17 +17,17 @@ CONFIG_FILE = Path.home() / ".esmvaltool" / "esgf-pyclient.yml"
 def read_config_file():
     """Read the configuration from file."""
     if CONFIG_FILE.exists():
-        logger.info("Loading ESGF configuration from %s", CONFIG_FILE)
+        logger.info("Loading ESGF configuration from {}", CONFIG_FILE)
         mode = os.stat(CONFIG_FILE).st_mode
         if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
-            logger.warning("Correcting unsafe permissions on %s", CONFIG_FILE)
+            logger.warning("Correcting unsafe permissions on {}", CONFIG_FILE)
             os.chmod(CONFIG_FILE, stat.S_IRUSR | stat.S_IWUSR)
         with CONFIG_FILE.open(encoding="utf-8") as file:
             cfg = yaml.safe_load(file)
     else:
         logger.info(
             "Using default ESGF configuration, configuration "
-            "file %s not present.",
+            "file {} not present.",
             CONFIG_FILE,
         )
         cfg = {}

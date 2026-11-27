@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import os
 from datetime import datetime, timedelta
 from functools import cache
@@ -14,6 +13,7 @@ import numpy as np
 import pandas as pd
 from cf_units import Unit
 from iris import NameConstraint
+from loguru import logger
 from scipy.interpolate import interp1d
 
 from esmvalcore.iris_helpers import date2num
@@ -23,8 +23,6 @@ if TYPE_CHECKING:
 
     from iris.coords import Coord
     from numpy.typing import ArrayLike
-
-logger = logging.getLogger(__name__)
 
 
 def add_aux_coords_from_cubes(cube, cubes, coord_dict):
@@ -189,7 +187,7 @@ def add_altitude_from_plev(cube):
 
 def add_scalar_depth_coord(cube, depth=0.0):
     """Add scalar coordinate 'depth' with value of `depth`m."""
-    logger.debug("Adding depth coordinate (%sm)", depth)
+    logger.debug("Adding depth coordinate ({}m)", depth)
     depth_coord = iris.coords.AuxCoord(
         depth,
         var_name="depth",
@@ -207,7 +205,7 @@ def add_scalar_depth_coord(cube, depth=0.0):
 
 def add_scalar_height_coord(cube, height=2.0):
     """Add scalar coordinate 'height' with value of `height`m."""
-    logger.debug("Adding height coordinate (%sm)", height)
+    logger.debug("Adding height coordinate ({}m)", height)
     height_coord = iris.coords.AuxCoord(
         height,
         var_name="height",
@@ -250,7 +248,7 @@ def add_scalar_areatype_coord(
 
     Information given with var_name `var_name', long_name `long_name`, and value of `value`.
     """
-    logger.debug("Adding areatype coordinate (%s)", value)
+    logger.debug("Adding areatype coordinate ({})", value)
     areatype_coord = iris.coords.AuxCoord(
         value,
         var_name=var_name,
@@ -397,7 +395,7 @@ def fix_bounds(cube, cubes, coord_var_names):
             continue
         bounds_cube = get_bounds_cube(cubes, coord_var_name)
         cube.coord(var_name=coord_var_name).bounds = bounds_cube.core_data()
-        logger.debug("Fixed bounds of coordinate '%s'", coord_var_name)
+        logger.debug("Fixed bounds of coordinate '{}'", coord_var_name)
 
 
 def round_coordinates(cubes, decimals=5, coord_names=None):

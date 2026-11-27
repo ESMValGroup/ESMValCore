@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
+
+from loguru import logger
 
 import esmvalcore.cmor.table
 
@@ -15,7 +16,6 @@ if TYPE_CHECKING:
 
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
 
-logger = logging.getLogger(__name__)
 
 _ALTERNATIVE_GENERIC_LEV_COORDS = {
     "alevel": {
@@ -204,11 +204,11 @@ def _get_single_cube(
         )
         raise ValueError(msg)
     logger.warning(
-        "Found variable %s%s, but there were other present in the file. Those "
+        "Found variable {}{}, but there were other present in the file. Those "
         "extra variables are usually metadata (cell area, latitude "
         "descriptions) that was not saved according to CF-conventions. It is "
         "possible that errors appear further on because of this.\nFull list "
-        "of cubes encountered: %s",
+        "of cubes encountered: {}",
         short_name,
         dataset_str,
         cube_list,

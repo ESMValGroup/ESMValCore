@@ -1,7 +1,6 @@
 """Fixes for ERA5."""
 
 import datetime as dt
-import logging
 
 import numpy as np
 from cf_units import Unit
@@ -16,8 +15,6 @@ from esmvalcore.iris_helpers import (
     has_unstructured_grid,
     safe_convert_units,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def fix_hourly_time_coordinate(cube, frequency):

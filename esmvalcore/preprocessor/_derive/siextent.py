@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import dask.array as da
@@ -13,8 +12,6 @@ from ._baseclass import DerivedVariableBase
 
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets
-
-logger = logging.getLogger(__name__)
 
 
 class DerivedVariable(DerivedVariableBase):

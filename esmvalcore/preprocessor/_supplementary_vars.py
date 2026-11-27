@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Literal, TypedDict
 
 import iris.coords
+from loguru import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 class RequiredSupplementaries(TypedDict):
@@ -106,7 +104,7 @@ def add_cell_measure(
     )
     cube.add_cell_measure(cell_measure, coord_dims)
     logger.debug(
-        "Added %s as cell measure in cube of %s.",
+        "Added {} as cell measure in cube of {}.",
         cell_measure_cube.var_name,
         cube.var_name,
     )
@@ -258,7 +256,7 @@ def add_ancillary_variable(
         ancillary_var.data = ancillary_cube.lazy_data().rechunk(cube_chunks)
     cube.add_ancillary_variable(ancillary_var, data_dims)
     logger.debug(
-        "Added %s as ancillary variable in cube of %s.",
+        "Added {} as ancillary variable in cube of {}.",
         ancillary_cube.var_name,
         cube.var_name,
     )

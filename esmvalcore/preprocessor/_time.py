@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
-import logging
 import warnings
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal
@@ -29,6 +28,7 @@ from iris.cube import CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
 from iris.util import broadcast_to_shape
+from loguru import logger
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import (
@@ -50,7 +50,6 @@ if TYPE_CHECKING:
     from iris.cube import Cube
     from numpy.typing import DTypeLike
 
-logger = logging.getLogger(__name__)
 
 # Ignore warnings about missing bounds where those are not required
 for _coord in (
@@ -451,7 +450,7 @@ def _aggregate_time_fx(result_cube, source_cube):
             measure_dims = set(source_cube.cell_measure_dims(measure))
             if time_dim.intersection(measure_dims):
                 logger.debug(
-                    "Averaging time dimension in measure %s.",
+                    "Averaging time dimension in measure {}.",
                     measure.var_name,
                 )
                 result_measure = da.mean(
@@ -471,7 +470,7 @@ def _aggregate_time_fx(result_cube, source_cube):
             )
             if time_dim.intersection(ancillary_dims):
                 logger.debug(
-                    "Averaging time dimension in ancillary variable %s.",
+                    "Averaging time dimension in ancillary variable {}.",
                     ancillary_var.var_name,
                 )
                 result_ancillary_var = da.mean(
@@ -1414,7 +1413,7 @@ def timeseries_filter(
     try:
         cube.coord("time")
     except CoordinateNotFoundError:
-        logger.error("Cube %s does not have time coordinate", cube)
+        logger.error("Cube {} does not have time coordinate", cube)
         raise
 
     # Construct weights depending on frequency

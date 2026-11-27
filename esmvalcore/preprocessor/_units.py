@@ -5,7 +5,6 @@ Allows for unit conversions.
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import dask.array as da
@@ -19,8 +18,6 @@ if TYPE_CHECKING:
     from cf_units import Unit
     from iris.coords import DimCoord
     from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
 
 
 def convert_units(cube: Cube, units: str | float | Unit) -> Cube:

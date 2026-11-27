@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import string
 from typing import TYPE_CHECKING, Literal
 
@@ -13,6 +12,7 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
+from loguru import logger
 
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import (
@@ -34,8 +34,6 @@ if TYPE_CHECKING:
     from iris.coords import Coord
 
     from esmvalcore.cmor.table import VariableInfo
-
-logger = logging.getLogger(__name__)
 
 
 def align_metadata(

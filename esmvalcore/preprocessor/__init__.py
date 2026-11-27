@@ -5,7 +5,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import inspect
-import logging
 import re
 import string
 from collections.abc import Sequence
@@ -15,6 +14,7 @@ from pprint import pformat
 from typing import TYPE_CHECKING, Any
 
 from iris.cube import Cube
+from loguru import logger
 
 from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
@@ -125,7 +125,6 @@ if TYPE_CHECKING:
     from esmvalcore.dataset import Dataset
     from esmvalcore.typing import FacetValue
 
-logger = logging.getLogger(__name__)
 
 __all__ = [  # noqa: RUF022
     # File reformatting/CMORization
@@ -446,7 +445,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
             signature.bind(None, **kwargs)
         except TypeError:
             logger.error(
-                "Wrong preprocessor function arguments in function '%s'",
+                "Wrong preprocessor function arguments in function '{}'",
                 step,
             )
             raise
@@ -509,8 +508,8 @@ def _run_preproc_function(
             f"\nloaded from original input file(s)\n{pformat(input_files)}"
         )
     logger.debug(
-        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
-        "argument(s)\n%s",
+        "Running preprocessor function '{}' on the data\n{}{}\nwith function "
+        "argument(s)\n{}",
         function.__name__,
         pformat(items),
         file_msg,
@@ -547,8 +546,8 @@ def _run_preproc_function(
                 f"here; refer to the debug log for a full list)"
             )
         logger.error(
-            "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
-            "function argument(s)\n%s",
+            "Failed to run preprocessor function '{}' on the data\n{}{}\nwith "
+            "function argument(s)\n{}",
             function.__name__,
             data_msg,
             file_msg,
@@ -566,7 +565,7 @@ def preprocess(
     **settings: Any,
 ) -> list[PreprocessorItem]:
     """Run preprocessor."""
-    logger.debug("Running preprocessor step %s", step)
+    logger.debug("Running preprocessor step {}", step)
     function = globals()[step]
     itype = _get_itype(step)
 
@@ -606,7 +605,7 @@ def preprocess(
             items.extend(item)
 
     if debug:
-        logger.debug("Result %s", items)
+        logger.debug("Result {}", items)
         if all(isinstance(elem, Cube) for elem in items):
             filename = _get_debug_filename(output_file, step)
             save(items, filename)
@@ -820,7 +819,7 @@ def _apply_multimodel(
     settings, exclude = _get_multi_model_settings(products, step)
 
     logger.debug(
-        "Applying %s to\n%s",
+        "Applying {} to\n{}",
         step,
         "\n".join(str(p) for p in products - exclude),
     )
@@ -837,10 +836,10 @@ def _apply_multimodel(
 
     if debug:
         for product in products:
-            logger.debug("Result %s", product.filename)
+            logger.debug("Result {}", product.filename)
             if not product.is_closed:
                 for cube in product.cubes:
-                    logger.debug("with cube %s", cube)
+                    logger.debug("with cube {}", cube)
 
     return products
 
@@ -880,7 +879,7 @@ class PreprocessingTask(BaseTask):
         saved = set()
         delayeds = []
         for block in blocks:
-            logger.debug("Running block %s", block)
+            logger.debug("Running block {}", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
                 for step in block:
                     self.products = _apply_multimodel(
@@ -891,7 +890,7 @@ class PreprocessingTask(BaseTask):
                     )
             else:
                 for product in _sort_products(self.products):
-                    logger.debug("Applying single-model steps to %s", product)
+                    logger.debug("Applying single-model steps to {}", product)
                     for step in block:
                         if step in product.settings:
                             product.apply(step, self.debug)
@@ -910,23 +909,22 @@ class PreprocessingTask(BaseTask):
         delayeds = [d for d in delayeds if d is not None]
 
         if self.scheduler_lock is not None:
-            logger.debug("Acquiring save lock for task %s", self.name)
+            logger.debug("Acquiring save lock for task {}", self.name)
             self.scheduler_lock.acquire()
-            logger.debug("Acquired save lock for task %s", self.name)
+            logger.debug("Acquired save lock for task {}", self.name)
         try:
             logger.info(
-                "Computing and saving data for preprocessing task %s",
+                "Computing and saving data for preprocessing task {}",
                 self.name,
             )
             _compute_with_progress(
                 delayeds,
                 session=session,
-                description=self.name,
             )
         finally:
             if self.scheduler_lock is not None:
                 self.scheduler_lock.release()
-                logger.debug("Released save lock for task %s", self.name)
+                logger.debug("Released save lock for task {}", self.name)
 
         return write_metadata(
             self.products,

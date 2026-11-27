@@ -1,13 +1,11 @@
 """Diagnostics and tags management."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Self
 
 import yaml
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 class Diagnostics:
@@ -69,7 +67,7 @@ class Diagnostics:
                 path = Path.cwd()
             else:
                 path = Path(esmvaltool.__file__).absolute().parent
-        logger.debug("Using diagnostics from %s", path)
+        logger.debug("Using diagnostics from {}", path)
         return cls(path)
 
 
@@ -84,14 +82,14 @@ class TagsManager(dict):
     def from_file(cls, filename: str) -> Self:
         """Load the reference tags used for provenance recording."""
         if os.path.exists(filename):
-            logger.debug("Loading tags from %s", filename)
+            logger.debug("Loading tags from {}", filename)
             with open(filename, encoding="utf-8") as file:
                 tags = cls(yaml.safe_load(file))
                 tags.source_file = filename
                 return tags
         else:
             # This happens if no diagnostics are installed
-            logger.debug("No tags loaded, file %s not present", filename)
+            logger.debug("No tags loaded, file {} not present", filename)
             return cls()
 
     def set_tag_value(self, section: str, tag: str, value: str) -> None:

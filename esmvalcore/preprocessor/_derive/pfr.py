@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import cftime
@@ -11,6 +10,7 @@ import iris
 import numpy as np
 from iris import NameConstraint
 from iris.time import PartialDateTime
+from loguru import logger
 
 from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
 
@@ -19,7 +19,6 @@ from ._baseclass import DerivedVariableBase
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets
 
-logger = logging.getLogger(__name__)
 
 # Constants
 THRESH_TEMPERATURE = 273.15

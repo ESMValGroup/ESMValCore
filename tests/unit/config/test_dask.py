@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import dask.config
 import pytest
 import xarray as xr
+from loguru import logger
 
 from esmvalcore.config import _dask
 from esmvalcore.exceptions import (
@@ -140,9 +141,13 @@ def test_get_distributed_client_external(
         assert client is mock_client
     _dask.Client.assert_called_once_with()
     mock_client.close.assert_called_once_with()  # type: ignore[union-attr]
-    mock_register_plugin.assert_called_once()
-    (plugin,) = mock_register_plugin.call_args.args
-    assert isinstance(plugin, _dask._XarrayOptionsPlugin)
+    xarray_plugins = [
+        c.args[0]
+        for c in mock_register_plugin.call_args_list
+        if isinstance(c.args[0], _dask._XarrayOptionsPlugin)
+    ]
+    assert len(xarray_plugins) == 1
+    (plugin,) = xarray_plugins
     assert plugin.options == {"file_cache_maxsize": 2}
     assert (
         mocker.call({"scheduler_address": "tcp://127.0.0.1:42021"})
@@ -175,7 +180,10 @@ def test_get_distributed_client_no_xarray_options(
 
     with _dask.get_distributed_client(session) as client:
         assert client is mock_client
-    mock_register_plugin.assert_not_called()
+    assert not any(
+        isinstance(c.args[0], _dask._XarrayOptionsPlugin)
+        for c in mock_register_plugin.call_args_list
+    )
 
 
 @pytest.mark.usefixtures("mock_dask_config_set")
@@ -419,3 +427,39 @@ def test_invalid_dask_config_worker_xarray_options(
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client(session):
             pass
+
+
+def test_forward_logs_plugin_setup_teardown(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    """Test that the plugin stops sending messages after teardown."""
+    # Keep the default handler of the test process.
+    remove = logger.remove
+    mocker.patch.object(
+        logger,
+        "remove",
+        side_effect=lambda handler_id: (
+            None if handler_id == 0 else remove(handler_id)
+        ),
+    )
+    worker = mocker.Mock()
+    plugin = _dask._ForwardLogsPlugin()
+    # Pretend that the worker runs in a different process than the client.
+    plugin._client_pid = -1
+    test_logger = logger.patch(lambda r: r.update(name="esmvalcore.test"))
+
+    plugin.setup(worker)
+    test_logger.debug("before teardown")
+    plugin.teardown(worker)
+    test_logger.debug("after teardown")
+
+    worker.log_event.assert_called_once()
+    topic, msg = worker.log_event.call_args.args
+    assert topic == _dask._WORKER_LOG_TOPIC
+    assert msg["name"] == "esmvalcore.test"
+    assert msg["level"] == "DEBUG"
+    assert msg["message"] == "before teardown"
+    assert plugin._handler_id is None
+
+    # A second teardown does nothing.
+    plugin.teardown(worker)

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -18,6 +17,7 @@ import pyproj
 from cf_units import Unit
 from iris.coord_systems import GeogCS, LambertConformal, RotatedGeogCS
 from iris.fileformats.pp import EARTH_RADIUS
+from loguru import logger
 
 from esmvalcore.cmor.fix import Fix
 
@@ -25,9 +25,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     import xarray as xr
-
-
-logger = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -183,9 +180,9 @@ class AllVars(Fix):
             diff = np.max(np.abs(old_coord.points - new_coord.points))
             log = logger.warning if diff > max_diff else logger.debug
             log(
-                "Maximum difference between original %s "
-                "points and standard %s domain points "
-                "for variable %s from dataset %s is %s %s. "
+                "Maximum difference between original {} "
+                "points and standard {} domain points "
+                "for variable {} from dataset {} is {} {}. "
                 "Consider visualizing the data on a map and comparing with "
                 "recognizable features such as coastlines to check that the "
                 "grid is correct.",
@@ -265,8 +262,8 @@ class AllVars(Fix):
         step = _get_projection_step(self.extra_facets["domain"])
         if step is None:
             logger.warning(
-                "Unable to use standard Lambert Conformal grid for domain %s, "
-                "choose a domain ending with %s.",
+                "Unable to use standard Lambert Conformal grid for domain {}, "
+                "choose a domain ending with {}.",
                 self.extra_facets["domain"],
                 ", ".join(_PROJECTION_STEP_IN_METERS.keys()),
             )

@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import importlib
 import inspect
-import logging
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -17,6 +16,7 @@ from iris.coords import CoordExtent
 from iris.cube import CubeList
 from iris.exceptions import UnitConversionError
 from iris.util import reverse
+from loguru import logger
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -41,8 +41,11 @@ if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session
 
-logger = logging.getLogger(__name__)
-generic_fix_logger = logging.getLogger(f"{__name__}.genericfix")
+# Messages from the generic fixes go to the CMOR log, see
+# esmvalcore/config/_logging.py.
+generic_fix_logger = logger.patch(
+    lambda r: r.update(name=f"{__name__}.genericfix"),
+)
 
 
 class Fix:
@@ -429,13 +432,15 @@ class GenericFix(Fix):
 
     def _debug_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
-        msg += self._msg_suffix(cube)
-        generic_fix_logger.debug(msg, *args)
+        text = msg.format(*args) if args else msg
+        text += self._msg_suffix(cube)
+        generic_fix_logger.debug(text)
 
     def _warning_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
-        msg += self._msg_suffix(cube)
-        generic_fix_logger.warning(msg, *args)
+        text = msg.format(*args) if args else msg
+        text += self._msg_suffix(cube)
+        generic_fix_logger.warning(text)
 
     @staticmethod
     def _set_range_in_0_360(array: np.ndarray) -> np.ndarray:
@@ -455,7 +460,7 @@ class GenericFix(Fix):
                     coord.bounds = np.fliplr(bounds)
             self._debug_msg(
                 cube,
-                "Coordinate %s values have been reversed",
+                "Coordinate {} values have been reversed",
                 coord.var_name,
             )
         return (cube, coord)
@@ -480,14 +485,14 @@ class GenericFix(Fix):
                 except (ValueError, UnitConversionError):
                     self._warning_msg(
                         cube,
-                        "Failed to convert cube units from '%s' to '%s'",
+                        "Failed to convert cube units from '{}' to '{}'",
                         old_units,
                         units,
                     )
                 else:
                     self._warning_msg(
                         cube,
-                        "Converted cube units from '%s' to '%s'",
+                        "Converted cube units from '{}' to '{}'",
                         old_units,
                         units,
                     )
@@ -502,7 +507,7 @@ class GenericFix(Fix):
         if cube.standard_name != self.vardef.standard_name:
             self._warning_msg(
                 cube,
-                "Standard name changed from '%s' to '%s'",
+                "Standard name changed from '{}' to '{}'",
                 cube.standard_name,
                 self.vardef.standard_name,
             )
@@ -519,7 +524,7 @@ class GenericFix(Fix):
         if cube.long_name != self.vardef.long_name:
             self._warning_msg(
                 cube,
-                "Long name changed from '%s' to '%s'",
+                "Long name changed from '{}' to '{}'",
                 cube.long_name,
                 self.vardef.long_name,
             )
@@ -581,7 +586,7 @@ class GenericFix(Fix):
                 self.vardef.coordinates[coord_name] = new_generic_level_coord
                 self._debug_msg(
                     cube,
-                    "Generic level coordinate %s will be checked against %s "
+                    "Generic level coordinate {} will be checked against {} "
                     "coordinate information",
                     coord_name,
                     name,
@@ -631,8 +636,8 @@ class GenericFix(Fix):
         if is_cmip6_multidim_lat_lon:
             self._debug_msg(
                 cube,
-                "Multidimensional %s coordinate is not set in CMOR standard, "
-                "ESMValTool will change the original value of '%s' to '%s' to "
+                "Multidimensional {} coordinate is not set in CMOR standard, "
+                "ESMValTool will change the original value of '{}' to '{}' to "
                 "match the one-dimensional case",
                 cube_coord.standard_name,
                 cube_coord.var_name,
@@ -659,8 +664,8 @@ class GenericFix(Fix):
             except (ValueError, UnitConversionError):
                 self._warning_msg(
                     cube,
-                    "Failed to convert units of coordinate %s from '%s' to "
-                    "'%s'",
+                    "Failed to convert units of coordinate {} from '{}' to "
+                    "'{}'",
                     cmor_coord.out_name,
                     old_units,
                     cmor_coord.units,
@@ -668,7 +673,7 @@ class GenericFix(Fix):
             else:
                 self._warning_msg(
                     cube,
-                    "Coordinate %s units '%s' converted to '%s'",
+                    "Coordinate {} units '{}' converted to '{}'",
                     cmor_coord.out_name,
                     old_units,
                     cmor_coord.units,
@@ -708,7 +713,7 @@ class GenericFix(Fix):
             cube_coord.points = cmor_points
             self._debug_msg(
                 cube,
-                "Aligned %s points with CMOR points",
+                "Aligned {} points with CMOR points",
                 cmor_coord.out_name,
             )
 
@@ -779,7 +784,7 @@ class GenericFix(Fix):
         ):
             self._debug_msg(
                 cube,
-                "Will not guess bounds for coordinate %s of unstructured grid",
+                "Will not guess bounds for coordinate {} of unstructured grid",
                 cube_coord.var_name,
             )
             return
@@ -788,13 +793,13 @@ class GenericFix(Fix):
             cube_coord.guess_bounds()
             self._warning_msg(
                 cube,
-                "Added guessed bounds to coordinate %s",
+                "Added guessed bounds to coordinate {}",
                 cube_coord.var_name,
             )
         except ValueError as exc:
             self._warning_msg(
                 cube,
-                "Cannot guess bounds for coordinate %s: %s",
+                "Cannot guess bounds for coordinate {}: {}",
                 cube.var_name,
                 str(exc),
             )
@@ -890,7 +895,7 @@ class GenericFix(Fix):
                 cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
                 self._warning_msg(
                     cube,
-                    "Added guessed bounds to coordinate %s",
+                    "Added guessed bounds to coordinate {}",
                     cube_coord.var_name,
                 )
 

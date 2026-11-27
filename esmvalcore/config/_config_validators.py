@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import os.path
 import warnings
 from collections.abc import Iterable
@@ -23,9 +22,6 @@ from esmvalcore.exceptions import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-
-logger = logging.getLogger(__name__)
 
 
 SEARCH_DATA_OPTIONS = (

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import dask
@@ -23,8 +22,6 @@ if TYPE_CHECKING:
     from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
     from iris.coords import Coord
     from numpy.typing import DTypeLike
-
-logger = logging.getLogger(__name__)
 
 
 class UnstructuredNearest(IrisUnstructuredNearest):

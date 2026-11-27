@@ -15,14 +15,11 @@ esmvalcore/cmor/_fixes/emac/emac.py for examples).
 
 """
 
-import logging
 from typing import ClassVar
 
 from iris.cube import CubeList
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-
-logger = logging.getLogger(__name__)
 
 
 class AllVars(NativeDatasetFix):

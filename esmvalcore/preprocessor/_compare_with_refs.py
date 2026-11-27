@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import string
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal
@@ -38,8 +37,6 @@ if TYPE_CHECKING:
     from iris.coords import Coord
 
     from esmvalcore.preprocessor import PreprocessorFile
-
-logger = logging.getLogger(__name__)
 
 
 BiasType = Literal["absolute", "relative"]

@@ -47,7 +47,6 @@ provided by the data source with the lowest value of
 from __future__ import annotations
 
 import importlib
-import logging
 import warnings
 from typing import TYPE_CHECKING
 
@@ -57,8 +56,6 @@ from esmvalcore.io.protocol import _DataSourceWithoutSearchableFacets
 
 if TYPE_CHECKING:
     from esmvalcore.config import Session
-
-logger = logging.getLogger(__name__)
 
 
 def load_data_sources(

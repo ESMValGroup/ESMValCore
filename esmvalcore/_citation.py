@@ -1,16 +1,14 @@
 """Citation module."""
 
-import logging
 import os
 import re
 import textwrap
 from functools import lru_cache
 
 import requests
+from loguru import logger
 
 from .config._diagnostics import DIAGNOSTICS
-
-logger = logging.getLogger(__name__)
 
 CMIP6_URL_STEM = "https://cera-www.dkrz.de/WDCC/ui/cerasearch"
 
@@ -163,7 +161,7 @@ def _get_response(url):
             if response.status_code == 200:
                 json_data = response.json()
             else:
-                logger.warning("Error in the CMIP6 citation link: %s", url)
+                logger.warning("Error in the CMIP6 citation link: {}", url)
         except OSError:
             logger.info(
                 "No network connection, "
@@ -214,7 +212,7 @@ def _collect_bibtex_citation(tag):
     else:
         entry = ""
         logger.warning(
-            "The reference file %s does not exist, citation information "
+            "The reference file {} does not exist, citation information "
             "incomplete.",
             bibtex_file,
         )

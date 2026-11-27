@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from iris import NameConstraint
+from loguru import logger
 
 from ._baseclass import DerivedVariableBase
 
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets
-
-logger = logging.getLogger(__name__)
 
 
 LWP_ONLY_DATASETS = [
@@ -89,7 +87,7 @@ class DerivedVariable(DerivedVariableBase):
                 clwvi_cube.attributes.get(k) == v for k, v in dataset.items()
             ):
                 logger.info(
-                    "Assuming that variable clwvi from %s contains only liquid water",
+                    "Assuming that variable clwvi from {} contains only liquid water",
                     ", ".join(f"{k}={v}" for k, v in dataset.items()),
                 )
                 lwp_cube = clwvi_cube

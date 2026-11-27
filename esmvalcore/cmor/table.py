@@ -11,7 +11,6 @@ import difflib
 import glob
 import importlib
 import json
-import logging
 import os
 from collections import Counter
 from functools import total_ordering
@@ -19,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
 import yaml
+from loguru import logger
 
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from esmvalcore.config import Config, Session
     from esmvalcore.typing import Facets
 
-logger = logging.getLogger(__name__)
 
 CMOR_TABLES: dict[str, InfoBase] = {}
 """dict of str, obj: CMOR info objects.
@@ -107,7 +106,7 @@ def _update_cmor_facets(facets: Facets) -> None:
                 facets[key] = value
             else:
                 logger.debug(
-                    "Failed to add key %s to variable %s from CMOR table",
+                    "Failed to add key {} to variable {} from CMOR table",
                     key,
                     facets,
                 )
@@ -573,11 +572,7 @@ class CMIP6Info(InfoBase):
                     self._load_table(json_file)
                 except Exception:
                     msg = f"Exception raised when loading {json_file}"
-                    # Logger may not be ready at this stage
-                    if logger.handlers:
-                        logger.error(msg)
-                    else:
-                        print(msg)  # noqa: T201
+                    logger.error(msg)
                     raise
 
     def _load_table(self, json_file):
@@ -629,7 +624,7 @@ class CMIP6Info(InfoBase):
                     coord = self.coords[dimension]
                 except KeyError:
                     logger.exception(
-                        "Can not find dimension %s for variable %s",
+                        "Can not find dimension {} for variable {}",
                         dimension,
                         var,
                     )
@@ -1088,11 +1083,7 @@ class CMIP5Info(InfoBase):
                     self._load_table(table_file)
                 except Exception:
                     msg = f"Exception raised when loading {table_file}"
-                    # Logger may not be ready at this stage
-                    if logger.handlers:
-                        logger.error(msg)
-                    else:
-                        print(msg)  # noqa: T201
+                    logger.error(msg)
                     raise
 
     def _load_table(self, table_file: str) -> None:
