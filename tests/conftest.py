@@ -16,6 +16,7 @@ from iris.coords import (
     DimCoord,
 )
 from iris.cube import Cube
+from loguru import logger
 
 import esmvalcore.cmor.table
 from esmvalcore.config import CFG, Config
@@ -38,6 +39,12 @@ def _load_default_config() -> bytes:
         cfg = Config()
     cfg.load_from_dirs([])
     return pickle.dumps(cfg)
+
+
+@pytest.fixture(autouse=True)
+def enable_logging() -> None:
+    """Enable log messages from ESMValCore, so tests can check them."""
+    logger.enable("esmvalcore")
 
 
 @pytest.fixture

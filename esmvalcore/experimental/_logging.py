@@ -2,23 +2,50 @@
 
 from __future__ import annotations
 
-import logging
+import contextlib
+import sys
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
+from esmvalcore.config._logging import (
+    _add_log_files,
+    _capture_external_messages,
+    _main_log_filter,
+)
+
 if TYPE_CHECKING:
-    from contextlib.abc import ContextManager
+    from collections.abc import Generator
     from pathlib import Path
 
 
+def _log_to_stdout() -> None:
+    """Print informative log messages to stdout.
+
+    This replaces the default loguru handler, which prints messages of all
+    levels to stderr.
+    """
+    with contextlib.suppress(ValueError):
+        logger.remove(0)
+    logger.add(
+        sys.stdout,
+        level="INFO",
+        format="{message}",
+        filter=_main_log_filter,
+        backtrace=False,
+        diagnose=False,
+    )
+    _capture_external_messages()
+
+
 @contextmanager
-def log_to_dir(drc: Path) -> ContextManager[None]:
+def log_to_dir(drc: Path) -> Generator[None]:
     """Log messages to the specified directory.
 
     This is a context manager to temporarily redirect the logging when
     running a recipe. Messages will be printed to the console, as well as
-    the specified directory. Handlers are attached to the root logger, and
-    removed at the end of the block.
+    the specified directory. The log files are closed at the end of the block.
 
     Messages will be logged to `<drc>/main_log.txt` and
     `<drc>/main_log_debug.txt`.
@@ -34,27 +61,9 @@ def log_to_dir(drc: Path) -> ContextManager[None]:
         Location where the logs should be stored.
     """
     drc.mkdir(parents=True, exist_ok=True)
-
-    # create file handler which logs even debug messages
-    debug_log_file = logging.FileHandler(drc / "main_log_debug.txt")
-    debug_log_file.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        "%(asctime)s UTC [%(process)d] %(levelname)-7s"
-        " %(name)s:%(lineno)s %(message)s",
-    )
-    debug_log_file.setFormatter(formatter)
-
-    # create file handler which logs simple info messages
-    simple_log_file = logging.FileHandler(drc / "main_log.txt")
-    simple_log_file.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(levelname)-7s [%(process)d] %(message)s")
-    simple_log_file.setFormatter(formatter)
-
-    # add the handlers to root logger
-    logging.root.addHandler(debug_log_file)
-    logging.root.addHandler(simple_log_file)
-
-    yield
-
-    logging.root.removeHandler(debug_log_file)
-    logging.root.removeHandler(simple_log_file)
+    handlers = _add_log_files(drc, ["main_log.txt", "main_log_debug.txt"])
+    try:
+        yield
+    finally:
+        for handler_id in handlers.values():
+            logger.remove(handler_id)

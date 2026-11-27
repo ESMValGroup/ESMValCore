@@ -15,8 +15,6 @@ import distributed.diagnostics.progressbar
 import rich.progress
 from loguru import logger
 
-from esmvalcore.config._logging import configure_logging
-
 if TYPE_CHECKING:
     import contextlib
     from collections.abc import Iterable
@@ -120,14 +118,8 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
     def __init__(
         self,
         log_interval: str | float = "1s",
-        log_level: str = "INFO",
-        log_dir: str | None = None,
         description: str = "",
     ) -> None:
-        configure_logging(
-            output_dir=log_dir,
-            console_log_level=log_level,
-        )
         self._desc = f"{description} " if description else description
         self._log_interval = dask.utils.parse_timedelta(
             log_interval,
@@ -162,14 +154,8 @@ class DistributedProgressLogger(
         self,
         keys,  # noqa: ANN001
         log_interval: str | float = "1s",
-        log_level: str = "INFO",
-        log_dir: str | None = None,
         description: str = "",
     ) -> None:
-        configure_logging(
-            output_dir=log_dir,
-            console_log_level=log_level,
-        )
         self._desc = f"{description} " if description else description
         self._log_interval = dask.utils.parse_timedelta(
             log_interval,
@@ -242,8 +228,6 @@ def _compute_with_progress(
                 futures,
                 description=description,
                 log_interval=log_progress_interval,
-                log_level=session["log_level"],
-                log_dir=session.run_dir,
             )
         dask.compute(futures)
     else:
@@ -253,8 +237,6 @@ def _compute_with_progress(
             ctx = ProgressLogger(
                 description=description,
                 log_interval=log_progress_interval,
-                log_level=session["log_level"],
-                log_dir=session.run_dir,
             )
         with ctx:
             dask.compute(delayeds)

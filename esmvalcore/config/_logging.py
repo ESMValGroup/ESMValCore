@@ -8,7 +8,7 @@ import logging
 import sys
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
@@ -17,6 +17,8 @@ import esmvalcore.exceptions
 if TYPE_CHECKING:
     import os
     from collections.abc import Iterable
+
+    from loguru import Record
 
 _WARNINGS_SHOWN_IN_MAIN_LOG = [
     cls.__name__
@@ -45,7 +47,7 @@ _DEBUG_FORMAT = (
 )
 
 
-def _has_name(record: dict[str, Any], names: Iterable[str]) -> bool:
+def _has_name(record: Record, names: Iterable[str]) -> bool:
     """Check if the record comes from (a child of) one of the loggers."""
     return any(
         record["name"] == name or record["name"].startswith(f"{name}.")
@@ -53,7 +55,7 @@ def _has_name(record: dict[str, Any], names: Iterable[str]) -> bool:
     )
 
 
-def _is_external_warning(record: dict[str, Any]) -> bool:
+def _is_external_warning(record: Record) -> bool:
     """Check if the record is a warning issued by an external package."""
     if record["name"] != "py.warnings":
         return False
@@ -63,7 +65,7 @@ def _is_external_warning(record: dict[str, Any]) -> bool:
     )
 
 
-def _main_log_filter(record: dict[str, Any]) -> bool:
+def _main_log_filter(record: Record) -> bool:
     """Filter for the console and the main log file."""
     return (
         _has_name(record, _OUR_NAMES)
@@ -73,14 +75,22 @@ def _main_log_filter(record: dict[str, Any]) -> bool:
     )
 
 
-def _debug_log_filter(record: dict[str, Any]) -> bool:
+def _debug_log_filter(record: Record) -> bool:
     """Filter for the debug log file."""
     return _has_name(record, _OUR_NAMES)
 
 
-def _cmor_log_filter(record: dict[str, Any]) -> bool:
+def _cmor_log_filter(record: Record) -> bool:
     """Filter for the CMOR log file."""
     return _has_name(record, _CMOR_NAMES)
+
+
+_LOG_FILES = {
+    "main_log.txt": ("INFO", _BRIEF_FORMAT, _main_log_filter),
+    "main_log_debug.txt": ("DEBUG", _DEBUG_FORMAT, _debug_log_filter),
+    "cmor_log.txt": ("INFO", _BRIEF_FORMAT, _cmor_log_filter),
+}
+"""Log files: their level, format, and filter."""
 
 
 class _InterceptHandler(logging.Handler):
@@ -112,6 +122,43 @@ def _log_warning(
     logger.patch(
         lambda r: r.update(name="py.warnings", line=lineno),
     ).warning(text.rstrip())
+
+
+def _add_log_files(
+    output_dir: os.PathLike | str,
+    filenames: Iterable[str] = _LOG_FILES,
+) -> dict[str, int]:
+    """Add handlers that write to log files in `output_dir`.
+
+    Returns
+    -------
+    :
+        A mapping from the path of each log file to its handler id.
+    """
+    handlers = {}
+    for filename in filenames:
+        level, fmt, filter_ = _LOG_FILES[filename]
+        # Only show variable values in tracebacks in the debug log.
+        diagnose = level == "DEBUG"
+        path = str(Path(output_dir) / filename)
+        handlers[path] = logger.add(
+            path,
+            level=level,
+            format=fmt,
+            filter=filter_,
+            encoding="utf-8",
+            mode="a",
+            backtrace=diagnose,
+            diagnose=diagnose,
+        )
+    return handlers
+
+
+def _capture_external_messages() -> None:
+    """Send messages from the standard library and warnings to loguru."""
+    logger.enable("esmvalcore")
+    logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
+    warnings.showwarning = _log_warning
 
 
 def configure_logging(
@@ -152,38 +199,11 @@ def configure_logging(
         diagnose=False,
     )
     _HANDLER_IDS.append(handler_id)
-    log_files = []
+    log_files = {}
     if output_dir is not None:
-        output_dir = Path(output_dir)
-        files = [
-            ("main_log.txt", "INFO", _BRIEF_FORMAT, _main_log_filter, False),
-            (
-                "main_log_debug.txt",
-                "DEBUG",
-                _DEBUG_FORMAT,
-                _debug_log_filter,
-                True,
-            ),
-            ("cmor_log.txt", "INFO", _BRIEF_FORMAT, _cmor_log_filter, False),
-        ]
-        # Only show variable values in tracebacks in the debug log.
-        for filename, file_level, fmt, filter_, diagnose in files:
-            path = str(output_dir / filename)
-            handler_id = logger.add(
-                path,
-                level=file_level,
-                format=fmt,
-                filter=filter_,
-                encoding="utf-8",
-                mode="a",
-                backtrace=diagnose,
-                diagnose=diagnose,
-            )
-            _HANDLER_IDS.append(handler_id)
-            log_files.append(path)
+        log_files = _add_log_files(output_dir)
+        _HANDLER_IDS.extend(log_files.values())
 
-    # Send messages logged with the standard library and warnings to loguru.
-    logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
-    warnings.showwarning = _log_warning
+    _capture_external_messages()
 
-    return log_files
+    return list(log_files)

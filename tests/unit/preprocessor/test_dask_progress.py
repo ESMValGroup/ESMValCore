@@ -9,6 +9,7 @@ import dask
 import distributed
 import pytest
 
+from esmvalcore.config._logging import configure_logging
 from esmvalcore.preprocessor import _dask_progress
 
 if TYPE_CHECKING:
@@ -34,6 +35,7 @@ def test_compute_with_progress(
         f"{interval}s" if interval > 0 else interval
     )
     session.run_dir.mkdir(parents=True)
+    configure_logging(console_log_level=session["log_level"])
 
     def func(delay: float) -> None:
         time.sleep(delay)

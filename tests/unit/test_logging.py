@@ -1,6 +1,9 @@
 """Tests for logging config submodule."""
 
 import logging
+import subprocess
+import sys
+import textwrap
 import warnings
 from pathlib import Path
 
@@ -118,3 +121,25 @@ def test_warnings_shown_in_main_log():
     }
     assert len(_WARNINGS_SHOWN_IN_MAIN_LOG) == 5
     assert set(_WARNINGS_SHOWN_IN_MAIN_LOG) == expected_warnings
+
+
+def test_no_messages_until_configured(tmp_path):
+    """Test that the package does not log anything until configured."""
+    code = textwrap.dedent(
+        f"""
+        from esmvalcore._task import write_ncl_settings
+        from esmvalcore.config._logging import configure_logging
+
+        write_ncl_settings({{}}, "{tmp_path / "before.ncl"}")
+        configure_logging(console_log_level="debug")
+        write_ncl_settings({{}}, "{tmp_path / "after.ncl"}")
+        """,
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    assert "before.ncl" not in result.stdout + result.stderr
+    assert "after.ncl" in result.stdout
