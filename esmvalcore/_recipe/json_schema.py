@@ -82,6 +82,7 @@ INTERNAL_ARGUMENTS["distance_metric"] = {"reference"}
 INTERNAL_ARGUMENTS["ensemble_statistics"] = {"output_products"}
 INTERNAL_ARGUMENTS["multi_model_statistics"] = {"output_products"}
 INTERNAL_ARGUMENTS["save"].add("compute")
+INTERNAL_ARGUMENTS["t_test"] = {"reference"}
 
 _DATASET_NAME = (
     "the name of a dataset in the diagnostic, or `reference_dataset` or "

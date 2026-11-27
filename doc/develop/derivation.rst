@@ -26,10 +26,10 @@ A typical example looks like this:
        """Derivation of variable `dummy`."""
 
        @staticmethod
-       def required(project: str) -> list[Facets]:
+       def required(facets: Facets) -> list[Facets]:
            """Declare the variables needed for derivation."""
            mip = "fx"
-           if project == "CMIP6":
+           if facets["project"] == "CMIP6":
                mip = "Ofx"
            required = [
                {"short_name": "var_a"},
@@ -47,9 +47,10 @@ A typical example looks like this:
            # Return single cube at the end
            return cube
 
-The static function ``required(project)`` returns a :obj:`list` of :obj:`~esmvalcore.typing.Facets`
+The static function ``required(facets)`` returns a :obj:`list` of :obj:`~esmvalcore.typing.Facets`
 containing all required variables for deriving the derived variable. Its only
-argument is the ``project`` of the specific dataset. In this particular
+argument are the ``facets`` (of type :obj:`~esmvalcore.typing.Facets`) of the
+specific dataset. In this particular
 example script, the derived variable ``dummy`` is derived from ``var_a`` and
 ``var_b``. It is possible to specify arbitrary attributes for each required
 variable, e.g. ``var_b`` uses the mip ``fx`` (or ``Ofx`` in the case of

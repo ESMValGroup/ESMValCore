@@ -48,24 +48,24 @@ ALL_DERIVED_VARIABLES: dict[str, type[DerivedVariableBase]] = (
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name: str, project: str) -> list[Facets]:
+def get_required(facets: Facets) -> list[Facets]:
     """Return all required variables for derivation.
 
     Get all information (at least ``short_name``) required for derivation.
 
     Parameters
     ----------
-    short_name:
-        Short name of the variable to derive.
-    project:
-        Project of the variable to derive.
+    facets:
+        Facets of the derived variable.
 
     Returns
     -------
     list[esmvalcore.typing.Facets]
-        List of facets (including at least the key ``short_name``).
+        List of facets of required variables (including at least the key ``short_name``).
 
     """
+    facets = dict(facets)  # avoid modifying original facets
+    short_name = str(facets["short_name"])
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
         msg = (
             f"Cannot derive variable '{short_name}': no derivation script "
@@ -73,7 +73,7 @@ def get_required(short_name: str, project: str) -> list[Facets]:
         )
         raise NotImplementedError(msg)
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
-    return deepcopy(DerivedVariable().required(project))
+    return deepcopy(DerivedVariable().required(facets))
 
 
 def derive(

@@ -67,7 +67,7 @@ def test_xco2_calculate(cubes):
 def test_xco2_required():
     """Test function ``required``."""
     derived_var = xco2.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({})
     assert output == [
         {"short_name": "co2"},
         {"short_name": "hus"},

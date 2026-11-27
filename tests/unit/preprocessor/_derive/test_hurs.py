@@ -52,7 +52,7 @@ def cubes():
 def test_hurs_calculate(cubes):
     """Test function ``calculate``."""
     derived_var = hurs.DerivedVariable()
-    required_vars = derived_var.required("CMIP6")
+    required_vars = derived_var.required({"project": "CMIP6"})
     expected_required_vars = [
         {"short_name": "tdps"},
         {"short_name": "tas"},

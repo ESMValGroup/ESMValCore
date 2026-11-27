@@ -4,6 +4,10 @@ projects:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        # Use a lower priority than for esmvalcore.io.local.LocalDataSource
+        # to avoid searching ESGF if the data is available locally and
+        # the setting `search_data: quick` is used.
+        priority: 5
         facets:
           activity: "activity_id"
           branding_suffix: "variable_branding_suffix"
@@ -13,6 +17,7 @@ projects:
           frequency: "frequency"
           grid: "grid_label"
           institute: "institution_id"
+          mip: "realm"
           project: "project"
           region: "region"
           short_name: "variable_id"
@@ -20,6 +25,7 @@ projects:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        priority: 5
         facets:
           activity: "activity_id"
           dataset: "source_id"
@@ -34,6 +40,7 @@ projects:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        priority: 5
         facets:
           activity: "activity_id"
           dataset: "source_id"
@@ -48,6 +55,7 @@ projects:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        priority: 5
         facets:
           dataset: "model"
           ensemble: "ensemble"
@@ -79,6 +87,7 @@ projects:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        priority: 5
         facets:
           dataset: "model"
           ensemble: "ensemble"
@@ -90,6 +99,7 @@ projects:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        priority: 5
         facets:
           activity: "activity_id"
           dataset: "source_id"
@@ -106,6 +116,7 @@ projects:
     data:
       intake-esgf-v2:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        priority: 5
         facets:
           dataset: "source_id"
           frequency: "frequency"

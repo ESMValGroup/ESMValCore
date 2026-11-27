@@ -90,6 +90,25 @@ def test_update_cmor_facets_unavailable(
     assert str(exc.value) == message
 
 
+def test_update_cmor_facets_unavailable_branding_suffix() -> None:
+    facets: Facets = {
+        "project": "CMIP7",
+        "mip": "atmos",
+        "short_name": "tas",
+        "branding_suffix": "tavg-h2m-hxy-uu",
+    }
+    with pytest.raises(RecipeError) as exc:
+        _update_cmor_facets(facets)
+    message = str(exc.value)
+    assert message.startswith(
+        "Variable 'tas' with branding suffix 'tavg-h2m-hxy-uu' not available "
+        "in table 'atmos' of project 'CMIP7'. Available branding suffixes "
+        "are: ",
+    )
+    assert "tavg-h2m-hxy-u," in message
+    assert message.endswith(" Did you mean 'tavg-h2m-hxy-u'?")
+
+
 def test_update_cmor_facets_facet_not_in_table(mocker):
     facets = {
         "project": "CMIP6",

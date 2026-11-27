@@ -148,8 +148,8 @@ def _get_default_settings_for_chl(save_filename):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-    def get_required(short_name, _):
-        if short_name != "tas":
+    def get_required(facets: Facets) -> list[Facets]:
+        if facets["short_name"] != "tas":
             raise AssertionError
         return [
             {"short_name": "pr"},
@@ -4151,3 +4151,71 @@ def test_align_metadata_missing_arg(
     )
     with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
+
+
+def test_t_test_no_ref(get_recipe, tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_t_test:
+            t_test:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_t_test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: 20000101/20001231
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_t_test: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 0" in exc.value.failed_tasks[0].message
+
+
+def test_t_test_two_refs(get_recipe, tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_t_test:
+            t_test:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_t_test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: 20000101/20001231
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5, reference_for_t_test: true}
+                  - {dataset: CESM2, reference_for_t_test: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_t_test: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 2" in exc.value.failed_tasks[0].message

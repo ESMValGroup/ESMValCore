@@ -378,3 +378,10 @@ reference_for_distance_metric_preproc = partial(
     step="distance_metric",
     attr_name="reference_for_metric",
 )
+
+
+reference_for_t_test_preproc = partial(
+    _check_ref_attributes,
+    step="t_test",
+    attr_name="reference_for_t_test",
+)

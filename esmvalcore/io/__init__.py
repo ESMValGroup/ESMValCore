@@ -49,35 +49,16 @@ from __future__ import annotations
 import importlib
 import logging
 import warnings
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
 
 import esmvalcore.io.protocol
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.io.protocol import _DataSourceWithoutSearchableFacets
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from esmvalcore.config import Session
-    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
-
-
-# TODO: Remove in v2.18.0
-@runtime_checkable
-class _DataSourceWithoutSearchableFacets(Protocol):
-    """A data source without the ``searchable_facets`` attribute."""
-
-    name: str
-    project: str
-    priority: int
-    debug_info: str
-
-    def find_data(
-        self,
-        **facets: FacetValue,
-    ) -> Iterable[esmvalcore.io.protocol.DataElement]:
-        """Find data."""
 
 
 def load_data_sources(

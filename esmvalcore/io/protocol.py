@@ -101,3 +101,17 @@ class DataSource(Protocol):
         :obj:`typing.Iterable` of :obj:`esmvalcore.io.base.DataElement`
             The data elements that have been found.
         """
+
+
+# TODO: Remove in v2.18.0
+@runtime_checkable
+class _DataSourceWithoutSearchableFacets(Protocol):  # noqa: PYI046
+    """A data source without the ``searchable_facets`` attribute."""
+
+    name: str
+    project: str
+    priority: int
+    debug_info: str
+
+    def find_data(self, **facets: FacetValue) -> Iterable[DataElement]:
+        """Find data."""

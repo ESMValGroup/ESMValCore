@@ -1,11 +1,18 @@
 """Derivation of variable ``soz``."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import dask.array as da
 import iris
 
 from ._baseclass import DerivedVariableBase
 from .toz import DerivedVariable as Toz
 from .toz import add_longitude_coord, interpolate_hybrid_plevs
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 # O3 mole fraction threshold (in ppb) that is used for the definition of the
 # stratosphere (stratosphere = region where O3 mole fraction is at least as
@@ -17,8 +24,10 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable ``soz``."""
 
     @staticmethod
-    def required(project):
+    def required(facets: Facets) -> list[Facets]:
         """Declare the variables needed for derivation."""
+        project = facets["project"]
+        required: list[Facets]
         if project == "CMIP6":
             required = [{"short_name": "o3"}]
         else:

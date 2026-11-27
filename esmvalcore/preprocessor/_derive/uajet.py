@@ -1,5 +1,9 @@
 """Derivation of variable `uajet`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cf_units
 import iris
 import numpy as np
@@ -7,6 +11,9 @@ import numpy as np
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 # Constants (Southern hemisphere at 850 hPa)
 LAT = [-80.0, -30.0]
@@ -17,7 +24,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `uajet`."""
 
     @staticmethod
-    def required(project):  # noqa: ARG004
+    def required(facets: Facets) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [{"short_name": "ua"}]
 

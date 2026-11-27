@@ -47,7 +47,7 @@ def test_hfns_calculate(cubes):
 def test_hfns_required():
     """Test function ``required``."""
     derived_var = hfns.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({})
     assert output == [
         {"short_name": "hfls"},
         {"short_name": "hfss"},

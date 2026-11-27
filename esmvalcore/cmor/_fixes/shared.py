@@ -276,13 +276,17 @@ def cube_to_aux_coord(cube):
     )
 
 
-def ensure_c_contiguous_input[T](
+def ensure_c_contiguous_and_aligned_input[T](
     func: Callable[[np.ndarray], T],
 ) -> Callable[[ArrayLike], T]:
-    """Ensure that input to a function is C-contiguous (e.g., as expected by interp1d)."""
+    """Ensure that input to a function is C-contiguous and aligned.
+
+    This is required by e.g. :class:`scipy.interpolate.interp1d`. Arrays
+    received from other Dask workers may not be aligned.
+    """
 
     def wrapped_func(x: ArrayLike) -> T:
-        return func(np.ascontiguousarray(x))
+        return func(np.require(x, requirements=["C_CONTIGUOUS", "ALIGNED"]))
 
     return wrapped_func
 
@@ -305,7 +309,7 @@ def get_altitude_to_pressure_func() -> Callable[[ArrayLike], np.ndarray]:
         kind="cubic",
         fill_value="extrapolate",
     )
-    return ensure_c_contiguous_input(interpolator)
+    return ensure_c_contiguous_and_aligned_input(interpolator)
 
 
 def get_bounds_cube(cubes, coord_var_name):
@@ -364,7 +368,7 @@ def get_pressure_to_altitude_func() -> Callable[[ArrayLike], np.ndarray]:
         kind="cubic",
         fill_value="extrapolate",
     )
-    return ensure_c_contiguous_input(interpolator)
+    return ensure_c_contiguous_and_aligned_input(interpolator)
 
 
 def fix_bounds(cube, cubes, coord_var_names):

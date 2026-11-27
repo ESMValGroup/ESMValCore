@@ -30,7 +30,7 @@ def test_qep_calculation(cubes):
 def test_qep_required():
     """Test function ``required``."""
     derived_var = qep.DerivedVariable()
-    output = derived_var.required(None)
+    output = derived_var.required({})
     assert output == [
         {"short_name": "evspsbl"},
         {"short_name": "pr"},

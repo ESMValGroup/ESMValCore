@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import dask.array as da
 import iris
 import iris.coords
@@ -22,7 +24,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
     cube_to_aux_coord,
-    ensure_c_contiguous_input,
+    ensure_c_contiguous_and_aligned_input,
     fix_bounds,
     fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
@@ -31,6 +33,9 @@ from esmvalcore.cmor._fixes.shared import (
     get_time_bounds,
     round_coordinates,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def test_altitude_to_pressure_func():
@@ -755,14 +760,55 @@ def test_get_time_bounds_invalid_hr_fail(time_coord, freq):
         get_time_bounds(time_coord, freq)
 
 
-def test_ensure_c_contiguous_input() -> None:
+def test_ensure_c_contiguous_and_aligned_input() -> None:
     def identity[T](x: T) -> T:
         return x
 
-    wrapped_identity = ensure_c_contiguous_input(identity)
+    wrapped_identity = ensure_c_contiguous_and_aligned_input(identity)
 
     f_arr = np.ones((2, 3), order="F")
     assert f_arr.flags["C_CONTIGUOUS"] is False
 
     c_arr = wrapped_identity(f_arr)
     assert c_arr.flags["C_CONTIGUOUS"] is True
+
+
+def _unaligned_array() -> np.ndarray:
+    """Create a C-contiguous float64 array that is not aligned."""
+    values = np.array([[0.0, 100.0], [1000.0, 10000.0]])
+    buffer = bytearray(values.nbytes + 4)
+    arr = np.frombuffer(
+        buffer,
+        dtype=np.float64,
+        offset=4,
+        count=values.size,
+    ).reshape(values.shape)
+    arr[...] = values
+    assert arr.flags["C_CONTIGUOUS"] is True
+    assert arr.flags["ALIGNED"] is False
+    return arr
+
+
+def test_ensure_c_contiguous_and_aligned_input_aligned() -> None:
+    def identity[T](x: T) -> T:
+        return x
+
+    wrapped_identity = ensure_c_contiguous_and_aligned_input(identity)
+
+    result = wrapped_identity(_unaligned_array())
+    assert result.flags["C_CONTIGUOUS"] is True
+    assert result.flags["ALIGNED"] is True
+
+
+@pytest.mark.parametrize(
+    "get_func",
+    [get_altitude_to_pressure_func, get_pressure_to_altitude_func],
+)
+def test_unaligned_input(get_func: Callable[[], Callable]) -> None:
+    """Test that unaligned input works (e.g. from other Dask workers)."""
+    unaligned_arr = _unaligned_array()
+    aligned_arr = unaligned_arr.copy()
+    assert unaligned_arr.flags["ALIGNED"] is False
+    assert aligned_arr.flags["ALIGNED"] is True
+    func = get_func()
+    np.testing.assert_allclose(func(unaligned_arr), func(aligned_arr))
