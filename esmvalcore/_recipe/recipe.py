@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+import operator
 import os
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from functools import partial
 from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -221,6 +223,25 @@ def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
         return
     if "frequency" not in settings["regrid_time"]:
         settings["regrid_time"]["frequency"] = dataset.facets["frequency"]
+
+
+def _update_count(settings: dict) -> None:
+    """Call threshold exceedance function for count.
+
+    Call a function checking the exceedances of a threshold for statistics
+    preprocessor functions used with count operator.
+    """
+    for step, step_settings in settings.items():
+        if (
+            "_statistics" in step
+            and ("operator", "count") in step_settings.items()
+        ):
+            if "above_threshold" in step_settings:
+                threshold = step_settings.pop("above_threshold")
+                settings[step]["function"] = partial(operator.lt, threshold)
+            if "below_threshold" in step_settings:
+                threshold = step_settings.pop("below_threshold")
+                settings[step]["function"] = partial(operator.gt, threshold)
 
 
 def _select_dataset(dataset_name: str, datasets: Sequence[Dataset]) -> Dataset:
@@ -822,6 +843,7 @@ def _update_preproc_functions(
     _update_align_metadata(settings, dataset)
     _update_extract_shape(settings, session)
     _update_weighting_settings(settings, dataset.facets)
+    _update_count(settings)
     try:
         _update_target_levels(
             dataset=dataset,
