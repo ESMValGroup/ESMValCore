@@ -10,6 +10,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
 import dask.config
+import xarray as xr
 from distributed import Client, WorkerPlugin
 from loguru import logger
 
@@ -74,6 +75,38 @@ def validate_dask_config(dask_config: Mapping) -> None:
             f"got '{use}', expected one of {list(profiles.keys())}"
         )
         raise InvalidConfigParameter(msg)
+    _validate_worker_xarray_options(
+        dask_config.get("worker_xarray_options", {}),
+    )
+
+
+def _validate_worker_xarray_options(xarray_options: object) -> None:
+    """Validate the xarray options for the Dask workers."""
+    if not isinstance(xarray_options, Mapping):
+        msg = (
+            f"Key 'dask.worker_xarray_options' needs to be a mapping, got "
+            f"{type(xarray_options)}"
+        )
+        raise InvalidConfigParameter(msg)
+    try:
+        with xr.set_options(**xarray_options):
+            pass
+    except (TypeError, ValueError) as exc:
+        msg = f"Key 'dask.worker_xarray_options' is invalid: {exc}"
+        raise InvalidConfigParameter(msg) from exc
+
+
+class _XarrayOptionsPlugin(WorkerPlugin):
+    """Set :func:`xarray.set_options` on each Dask worker."""
+
+    name = "esmvalcore-xarray-options"
+
+    def __init__(self, options: Mapping[str, Any]) -> None:
+        self.options = dict(options)
+
+    def setup(self, worker: Worker) -> None:  # noqa: ARG002
+        """Set the xarray options when the worker starts."""
+        xr.set_options(**self.options)
 
 
 _WORKER_LOG_TOPIC = "esmvalcore-log"
@@ -155,6 +188,7 @@ def get_distributed_client(session: Session) -> Generator[Client | None]:
     """Get a Dask distributed client."""
     dask_config = deepcopy(session["dask"])
     validate_dask_config(dask_config)
+    xarray_options = dask_config.pop("worker_xarray_options", {})
 
     # Set up cluster and client according to the selected profile
     # Note: we already ensured earlier that the selected profile (via `use`)
@@ -164,55 +198,62 @@ def get_distributed_client(session: Session) -> Generator[Client | None]:
     cluster_kwargs = profile.pop("cluster", None)
 
     logger.debug("Using additional Dask settings {}", profile)
-    dask.config.set(profile)
 
-    cluster: Cluster | None
-    client: Client | None
+    # Use an exit stack, so the Dask configuration is restored and the
+    # client and cluster are closed when leaving the context, even if an
+    # error occurs while setting them up.
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(dask.config.set(profile))
 
-    # Threaded scheduler
-    if cluster_kwargs is None:
-        cluster = None
+        # Threaded scheduler: nothing to set up.
+        # Distributed scheduler: start the cluster.
+        if cluster_kwargs is not None:
+            cluster_type = cluster_kwargs.pop("type")
+            cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
+            cluster_module = importlib.import_module(cluster_module_name)
+            cluster_cls = getattr(cluster_module, cluster_cls_name)
+            cluster = cluster_cls(**cluster_kwargs)
+            stack.callback(_close_cluster, cluster)
+            stack.enter_context(
+                dask.config.set(
+                    {"scheduler_address": cluster.scheduler_address},
+                ),
+            )
+            logger.debug("Using Dask cluster {}", cluster)
 
-    # Distributed scheduler
-    else:
-        cluster_type = cluster_kwargs.pop("type")
-        cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
-        cluster_module = importlib.import_module(cluster_module_name)
-        cluster_cls = getattr(cluster_module, cluster_cls_name)
-        cluster = cluster_cls(**cluster_kwargs)
-        dask.config.set({"scheduler_address": cluster.scheduler_address})
-        logger.debug("Using Dask cluster {}", cluster)
+        client: Client | None
+        if dask.config.get("scheduler_address", None) is None:
+            client = None
+            logger.info(
+                "Using Dask threaded scheduler. The distributed scheduler is "
+                "recommended, please read https://docs.esmvaltool.org/"
+                "projects/ESMValCore/en/latest/quickstart/"
+                "configure.html#dask-configuration how to use a distributed "
+                "scheduler.",
+            )
+        else:
+            client = Client()
+            stack.callback(client.close)
+            _forward_worker_logs(client)
+            logger.info(
+                "Using Dask distributed scheduler (address: {}, dashboard "
+                "link: {})",
+                dask.config.get("scheduler_address"),
+                client.dashboard_link,
+            )
+            if xarray_options:
+                client.register_plugin(_XarrayOptionsPlugin(xarray_options))
 
-    if dask.config.get("scheduler_address", None) is None:
-        client = None
-        logger.info(
-            "Using Dask threaded scheduler. The distributed scheduler is "
-            "recommended, please read https://docs.esmvaltool.org/projects/"
-            "ESMValCore/en/latest/quickstart/"
-            "configure.html#dask-configuration how to use a distributed "
-            "scheduler.",
-        )
-    else:
-        client = Client()
-        _forward_worker_logs(client)
-        logger.info(
-            "Using Dask distributed scheduler (address: {}, dashboard link: "
-            "{})",
-            dask.config.get("scheduler_address"),
-            client.dashboard_link,
-        )
-
-    try:
         yield client
-    finally:
-        if client is not None:
-            client.close()
-        if cluster is not None:
-            try:
-                cluster.close()
-            except TimeoutError:
-                logger.warning(
-                    "Timeout while trying to shut down the cluster at {}, "
-                    "you may want to check it was stopped.",
-                    cluster.scheduler_address,
-                )
+
+
+def _close_cluster(cluster: Cluster) -> None:
+    """Close a Dask cluster."""
+    try:
+        cluster.close()
+    except TimeoutError:
+        logger.warning(
+            "Timeout while trying to shut down the cluster at {}, "
+            "you may want to check it was stopped.",
+            cluster.scheduler_address,
+        )

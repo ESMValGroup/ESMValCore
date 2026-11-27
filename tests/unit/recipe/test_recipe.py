@@ -845,8 +845,37 @@ def test_update_target_grid_still_validates_mxn():
     )
     settings = {"regrid": {"target_grid": "EUR-11x", "scheme": "linear"}}
 
-    with pytest.raises(ValueError, match="Invalid MxN cell specification"):
+    with pytest.raises(RecipeError, match="Invalid MxN cell specification"):
         _recipe._update_target_grid(dataset, [dataset], settings)
+
+
+@pytest.mark.parametrize("relative", [True, False])
+def test_update_target_grid_file(session, tmp_path, relative):
+    """Test that a file can be used as target grid."""
+    session["auxiliary_data_dir"] = tmp_path
+    grid_file = tmp_path / "grids" / "target_grid.nc"
+    grid_file.parent.mkdir()
+    grid_file.write_text("")
+    dataset = Dataset(dataset="CanESM5", project="CMIP6")
+    dataset.session = session
+    target_grid = "grids/target_grid.nc" if relative else str(grid_file)
+    settings = {"regrid": {"target_grid": target_grid, "scheme": "linear"}}
+
+    _recipe._update_target_grid(dataset, [dataset], settings)
+
+    assert settings["regrid"]["target_grid"] == grid_file
+
+
+def test_update_target_grid_missing_file(session, tmp_path):
+    """Test that the error mentions where a target grid file was looked for."""
+    session["auxiliary_data_dir"] = tmp_path
+    dataset = Dataset(dataset="CanESM5", project="CMIP6")
+    dataset.session = session
+    settings = {"regrid": {"target_grid": "missing.nc", "scheme": "linear"}}
+
+    with pytest.raises(RecipeError, match="no file was found at") as exc:
+        _recipe._update_target_grid(dataset, [dataset], settings)
+    assert str(tmp_path / "missing.nc") in str(exc.value)
 
 
 def test_update_target_grid_validates_regional_dict():
@@ -873,6 +902,27 @@ def test_update_target_grid_validates_regional_dict():
     }
 
     _recipe._update_target_grid(dataset, [dataset], settings)
+
+
+def test_update_target_grid_invalid_regional_dict():
+    """Test invalid regional dict target grids raise a RecipeError."""
+    dataset = Dataset(dataset="CanESM5", project="CMIP6")
+    settings = {
+        "regrid": {
+            "target_grid": {
+                "start_longitude": 0,
+                "end_longitude": 360,
+                "step_longitude": 5,
+                "start_latitude": -90,
+                "end_latitude": 90,
+                "step_latitude": 0,
+            },
+            "scheme": "linear",
+        },
+    }
+
+    with pytest.raises(RecipeError, match="Latitude step cannot be 0"):
+        _recipe._update_target_grid(dataset, [dataset], settings)
 
 
 def test_update_regrid_time():
