@@ -43,7 +43,8 @@ class DerivedVariable(DerivedVariableBase):
                 u_suffix = "-".join([*suffix.split("-")[:-1], "u"])
                 air_suffix = "-".join([*suffix.split("-")[:-1], "air"])
             else:
-                mod_suffix = suffix 
+                u_suffix = suffix 
+                air_suffix = suffix 
 
             return [
                 {"short_name": "co2", "branding_suffix": air_suffix, "mip": "atmos"},
