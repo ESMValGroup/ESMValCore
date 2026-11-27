@@ -1,6 +1,6 @@
 <h3>{{ task.title }}</h3>
 
-{% for file in task.image_files %}
+{% for file in task.image_files + task.table_files %}
 
 <div class="div_figure d-inline-flex
 {% for filter_name in filters.keys() %}
@@ -15,9 +15,31 @@
 {% endfor %}
 ">
     <figure class="figure">
+        {% if file.kind == 'image' %}
         <a href='{{ relpath(file.path, session.session_dir) }}'>
         <img class="figure-img img-fluid" src='{{ relpath(file.path, session.session_dir) }}' alt='{{ file.caption }}'/>
         </a>
+        {% else %}
+        {% set rows = file.read_rows() %}
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-sm" style="white-space: pre-wrap">
+                <thead>
+                    <tr>
+                        {% for cell in rows[0] %}<th scope="col">{{ cell }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows[1:] %}
+                    <tr>
+                        {% for cell in row %}<td>{{ cell }}</td>{% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% endif %}
         <figcaption class="figure-caption">
             {{ file.caption }}
             <br>
