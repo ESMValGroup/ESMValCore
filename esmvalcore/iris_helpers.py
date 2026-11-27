@@ -622,7 +622,7 @@ def _remove_formula_term_cubes(
     return iris.cube.CubeList(
         cube
         for cube in cubes
-        if cube.aux_factories or cube.var_name not in formula_terms
+        if cube.var_name not in formula_terms
     )
 
 
