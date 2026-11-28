@@ -6,16 +6,21 @@ import inspect
 import logging
 import os
 import subprocess
+from datetime import datetime, timedelta
 from functools import partial
+from itertools import pairwise
 from pprint import pformat
 from shutil import which
 from typing import TYPE_CHECKING, Any
 
 import isodate
 import yamale
+from cftime import datetime as cf_datetime
 
 import esmvalcore.preprocessor
+from esmvalcore._time import _parse_timerange
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.io.intake_esm import IntakeEsmDataset
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
@@ -35,8 +40,12 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
     from pathlib import Path
 
+    from iris.coords import Coord
+    from iris.cube import Cube
+
     from esmvalcore._task import TaskSet
     from esmvalcore.dataset import Dataset
+    from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets
 
 
@@ -232,6 +241,22 @@ def _group_years(years: Iterable[int]) -> str:
     return ", ".join(ranges)
 
 
+def _data_timeranges(input_files: Sequence[DataElement]) -> list[str] | None:
+    """Return asset intervals, deferring checks if any coverage is unknown."""
+    timeranges: list[str] = []
+    for file in input_files:
+        if isinstance(file, IntakeEsmDataset):
+            if file.timeranges is None:
+                return None
+            timeranges.extend(file.timeranges)
+        else:
+            timerange = file.facets.get("timerange")
+            if not isinstance(timerange, str):
+                return None
+            timeranges.append(timerange)
+    return timeranges
+
+
 def data_availability(dataset: Dataset, log: bool = True) -> None:
     """Check if input_files cover the required years."""
     input_files = dataset.files
@@ -244,20 +269,31 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if (
-        "*" in facets.get("timerange", "*")  # type: ignore[operator]
-        or any("timerange" not in f.facets for f in input_files)
-    ):
+    if "*" in facets.get("timerange", "*"):  # type: ignore[operator]
+        return
+    timeranges = _data_timeranges(input_files)
+    if timeranges is None:
         return
 
-    start_date, end_date = _parse_period(facets["timerange"])
-    start_year = int(start_date[0:4])
-    end_year = int(end_date[0:4])
+    if any(isinstance(file, IntakeEsmDataset) for file in input_files):
+        frequency = str(facets.get("frequency", "")).lower().removesuffix("pt")
+        if (
+            frequency != "subhr"
+            and _sampling_resolution(frequency, ()) is None
+        ):
+            return  # Multi-year averages need actual bounds, not point years.
+        start, end = _parse_timerange(str(facets["timerange"]))
+        start_year = start.year
+        end_year = (end - timedelta(microseconds=1)).year
+    else:
+        start_date, end_date = _parse_period(facets["timerange"])
+        start_year = int(start_date[0:4])
+        end_year = int(end_date[0:4])
     required_years = set(range(start_year, end_year + 1, 1))
     available_years: set[int] = set()
 
-    for file in input_files:
-        start_date, end_date = file.facets["timerange"].split("/")  # type: ignore[union-attr]
+    for timerange in timeranges:
+        start_date, end_date = timerange.split("/")
         start_year = int(start_date[:4])
         end_year = int(end_date[:4])
         available_years.update(range(start_year, end_year + 1))
@@ -269,6 +305,133 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = "No input data available for years {} in files:\n{}".format(
             missing_txt,
             "\n".join(str(f) for f in input_files),
+        )
+        raise InputFilesNotFound(msg)
+
+
+def _sampling_resolution(
+    frequency: str,
+    dates: Sequence[cf_datetime],
+) -> tuple[int, int] | None:
+    """Get the calendar resolution and, for hourly data, period microseconds."""
+    resolution = {"yr": 1, "mon": 2, "mo": 2, "day": 3}.get(frequency)
+    if resolution is not None:
+        return resolution, 3600_000_000
+    hours = frequency.removesuffix("hr") or "1"
+    if frequency.endswith("hr") and hours.isdigit() and int(hours) > 0:
+        return 4, int(hours) * 3600_000_000
+    if frequency == "subhr":
+        intervals = {later - earlier for earlier, later in pairwise(dates)}
+        if len(intervals) == 1:
+            interval = intervals.pop()
+            if timedelta(0) < interval <= timedelta(hours=1):
+                return 4, round(interval.total_seconds() * 1000_000)
+    return None
+
+
+def _calendar_date(date: datetime, calendar: str) -> cf_datetime:
+    """Convert a selection limit to the data calendar."""
+    month = cf_datetime(date.year, date.month, 1, calendar=calendar)
+    return month.replace(
+        day=min(date.day, month.daysinmonth),
+        hour=date.hour,
+        minute=date.minute,
+        second=date.second,
+        microsecond=date.microsecond,
+    )
+
+
+def _bounds_cover_timerange(
+    time: Coord,
+    start: cf_datetime,
+    end: cf_datetime,
+) -> bool:
+    """Check the union of actual intervals, including gaps between averages."""
+    if not time.has_bounds():
+        msg = (
+            "Cannot validate requested time coverage: time bounds are missing "
+            "and a regular sampling interval cannot be determined."
+        )
+        raise InputFilesNotFound(msg)
+    covered_until, required_end = time.units.date2num([start, end])
+    for lower, upper in sorted(time.bounds.tolist()):
+        if upper <= covered_until:
+            continue
+        if lower > covered_until:
+            return False
+        covered_until = upper
+        if covered_until >= required_end:
+            return True
+    return False
+
+
+def loaded_data_availability(dataset: Dataset, cube: Cube) -> None:
+    """Check requested endpoints and years against selected time samples.
+
+    Compare at the sampling resolution so monthly midpoints and instantaneous
+    daily data both cover their respective periods. Multi-year averages use
+    their bounds rather than requiring a time point in every requested year.
+    CMOR checks validate the cadence between samples.
+
+    Parameters
+    ----------
+    dataset:
+        Requested dataset, including frequency and time range.
+    cube:
+        Selected, concatenated data after metadata fixes.
+    """
+    timerange = dataset.facets.get("timerange")
+    frequency = (
+        str(dataset.facets.get("frequency", "")).lower().removesuffix("pt")
+    )
+    if frequency == "fx" or not isinstance(timerange, str):
+        return
+    time = cube.coord("time")
+    # CF conversions from distant float64 epochs can introduce microsecond
+    # jitter. Round only these comparison dates, not the cube's coordinates.
+    dates = [
+        date
+        + timedelta(
+            microseconds=1000 * round(date.microsecond / 1000)
+            - date.microsecond,
+        )
+        for date in time.units.num2date(time.points)
+    ]
+    start_date, end_date = _parse_timerange(timerange)
+    start = _calendar_date(start_date, time.units.calendar)
+    end = _calendar_date(end_date, time.units.calendar)
+    sampling = _sampling_resolution(frequency, dates)
+    if sampling is None:
+        covered = _bounds_cover_timerange(time, start, end)
+    else:
+        resolution, microseconds = sampling
+        inclusive_end = end - timedelta(microseconds=1)
+        missing_years = set(range(start.year, inclusive_end.year + 1)) - {
+            date.year for date in dates
+        }
+        if frequency == "subhr":
+            interval = timedelta(microseconds=microseconds)
+            covered = (
+                not missing_years
+                and dates[0] < start + interval
+                and dates[-1] >= end - interval
+            )
+        else:
+
+            def period(date: cf_datetime) -> tuple[int, ...]:
+                seconds = (date.hour * 60 + date.minute) * 60 + date.second
+                slot = (seconds * 1000_000 + date.microsecond) // microseconds
+                return (date.year, date.month, date.day, slot)[:resolution]
+
+            covered = (
+                not missing_years
+                and period(dates[0]) <= period(start)
+                and period(dates[-1]) >= period(inclusive_end)
+            )
+    if not covered:
+        msg = (
+            f"Input data do not cover requested timerange {timerange} "
+            f"for {dataset.summary(True)}. Loaded {dates[0]} to {dates[-1]}."
         )
         raise InputFilesNotFound(msg)
 

@@ -859,6 +859,94 @@ and you should be good to go. If your HPC system is not supported yet, you can
 copy one of the other example configuration files, e.g. ``data-hpc-dkrz.yml``
 and tailor it for your system.
 
+Cloud
+`````
+
+The public Pangeo CMIP6 catalog on Google Cloud Storage can be used as an
+intake-esm data source. Install the Google Cloud Storage client and copy the
+example configuration:
+
+.. code-block:: bash
+
+  pip install gcsfs
+  esmvaltool config copy data-intake-esm-gcs.yml
+
+The ``catalog`` entry points to the public catalog. The catalog has no
+``time_range`` search facet, so ESMValCore selects the requested period after
+loading.
+The NCI example targets the fs38 catalog on Gadi.
+Its ``project_id`` column is not the CMIP6 activity, so the example leaves
+``activity`` unmapped and retains it from the recipe or infers it from the
+CMIP6 experiment vocabulary.
+Use ``exp`` to select or discover experiments; the catalog cannot filter by
+``activity`` directly.
+For experiments absent from the CMIP6 vocabulary, specify ``activity`` in the
+recipe when it is needed by another data source.
+The AWS and DKRZ configuration files need site-specific verification.
+
+An intake-esm configuration maps ESMValCore facets to columns in that catalog.
+The configured columns must exist and each mapped facet must have one value per
+catalog row. If a catalog has a ``time_range`` column,
+map ``timerange`` to it and set ``time_separator`` to the delimiter in its
+values. The data source selects assets whose time ranges overlap the recipe
+period. Use ``catalog_filters`` to limit catalog rows before applying recipe
+facets. For example, fs38 lists physical files, versioned links, and ``latest``
+links; its example selects versioned links with ``file_type: l``
+and ``version: v*``. Intake-esm's aggregation rules then assemble those assets
+into a dataset. Use ``squeeze_dimensions`` only for named singleton dimensions
+that are not part of the CMOR variable. If an asset selection still spans several
+intake-esm dataset keys, the adapter reports the ambiguity so the mapping or
+catalog aggregation can be corrected. To deduplicate data across catalogs,
+configure the same ESMValCore identity facets in each source; versions are
+compared separately.
+
+When an intake-esm source is configured, both search modes inspect all sources.
+Catalog metadata may omit time coverage or hide gaps within an asset, so
+``Dataset.files`` lists candidate inputs, including those checked for coverage
+but ultimately superseded by a preferred source.
+When candidates include intake-esm data, ESMValCore selects overlapping samples
+using the actual time coordinates after metadata fixes:
+
+* ``search_data: quick`` prefers the source with the lowest ``priority`` value,
+  then the newest version within that source.
+* ``search_data: complete`` prefers the newest version across all sources,
+  using source priority to break ties.
+
+Numeric versions compare numerically, with an optional ``v`` prefix ignored.
+Other version labels compare alphabetically and sort before numeric versions.
+Lower-ranked candidates fill missing timestamps, including gaps within files.
+Catalog asset intervals are checked for missing requested years when available.
+After loading, ESMValCore checks that selected samples reach the requested
+first and last periods and include every requested year, even if catalog
+coverage is absent.
+Subhourly sampling intervals are inferred from regular time coordinates.
+Multi-year averages use their time bounds rather than a point in each year.
+Coverage that cannot be established from sampling intervals or time bounds
+raises an error.
+The usual CMOR checks validate the spacing between samples.
+Dataset identity facets distinguish models, experiments, members, and grids.
+CMOR coordinate history is ignored, as in ordinary concatenation.
+Incompatible coordinates, units, or calendars raise an error instead of silently
+discarding a candidate.
+Selection reads coordinates while preserving lazy field data, but opening all
+candidates can add I/O compared with stopping at the first source.
+Configured catalogs are opened lazily and shared between datasets within a
+session, while each source keeps its own filters and search state.
+Start a new session to read an updated catalog at the same location.
+Preprocessing workers receive selected catalog rows, without the full cached
+catalog.
+
+For the data source interface, see :mod:`esmvalcore.io.intake_esm`.
+
+Authentication and access
+-------------------------
+
+Cloud-hosted catalogs may require provider-specific authentication or
+configuration (for example, AWS credentials, GCP service accounts, or VPN
+access for institutional providers). Follow your cloud or institutional
+provider's documentation for configuring authentication and network access.
+
+
 .. warning::
 
     It is important to :doc:`configure intake-esgf <intake_esgf:configure>`
@@ -871,7 +959,8 @@ and tailor it for your system.
 .. note::
 
     Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
-    and the :mod:`esmvalcore.io.local` data sources has not yet been implemented.
+    and the :mod:`esmvalcore.io.local` data sources without an intake-esm
+    candidate has not yet been implemented.
     Therefore it is recommended not to use the configuration option
     ``search_data: complete`` when using both data sources for the same project.
     The ``search_data: quick`` option can be safely used.

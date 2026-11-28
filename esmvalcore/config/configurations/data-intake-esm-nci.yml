@@ -1,0 +1,26 @@
+# Example: NCI fs38 intake-esm catalog (on-disk access on Gadi).
+# Use `esmvaltool config copy data-intake-esm-nci.yml` to copy this example,
+# then adjust the catalog path and facets if using another NCI collection.
+projects:
+  CMIP6:
+    data:
+      nci-disk-catalog:
+        type: esmvalcore.io.intake_esm.IntakeEsmDataSource
+        # fs38 project_id is not the CMIP6 activity (e.g. ScenarioMIP).
+        # Keep activity from the recipe or the CMIP6 experiment vocabulary.
+        facets:
+          dataset: "source_id"
+          ensemble: "member_id"
+          exp: "experiment_id"
+          institute: "institution_id"
+          grid: "grid_label"
+          mip: "table_id"
+          short_name: "variable_id"
+          version: "version"
+          timerange: "time_range"
+        # Select versioned links, excluding physical-file and latest aliases.
+        catalog_filters:
+          file_type: "l"
+          version: "v*"
+        time_separator: "-"
+        catalog: "/g/data/fs38/catalog/v2/esm/catalog.json"

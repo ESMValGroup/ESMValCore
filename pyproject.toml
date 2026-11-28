@@ -44,7 +44,9 @@ dependencies = [
     "fire",
     "geopy",
     "humanfriendly",
+    "intake>=2.0.0",
     "intake-esgf>=2026.9.28",
+    "intake-esm>=2025.2.3",
     "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
     "isodate>=0.7.0",
     "jinja2",
@@ -56,7 +58,7 @@ dependencies = [
     "packaging",
     "pandas",
     "pillow",
-    "prov",
+    "prov[xml]>=3.0",  # XML-safe intake-esm attribute names (trungdong/prov#289).
     "psutil",
     "py-cordex",
     "pybtex",
@@ -222,14 +224,16 @@ fiona = "*"
 fire = "*"
 geopy = "*"
 humanfriendly = "*"
+intake = ">=2.0.0"
 intake-esgf = ">=2026.9.28"
+intake-esm = ">=2025.2.3"
 iris = ">=3.12.2"
 iris-esmf-regrid = ">=0.11.0"
 iris-grib = ">=0.20.0"
 isodate = ">=0.7.0"
 jinja2 = "*"
 libnetcdf = "!=4.9.1"
-lxml = "*"  # Used by the `prov` library to serialize provenance to XML.
+lxml = ">=3.3.5"  # Matches the `prov[xml]` dependency for XML serialization.
 nc-time-axis = "*"
 ncdata = ">=0.4"
 nested-lookup = "*"
@@ -239,7 +243,7 @@ packaging = "*"
 pandas = "*"
 pillow = "*"
 pip = "!=21.3"
-prov-core = "*"
+prov-core = ">=3.0"
 psutil = "*"
 py-cordex = "*"
 pybtex = "*"

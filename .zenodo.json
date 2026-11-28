@@ -248,6 +248,10 @@
     {
       "affiliation": "DLR, Germany",
       "name": "Caspers, Laura"
+    },
+    {
+      "name": "Turner, Charles",
+      "orcid": "0000-0002-3262-4972"
     }
   ],
   "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",

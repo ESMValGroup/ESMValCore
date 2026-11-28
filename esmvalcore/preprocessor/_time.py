@@ -20,7 +20,6 @@ import iris
 import iris.analysis
 import iris.coord_categorisation
 import iris.util
-import isodate
 import numpy as np
 from cf_units import Unit
 from cftime import datetime as cf_datetime
@@ -30,7 +29,8 @@ from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
 from iris.util import broadcast_to_shape
 
-from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
+from esmvalcore._time import _parse_timerange
+from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.iris_helpers import (
     date2num,
     ignore_iris_vague_metadata_warnings,
@@ -149,56 +149,6 @@ def extract_time(
     return _extract_datetime(cube, t_1, t_2)
 
 
-def _parse_start_date(date):
-    """Parse start of the input `timerange` tag given in ISO 8601 format.
-
-    Returns a datetime.datetime object.
-
-    Raises an ISO8601 parser error if data can not be parsed.
-    """
-    if date.startswith("P"):
-        start_date = isodate.parse_duration(date)
-    elif "T" in date:
-        start_date = isodate.parse_datetime(date)
-    else:
-        start_date = isodate.parse_date(date)
-        start_date = dt.datetime.combine(start_date, dt.time.min)
-
-    return start_date
-
-
-def _parse_end_date(date):
-    """Parse end of the input `timerange` given in ISO 8601 format.
-
-    Returns a datetime.datetime object.
-
-    Raises an ISO8601 parser error if data can not be parsed.
-    """
-    if date.startswith("P"):
-        end_date = isodate.parse_duration(date)
-    elif len(date) == 4:
-        end_date = dt.datetime(int(date) + 1, 1, 1, 0, 0, 0)
-    elif len(date) == 6:
-        month, year = get_next_month(int(date[4:]), int(date[0:4]))
-        end_date = dt.datetime(year, month, 1, 0, 0, 0)
-    else:
-        if "T" in date:
-            end_date = isodate.parse_datetime(date)
-        else:
-            end_date = isodate.parse_date(date)
-            end_date = dt.datetime.combine(
-                end_date,
-                dt.time.min,
-            )
-        end_date += dt.timedelta(seconds=1)
-    return end_date
-
-
-def _duration_to_date(duration, reference, sign):
-    """Add or subtract a duration period to a reference datetime."""
-    return reference + sign * duration
-
-
 def _select_timeslice(cube: Cube, select: np.ndarray) -> Cube | None:
     """Slice a cube along its time axis."""
     if select.any():
@@ -310,20 +260,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
         Start/end times can not be parsed by isodate.
 
     """
-    start_date = _parse_start_date(timerange.split("/", maxsplit=1)[0])
-    end_date = _parse_end_date(timerange.split("/")[1])
-
-    if isinstance(start_date, isodate.duration.Duration):
-        start_date = _duration_to_date(start_date, end_date, sign=-1)
-    elif isinstance(start_date, dt.timedelta):
-        start_date = _duration_to_date(start_date, end_date, sign=-1)
-        start_date -= dt.timedelta(seconds=1)
-
-    if isinstance(end_date, isodate.duration.Duration):
-        end_date = _duration_to_date(end_date, start_date, sign=1)
-    elif isinstance(end_date, dt.timedelta):
-        end_date = _duration_to_date(end_date, start_date, sign=1)
-        end_date += dt.timedelta(seconds=1)
+    start_date, end_date = _parse_timerange(timerange)
 
     t_1 = PartialDateTime(
         year=start_date.year,
